@@ -19,7 +19,6 @@ class BotSettings(BaseSettings):
     )
 
     token: SecretStr
-    root_id: int
     drop_pending_updates: bool = True
 
 
@@ -64,6 +63,7 @@ class AppSettings(BaseSettings):
         extra="ignore",
     )
 
+    root_id: int
     log_level: str = "INFO"
     log_json: bool = False
     default_locale: str = "ru"

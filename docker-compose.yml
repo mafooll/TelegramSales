@@ -33,6 +33,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      APP_ROOT_ID: ${APP_ROOT_ID:?APP_ROOT_ID not set, see .env.example}
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,13 +46,14 @@ services:
     restart: unless-stopped
     environment:
       BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN not set, see .env.example}
-      BOT_ROOT_ID: ${BOT_ROOT_ID:?BOT_ROOT_ID not set, see .env.example}
       BOT_DROP_PENDING_UPDATES: ${BOT_DROP_PENDING_UPDATES:-true}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      APP_ROOT_ID: ${APP_ROOT_ID:?APP_ROOT_ID not set, see .env.example}
+      APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-ru}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       APP_LOG_JSON: ${APP_LOG_JSON:-false}
     depends_on:

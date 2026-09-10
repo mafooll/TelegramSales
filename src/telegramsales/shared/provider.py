@@ -28,7 +28,7 @@ class SharedProvider(Provider):
 
     @provide
     def app_settings(self) -> AppSettings:
-        return AppSettings()
+        return AppSettings()  # pyright: ignore[reportCallIssue]
 
     @provide
     def postgres_settings(self) -> PostgresSettings:
