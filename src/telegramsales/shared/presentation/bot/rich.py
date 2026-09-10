@@ -7,18 +7,20 @@ from aiogram.types import (
     RichMessageButton,
 )
 
-from telegramsales.shared.application.access import Actor
 from telegramsales.shared.presentation.bot import texts
-from telegramsales.shared.presentation.bot.content import Content, content_blocks
+from telegramsales.shared.presentation.bot.content import content_blocks
+from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.keyboard import Button, ListScreen, Screen
 from telegramsales.shared.presentation.bot.pagination import Pagination
 
 
 def _to_button[ViewType](
-    button: Button[ViewType], view: ViewType
+    button: Button[ViewType],
+    view: ViewType,
+    context: RenderContext,
 ) -> RichMessageButton:
     return RichMessageButton(
-        text=button.render(view),
+        text=button.render(view, context),
         callback_data=button.callback(view).pack(),
         style=button.style,
     )
@@ -34,21 +36,23 @@ def _rows(
     ]
 
 
-def screen_blocks[ViewType](
-    screen: Screen[ViewType],
+def button_blocks[ViewType](
+    buttons: Sequence[Button[ViewType]],
+    row_width: int,
     view: ViewType,
-    actor: Actor,
+    context: RenderContext,
 ) -> list[InputRichBlockUnion]:
     allowed = [
-        _to_button(button, view)
-        for button in screen.buttons
-        if button.is_allowed(view, actor)
+        _to_button(button, view, context)
+        for button in buttons
+        if button.is_allowed(view, context)
     ]
-    return _rows(allowed, screen.row_width)
+    return _rows(allowed, row_width)
 
 
 def _navigation_blocks[ItemType](
     pagination: Pagination[ItemType],
+    context: RenderContext,
 ) -> list[InputRichBlockUnion]:
     page, make_callback = pagination.page, pagination.callback
     if page.is_single:
@@ -58,20 +62,24 @@ def _navigation_blocks[ItemType](
     if page.has_previous:
         buttons.append(
             RichMessageButton(
-                text=texts.PREVIOUS,
+                text=context.translate(texts.PREVIOUS),
                 callback_data=make_callback(page.number - 1).pack(),
             )
         )
     buttons.append(
         RichMessageButton(
-            text=f"{page.number + 1}/{page.total_pages}",
+            text=context.translate(
+                texts.PAGE_POSITION,
+                current=page.number + 1,
+                total=page.total_pages,
+            ),
             callback_data=make_callback(page.number).pack(),
         )
     )
     if page.has_next:
         buttons.append(
             RichMessageButton(
-                text=texts.NEXT,
+                text=context.translate(texts.NEXT),
                 callback_data=make_callback(page.number + 1).pack(),
             )
         )
@@ -79,36 +87,34 @@ def _navigation_blocks[ItemType](
 
 
 def rich_screen[ViewType](
-    content: Content,
     screen: Screen[ViewType],
     view: ViewType,
-    actor: Actor,
+    context: RenderContext,
 ) -> InputRichMessage:
     return InputRichMessage(
         blocks=[
-            *content_blocks(content),
-            *screen_blocks(screen, view, actor),
+            *content_blocks(screen.render(view, context)),
+            *button_blocks(screen.buttons, screen.row_width, view, context),
         ]
     )
 
 
 def rich_paged_screen[ItemType, ViewType](
-    content: Content,
     screen: ListScreen[ItemType, ViewType],
     pagination: Pagination[ItemType],
     view: ViewType,
-    actor: Actor,
+    context: RenderContext,
 ) -> InputRichMessage:
     items = [
-        _to_button(screen.item, item)
+        _to_button(screen.item, item, context)
         for item in pagination.page.items
-        if screen.item.is_allowed(item, actor)
+        if screen.item.is_allowed(item, context)
     ]
     return InputRichMessage(
         blocks=[
-            *content_blocks(content),
+            *content_blocks(screen.render(view, context)),
             *_rows(items, screen.row_width),
-            *_navigation_blocks(pagination),
-            *screen_blocks(screen.footer, view, actor),
+            *_navigation_blocks(pagination, context),
+            *button_blocks(screen.footer, screen.footer_row_width, view, context),
         ]
     )

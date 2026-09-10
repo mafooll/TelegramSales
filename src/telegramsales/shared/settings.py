@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
 ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+LOCALES_PATH = Path(__file__).resolve().parents[3] / "locales"
 
 
 class BotSettings(BaseSettings):
@@ -18,7 +19,6 @@ class BotSettings(BaseSettings):
     )
 
     token: SecretStr
-    root_id: int
     drop_pending_updates: bool = True
 
 
@@ -63,5 +63,7 @@ class AppSettings(BaseSettings):
         extra="ignore",
     )
 
+    root_id: int
     log_level: str = "INFO"
     log_json: bool = False
+    default_locale: str = "ru"

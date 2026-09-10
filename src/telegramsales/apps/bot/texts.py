@@ -1,1 +1,2 @@
-GREETING = "Скелет запущен. Первый модуль подключается в dispatcher.py."
+GREETING = "menu-greeting"
+OPEN_STAFF_BUTTON = "menu-open-staff-button"

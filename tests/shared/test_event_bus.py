@@ -4,7 +4,7 @@ import pytest
 from structlog.testing import capture_logs
 
 from telegramsales.shared.domain.event import DomainEvent
-from telegramsales.shared.infrastructure.events.bus import EventBus
+from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -22,11 +22,11 @@ class HandlerBoomError(Exception):
 
 
 @pytest.fixture
-def bus() -> EventBus:
-    return EventBus()
+def bus() -> InProcessEventBus:
+    return InProcessEventBus()
 
 
-async def test_subscribed_handler_receives_the_event(bus: EventBus) -> None:
+async def test_subscribed_handler_receives_the_event(bus: InProcessEventBus) -> None:
     received: list[ProductCreated] = []
 
     async def remember(event: ProductCreated) -> None:
@@ -40,7 +40,7 @@ async def test_subscribed_handler_receives_the_event(bus: EventBus) -> None:
     assert received == [event]
 
 
-async def test_handler_of_another_type_is_not_called(bus: EventBus) -> None:
+async def test_handler_of_another_type_is_not_called(bus: InProcessEventBus) -> None:
     calls: list[str] = []
 
     async def on_archived(_event: ProductArchived) -> None:
@@ -53,11 +53,13 @@ async def test_handler_of_another_type_is_not_called(bus: EventBus) -> None:
     assert calls == []
 
 
-async def test_publish_without_subscribers_does_nothing(bus: EventBus) -> None:
+async def test_publish_without_subscribers_does_nothing(
+    bus: InProcessEventBus,
+) -> None:
     await bus.publish(ProductCreated(product_id=1))
 
 
-async def test_handlers_run_in_subscription_order(bus: EventBus) -> None:
+async def test_handlers_run_in_subscription_order(bus: InProcessEventBus) -> None:
     calls: list[str] = []
 
     async def first(_event: ProductCreated) -> None:
@@ -74,7 +76,9 @@ async def test_handlers_run_in_subscription_order(bus: EventBus) -> None:
     assert calls == ["first", "second"]
 
 
-async def test_failing_handler_does_not_stop_the_others(bus: EventBus) -> None:
+async def test_failing_handler_does_not_stop_the_others(
+    bus: InProcessEventBus,
+) -> None:
     calls: list[str] = []
 
     async def broken(_event: ProductCreated) -> None:
@@ -91,7 +95,9 @@ async def test_failing_handler_does_not_stop_the_others(bus: EventBus) -> None:
     assert calls == ["healthy"]
 
 
-async def test_failing_handler_is_logged_with_its_name(bus: EventBus) -> None:
+async def test_failing_handler_is_logged_with_its_name(
+    bus: InProcessEventBus,
+) -> None:
     async def broken(_event: ProductCreated) -> None:
         raise HandlerBoomError
 
@@ -109,7 +115,9 @@ async def test_failing_handler_is_logged_with_its_name(bus: EventBus) -> None:
     assert logs[0]["handler"].endswith("broken")
 
 
-async def test_subclass_event_does_not_reach_parent_handler(bus: EventBus) -> None:
+async def test_subclass_event_does_not_reach_parent_handler(
+    bus: InProcessEventBus,
+) -> None:
     @dataclass(frozen=True, kw_only=True)
     class SpecialProductCreated(ProductCreated):
         reason: str
@@ -126,7 +134,7 @@ async def test_subclass_event_does_not_reach_parent_handler(bus: EventBus) -> No
     assert calls == []
 
 
-async def test_publish_all_delivers_every_event(bus: EventBus) -> None:
+async def test_publish_all_delivers_every_event(bus: InProcessEventBus) -> None:
     received: list[int] = []
 
     async def remember(event: ProductCreated) -> None:

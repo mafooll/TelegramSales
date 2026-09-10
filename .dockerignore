@@ -5,6 +5,7 @@
 !README.md
 !alembic.ini
 !src
+!locales
 !migrations
 
 **/__pycache__
