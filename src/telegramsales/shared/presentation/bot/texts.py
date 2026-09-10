@@ -1,0 +1,5 @@
+CONFIRM = "✅ Да"
+CANCEL = "✖️ Отмена"
+HOME = "⬅️ В меню"
+PREVIOUS = "⬅️"
+NEXT = "➡️"
