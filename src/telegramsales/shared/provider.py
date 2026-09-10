@@ -10,10 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from telegramsales.shared.application.clock import IClock
 from telegramsales.shared.application.events import IEventPublisher
+from telegramsales.shared.application.i18n import ITranslatorFactory
 from telegramsales.shared.infrastructure.clock import SystemClock
 from telegramsales.shared.infrastructure.database.manager import DatabaseManager
-from telegramsales.shared.infrastructure.events.bus import EventBus
-from telegramsales.shared.settings import PostgresSettings
+from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
+from telegramsales.shared.infrastructure.i18n.fluent import FluentTranslations
+from telegramsales.shared.settings import (
+    LOCALES_PATH,
+    AppSettings,
+    PostgresSettings,
+)
 
 
 @final
@@ -21,8 +27,16 @@ class SharedProvider(Provider):
     scope = Scope.APP
 
     @provide
+    def app_settings(self) -> AppSettings:
+        return AppSettings()
+
+    @provide
     def postgres_settings(self) -> PostgresSettings:
         return PostgresSettings()
+
+    @provide
+    def translations(self, settings: AppSettings) -> ITranslatorFactory:
+        return FluentTranslations(LOCALES_PATH, settings.default_locale)
 
     @provide
     async def database_manager(
@@ -43,11 +57,11 @@ class SharedProvider(Provider):
         return SystemClock()
 
     @provide
-    def event_bus(self) -> EventBus:
-        return EventBus()
+    def event_bus(self) -> InProcessEventBus:
+        return InProcessEventBus()
 
     @provide
-    def event_publisher(self, bus: EventBus) -> IEventPublisher:
+    def event_publisher(self, bus: InProcessEventBus) -> IEventPublisher:
         return bus
 
     @provide(scope=Scope.REQUEST)

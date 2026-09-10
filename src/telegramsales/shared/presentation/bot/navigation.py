@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 
 from telegramsales.shared.presentation.bot import texts
-from telegramsales.shared.presentation.bot.keyboard import Button
+from telegramsales.shared.presentation.bot.keyboard import Button, label
 
 
 class HomeCallback(CallbackData, prefix="home"):
@@ -9,4 +9,4 @@ class HomeCallback(CallbackData, prefix="home"):
 
 
 def home_button[ViewType]() -> Button[ViewType]:
-    return Button(text=texts.HOME, callback=lambda _: HomeCallback())
+    return Button(text=label(texts.HOME), callback=lambda _: HomeCallback())

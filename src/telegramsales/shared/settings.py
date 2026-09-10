@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
 ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+LOCALES_PATH = Path(__file__).resolve().parents[3] / "locales"
 
 
 class BotSettings(BaseSettings):
@@ -65,3 +66,4 @@ class AppSettings(BaseSettings):
 
     log_level: str = "INFO"
     log_json: bool = False
+    default_locale: str = "ru"

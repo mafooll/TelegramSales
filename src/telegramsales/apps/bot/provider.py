@@ -12,16 +12,12 @@ from dishka import (
 
 from telegramsales.apps.bot.access import StaticPermissionResolver
 from telegramsales.shared.application.access import IPermissionResolver
-from telegramsales.shared.settings import AppSettings, BotSettings
+from telegramsales.shared.settings import BotSettings
 
 
 @final
 class BotProvider(Provider):
     scope = Scope.APP
-
-    @provide
-    def app_settings(self) -> AppSettings:
-        return AppSettings()
 
     @provide
     def bot_settings(self) -> BotSettings:

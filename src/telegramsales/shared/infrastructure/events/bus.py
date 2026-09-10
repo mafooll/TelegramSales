@@ -14,7 +14,7 @@ type EventHandler[EventType: DomainEvent] = Callable[[EventType], Awaitable[None
 type HandlerRegistry = dict[type[DomainEvent], list[EventHandler[Any]]]
 
 
-class EventBus(IEventPublisher):
+class InProcessEventBus(IEventPublisher):
     def __init__(self) -> None:
         self._handlers: HandlerRegistry = defaultdict(list)
 
