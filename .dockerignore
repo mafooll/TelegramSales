@@ -1,0 +1,11 @@
+*
+
+!pyproject.toml
+!uv.lock
+!README.md
+!alembic.ini
+!src
+!migrations
+
+**/__pycache__
+**/*.py[codz]
