@@ -4,9 +4,28 @@ from dishka import (
     Provider,
     Scope,
     provide,  # pyright: ignore[reportUnknownVariableType]
+    provide_all,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from telegramsales.modules.catalog.application.commands.brands import (
+    ChangeBrandVisibilityHandler,
+    CreateBrandHandler,
+    DeleteBrandHandler,
+    RenameBrandHandler,
+)
+from telegramsales.modules.catalog.application.commands.catalogs import (
+    ChangeCatalogVisibilityHandler,
+    CreateCatalogHandler,
+    DeleteCatalogHandler,
+    RenameCatalogHandler,
+)
+from telegramsales.modules.catalog.application.commands.categories import (
+    ChangeCategoryVisibilityHandler,
+    CreateCategoryHandler,
+    DeleteCategoryHandler,
+    RenameCategoryHandler,
+)
 from telegramsales.modules.catalog.application.ports import (
     ICatalogQueries,
     ICatalogUnitOfWork,
@@ -27,3 +46,18 @@ class CatalogProvider(Provider):
     @provide
     def queries(self, session: AsyncSession) -> ICatalogQueries:
         return CatalogQueries(session)
+
+    handlers = provide_all(
+        CreateCatalogHandler,
+        RenameCatalogHandler,
+        ChangeCatalogVisibilityHandler,
+        DeleteCatalogHandler,
+        CreateCategoryHandler,
+        RenameCategoryHandler,
+        ChangeCategoryVisibilityHandler,
+        DeleteCategoryHandler,
+        CreateBrandHandler,
+        RenameBrandHandler,
+        ChangeBrandVisibilityHandler,
+        DeleteBrandHandler,
+    )
