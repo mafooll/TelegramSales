@@ -54,6 +54,24 @@ class PostgresSettings(BaseSettings):
         return self.sqlalchemy_url.render_as_string(hide_password=False)
 
 
+class RedisSettings(BaseSettings):
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
+        env_file=ENV_PATH,
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        env_prefix="REDIS_",
+        extra="ignore",
+    )
+
+    host: str = "redis"
+    port: int = 6379
+    db: int = 0
+
+    @property
+    def url(self) -> str:
+        return f"redis://{self.host}:{self.port}/{self.db}"
+
+
 class AppSettings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=ENV_PATH,

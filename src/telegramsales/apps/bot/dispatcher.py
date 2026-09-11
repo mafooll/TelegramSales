@@ -1,5 +1,5 @@
 from aiogram import Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.base import BaseStorage
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import setup_dishka
 
@@ -12,8 +12,8 @@ from telegramsales.shared.presentation.bot.middlewares import (
 )
 
 
-def build_dispatcher(container: AsyncContainer) -> Dispatcher:
-    dispatcher = Dispatcher(storage=MemoryStorage())
+def build_dispatcher(container: AsyncContainer, storage: BaseStorage) -> Dispatcher:
+    dispatcher = Dispatcher(storage=storage)
     setup_dishka(container=container, router=dispatcher, auto_inject=True)
 
     for observer in (dispatcher.message, dispatcher.callback_query):

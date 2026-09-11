@@ -1,4 +1,5 @@
 from aiogram import Bot
+from aiogram.fsm.storage.base import BaseStorage
 import structlog
 from structlog.stdlib import BoundLogger
 import uvloop
@@ -21,7 +22,8 @@ async def run() -> None:
 
         bot_settings = await container.get(BotSettings)
         bot = await container.get(Bot)
-        dispatcher = build_dispatcher(container)
+        storage = await container.get(BaseStorage)
+        dispatcher = build_dispatcher(container, storage)
 
         await bot.delete_webhook(
             drop_pending_updates=bot_settings.drop_pending_updates,

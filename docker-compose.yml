@@ -20,6 +20,22 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   migrate:
     build:
       context: .
@@ -52,12 +68,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       APP_ROOT_ID: ${APP_ROOT_ID:?APP_ROOT_ID not set, see .env.example}
       APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-ru}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       APP_LOG_JSON: ${APP_LOG_JSON:-false}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
@@ -73,3 +93,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
