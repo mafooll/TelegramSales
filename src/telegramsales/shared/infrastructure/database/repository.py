@@ -26,8 +26,10 @@ class Repository[ModelType: BaseORM, IdType: Hashable]:
             await self._session.flush()
         return merged
 
-    async def delete(self, model: ModelType) -> None:
+    async def delete(self, model: ModelType, *, flush: bool = True) -> None:
         await self._session.delete(model)
+        if flush:
+            await self._session.flush()
 
     async def paginate(
         self,
