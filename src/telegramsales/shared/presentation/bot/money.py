@@ -5,6 +5,7 @@ from telegramsales.shared.domain.money import Currency, Money
 
 SYMBOLS: Mapping[Currency, str] = {Currency.RUB: "₽", Currency.USD: "$"}
 GROUP_SEPARATOR = " "
+STRIKE = "\u0336"
 
 
 def money_text(money: Money) -> str:
@@ -18,3 +19,7 @@ def parse_amount(raw: str) -> Decimal:
     return Decimal(
         raw.replace(GROUP_SEPARATOR, "").replace(" ", "").replace(",", ".")
     )
+
+
+def struck_text(text: str) -> str:
+    return "".join(character + STRIKE for character in text)
