@@ -14,6 +14,7 @@ from telegramsales.modules.staff.presentation.bot.views import StaffListView
 from telegramsales.shared.application.pagination import DEFAULT_PAGE_SIZE
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.pagination import Pagination
+from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 
 
@@ -31,13 +32,14 @@ async def render_list(
         return
 
     page = await queries.list_page(number, DEFAULT_PAGE_SIZE)
-    await callback.message.edit_text(
-        rich_message=rich_paged_screen(
+    await show(
+        callback,
+        rich_paged_screen(
             STAFF_LIST,
             Pagination(page=page, callback=_page_callback),
             StaffListView(total=page.total),
             context,
-        )
+        ),
     )
 
 
@@ -49,6 +51,4 @@ async def render_card(
     if not isinstance(callback.message, Message):
         return
 
-    await callback.message.edit_text(
-        rich_message=rich_screen(MEMBER_CARD, member, context)
-    )
+    await show(callback, rich_screen(MEMBER_CARD, member, context))

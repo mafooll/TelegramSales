@@ -17,6 +17,7 @@ from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.filters import HasActorFilter
 from telegramsales.shared.presentation.bot.keyboard import Button, Screen, label
 from telegramsales.shared.presentation.bot.navigation import HomeCallback
+from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 OPEN_STAFF: Button[None] = Button(
@@ -56,5 +57,4 @@ async def start(message: Message, bot: Bot, context: RenderContext) -> None:
 @router.callback_query(HomeCallback.filter())
 async def open_menu(callback: CallbackQuery, context: RenderContext) -> None:
     await callback.answer()
-    if isinstance(callback.message, Message):
-        await callback.message.edit_text(rich_message=_main_menu(context))
+    await show(callback, _main_menu(context))

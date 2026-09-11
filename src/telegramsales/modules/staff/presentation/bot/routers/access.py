@@ -27,6 +27,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.filters import TranslatedTextFilter
+from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="staff.access")
@@ -93,9 +94,7 @@ async def ask_revoke(
         confirm=StaffCallback(action=StaffAction.REVOKE, staff_id=member.id),
         cancel=StaffCallback(action=StaffAction.CARD, staff_id=member.id),
     )
-    await callback.message.edit_text(
-        rich_message=rich_screen(CONFIRMATION_SCREEN, view, context)
-    )
+    await show(callback, rich_screen(CONFIRMATION_SCREEN, view, context))
 
 
 @router.callback_query(StaffCallback.filter(F.action == StaffAction.REVOKE))
