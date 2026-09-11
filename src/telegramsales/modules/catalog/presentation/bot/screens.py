@@ -77,6 +77,7 @@ CATALOG_CARD: ListScreen[CategoryView, CatalogView] = ListScreen(
         DELETE_CATALOG,
         back_to_catalogs(),
     ],
+    footer_layout=(1, 2, 2),
 )
 
 CATEGORY_CARD: ListScreen[CategoryView, CategoryView] = ListScreen(
@@ -96,6 +97,7 @@ CATEGORY_CARD: ListScreen[CategoryView, CategoryView] = ListScreen(
         BACK_TO_CATALOG,
         BACK_TO_PARENT,
     ],
+    footer_layout=(1, 2, 2),
 )
 
 BRAND_LIST: ListScreen[BrandView, CountedView] = ListScreen(
@@ -116,4 +118,5 @@ BRAND_CARD: Screen[BrandView] = Screen(
         DELETE_BRAND,
         back_to_brands(),
     ],
+    layout=(2, 2),
 )

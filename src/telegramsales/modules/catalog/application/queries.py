@@ -8,7 +8,7 @@ from telegramsales.modules.catalog.contracts import (
     ProductId,
     VariantId,
 )
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.shared.domain.money import Money
 
 
@@ -57,6 +57,7 @@ class ProductView:
     variant_count: int
     photo_ids: tuple[str, ...]
     video_id: str | None
+    media_layout: MediaLayout
 
 
 @dataclass(frozen=True, slots=True)

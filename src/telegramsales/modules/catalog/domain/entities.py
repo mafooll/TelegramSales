@@ -10,7 +10,7 @@ from telegramsales.modules.catalog.contracts import (
     ProductId,
     VariantId,
 )
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.domain.pricing import (
     ensure_positive_price,
     ensure_sellable_price,
@@ -123,6 +123,7 @@ class Product(DomainEntity[ProductId]):
     brand_id: BrandId | None = None
     old_price: Money | None = None
     variant_label: Title | None = None
+    media_layout: MediaLayout = MediaLayout.COLLAGE
     published_at: datetime | None = None
     is_visible: bool = True
     is_in_stock: bool = True
@@ -189,6 +190,9 @@ class Product(DomainEntity[ProductId]):
         ensure_sellable_price(price, old_price)
         self.price = price
         self.old_price = old_price
+
+    def show_media_as(self, layout: MediaLayout) -> None:
+        self.media_layout = layout
 
     def open_variants(self, label: Title) -> None:
         self.variant_label = label

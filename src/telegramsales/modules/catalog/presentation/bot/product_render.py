@@ -3,6 +3,7 @@ from aiogram.types import InputRichMessage
 
 from telegramsales.modules.catalog.application.ports import IProductQueries
 from telegramsales.modules.catalog.application.queries import (
+    BrandView,
     MediaView,
     ProductView,
     VariantView,
@@ -13,6 +14,7 @@ from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
     ProductCallback,
 )
 from telegramsales.modules.catalog.presentation.bot.product_screens import (
+    BRAND_PICKER,
     MEDIA_BOARD,
     PRODUCT_CARD,
     PRODUCT_LIST,
@@ -20,6 +22,7 @@ from telegramsales.modules.catalog.presentation.bot.product_screens import (
 )
 from telegramsales.modules.catalog.presentation.bot.screens import PROMPT
 from telegramsales.modules.catalog.presentation.bot.views import (
+    BrandPickView,
     ProductListView,
     PromptView,
 )
@@ -86,3 +89,15 @@ def prompt(
 ) -> InputRichMessage:
     view = PromptView(message_key=message_key, back=back)
     return rich_screen(PROMPT, view, context)
+
+
+def brand_picker(
+    context: RenderContext,
+    product: ProductView,
+    brands: list[BrandView],
+) -> InputRichMessage:
+    picks = [
+        BrandPickView(product_id=product.id, brand_id=brand.id, title=brand.title)
+        for brand in brands
+    ]
+    return rich_paged_screen(BRAND_PICKER, _whole(picks), product, context)

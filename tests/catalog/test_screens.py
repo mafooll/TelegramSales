@@ -162,7 +162,7 @@ def test_empty_catalog_offers_deletion() -> None:
         CATALOG_CARD, empty_pagination(), catalog_view(), MANAGER
     )
 
-    assert "🗑 Удалить" in texts_of(message)
+    assert "🗑️ Удалить" in texts_of(message)
 
 
 def test_catalog_with_categories_hides_deletion() -> None:
@@ -170,7 +170,7 @@ def test_catalog_with_categories_hides_deletion() -> None:
         CATALOG_CARD, empty_pagination(), catalog_view(categories=2), MANAGER
     )
 
-    assert "🗑 Удалить" not in texts_of(message)
+    assert "🗑️ Удалить" not in texts_of(message)
 
 
 def test_visible_catalog_offers_hiding() -> None:
@@ -246,14 +246,14 @@ def test_category_with_children_hides_deletion() -> None:
         CATEGORY_CARD, empty_pagination(), category_view(children=1), MANAGER
     )
 
-    assert "🗑 Удалить" not in texts_of(message)
+    assert "🗑️ Удалить" not in texts_of(message)
 
 
 def test_brand_card_offers_the_full_set() -> None:
     assert texts_of(rich_screen(BRAND_CARD, brand_view(), MANAGER)) == [
         "✏️ Переименовать",
         "🚫 Скрыть",
-        "🗑 Удалить",
+        "🗑️ Удалить",
         "⬅️ Назад",
     ]
 

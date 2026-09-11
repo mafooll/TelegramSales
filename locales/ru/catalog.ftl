@@ -55,7 +55,7 @@ catalog-brand-ask-new-title = Пришлите новое название бр�
 catalog-rename-button = ✏️ Переименовать
 catalog-hide-button = 🚫 Скрыть
 catalog-show-button = ♻️ Вернуть
-catalog-delete-button = 🗑 Удалить
+catalog-delete-button = 🗑️ Удалить
 catalog-back-button = ⬅️ Назад
 catalog-cancel-button = Отмена
 
@@ -140,3 +140,15 @@ catalog-axis-button = 📐 Ось вариантов
 catalog-add-variant-button = ➕ Вариант
 catalog-media-rejected =
     Это не фото и не видео. Пришлите снимок или видеофайл — кружок и голосовое не подойдут.
+catalog-media-as-file =
+    Видео пришло файлом — Telegram такой файл в карточку не пустит.
+    Отправьте его как видео: в меню вложения выберите «Видео», а не «Файл».
+catalog-layout-collage-button = 🔲 Коллажем
+catalog-layout-slideshow-button = 🎞 Каруселью
+catalog-product-brand-button = 🏷 Бренд
+catalog-brand-picker =
+    { $title }
+    Бренд: { $brand }
+catalog-brand-unknown = не указан
+catalog-brand-entry = { $title }
+catalog-no-brand-button = ✖️ Без бренда

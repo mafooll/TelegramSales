@@ -31,6 +31,7 @@ from telegramsales.modules.catalog.application.commands.media import (
     DetachMediaHandler,
 )
 from telegramsales.modules.catalog.application.commands.products import (
+    ChangeMediaLayoutHandler,
     ChangeProductStockHandler,
     ChangeProductVisibilityHandler,
     CreateProductHandler,
@@ -101,6 +102,7 @@ class CatalogProvider(Provider):
         PublishProductHandler,
         ChangeProductVisibilityHandler,
         ChangeProductStockHandler,
+        ChangeMediaLayoutHandler,
         DeleteProductHandler,
         ChangeVariantAxisHandler,
         AddVariantHandler,

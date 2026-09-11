@@ -18,7 +18,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.domain.values import (
     MAX_DESCRIPTION_LENGTH,
     MAX_TITLE_LENGTH,
@@ -104,6 +104,7 @@ class ProductORM(WithCreatedAtMixin, BaseORM):
     __table_args__ = (
         UniqueConstraint("article"),
         enum_check("currency", Currency, name="known_currency"),
+        enum_check("media_layout", MediaLayout, name="known_layout"),
     )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
@@ -131,6 +132,10 @@ class ProductORM(WithCreatedAtMixin, BaseORM):
     )
     currency: Mapped[str] = mapped_column(String(CURRENCY_LENGTH))
     variant_label: Mapped[str | None] = mapped_column(String(MAX_TITLE_LENGTH))
+    media_layout: Mapped[str] = mapped_column(
+        String(KIND_LENGTH + 2),
+        server_default=MediaLayout.COLLAGE.value,
+    )
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_visible: Mapped[bool] = mapped_column(default=True)
     is_in_stock: Mapped[bool] = mapped_column(default=True)

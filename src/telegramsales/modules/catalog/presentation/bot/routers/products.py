@@ -9,6 +9,8 @@ from telegramsales.modules.catalog.application.commands.media import (
     DetachMediaHandler,
 )
 from telegramsales.modules.catalog.application.commands.products import (
+    ChangeMediaLayout,
+    ChangeMediaLayoutHandler,
     ChangeProductStock,
     ChangeProductStockHandler,
     ChangeProductVisibility,
@@ -17,19 +19,26 @@ from telegramsales.modules.catalog.application.commands.products import (
     DeleteProductHandler,
     PublishProduct,
     PublishProductHandler,
+    RebrandProduct,
+    RebrandProductHandler,
 )
 from telegramsales.modules.catalog.application.commands.variants import (
     ChangeVariantAvailability,
     ChangeVariantAvailabilityHandler,
 )
-from telegramsales.modules.catalog.application.ports import IProductQueries
+from telegramsales.modules.catalog.application.ports import (
+    ICatalogQueries,
+    IProductQueries,
+)
 from telegramsales.modules.catalog.application.queries import ProductView
 from telegramsales.modules.catalog.contracts import (
+    BrandId,
     CategoryId,
     MediaId,
     ProductId,
     VariantId,
 )
+from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.presentation.bot import product_render, texts
 from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
     ProductAction,
@@ -48,6 +57,7 @@ router = Router(name="catalog.products")
 VISIBILITY = F.action.in_({ProductAction.HIDE, ProductAction.SHOW})
 STOCK = F.action.in_({ProductAction.OUT, ProductAction.STOCK})
 AVAILABILITY = F.action.in_({ProductAction.VARIANT_ON, ProductAction.VARIANT_OFF})
+BRAND_PAGE_SIZE = 50
 
 
 async def _view(
@@ -57,6 +67,24 @@ async def _view(
     if product_id is None:
         return None
     return await queries.get_product(ProductId(product_id))
+
+
+async def _brand_target(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    queries: IProductQueries,
+) -> tuple[ProductView, BrandId | None] | None:
+    if callback_data.item_id is not None:
+        brand_id = BrandId(callback_data.item_id)
+        product_id = callback_data.product_id
+    else:
+        brand_id = None
+        product_id = callback_data.product_id
+    product = await _view(queries, product_id)
+    if product is None:
+        await callback.answer()
+        return None
+    return product, brand_id
 
 
 async def _show_card(
@@ -312,3 +340,75 @@ async def set_availability(
 
     variants = await queries.list_variants(product.id)
     await show(callback, product_render.variant_board(context, product, variants))
+
+
+@router.callback_query(ProductCallback.filter(F.action == ProductAction.LAYOUT))
+async def switch_layout(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    context: RenderContext,
+    handler: FromDishka[ChangeMediaLayoutHandler],
+    queries: FromDishka[IProductQueries],
+) -> None:
+    await callback.answer()
+    product = await _view(queries, callback_data.product_id)
+    if product is None:
+        return
+
+    flipped = (
+        MediaLayout.SLIDESHOW
+        if product.media_layout is MediaLayout.COLLAGE
+        else MediaLayout.COLLAGE
+    )
+    await handler.handle(
+        ChangeMediaLayout(product_id=product.id, layout=flipped), context.actor
+    )
+
+    updated = await queries.get_product(product.id)
+    if updated is None:
+        return
+    media = await queries.list_media(product.id)
+    await show(callback, product_render.media_board(context, updated, media))
+
+
+@router.callback_query(ProductCallback.filter(F.action == ProductAction.BRAND))
+async def pick_brand(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    context: RenderContext,
+    queries: FromDishka[IProductQueries],
+    catalog_queries: FromDishka[ICatalogQueries],
+) -> None:
+    await callback.answer()
+    product = await _view(queries, callback_data.product_id)
+    if product is None:
+        return
+
+    brands = await catalog_queries.list_brands(0, BRAND_PAGE_SIZE)
+    await show(
+        callback,
+        product_render.brand_picker(context, product, list(brands.items)),
+    )
+
+
+@router.callback_query(ProductCallback.filter(F.action == ProductAction.SET_BRAND))
+async def set_brand(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    context: RenderContext,
+    handler: FromDishka[RebrandProductHandler],
+    queries: FromDishka[IProductQueries],
+) -> None:
+    state = await _brand_target(callback, callback_data, queries)
+    if state is None:
+        return
+
+    product, brand_id = state
+    await handler.handle(
+        RebrandProduct(product_id=product.id, brand_id=brand_id), context.actor
+    )
+    await callback.answer()
+
+    updated = await queries.get_product(product.id)
+    if updated is not None:
+        await _show_card(callback, context, updated)

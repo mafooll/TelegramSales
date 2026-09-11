@@ -11,7 +11,7 @@ from telegramsales.modules.catalog.application.queries import (
     ProductView,
     VariantView,
 )
-from telegramsales.modules.catalog.contracts import CategoryId
+from telegramsales.modules.catalog.contracts import BrandId, CategoryId, ProductId
 from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.presentation.bot import product_texts, texts
 
@@ -31,6 +31,13 @@ class PromptView:
 class ProductListView:
     category_id: CategoryId
     total: int
+
+
+@dataclass(frozen=True, slots=True)
+class BrandPickView:
+    product_id: ProductId
+    brand_id: BrandId
+    title: str
 
 
 def catalog_item_key(catalog: CatalogView) -> str:

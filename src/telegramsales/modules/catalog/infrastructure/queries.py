@@ -26,7 +26,7 @@ from telegramsales.modules.catalog.contracts import (
     ProductId,
     VariantId,
 )
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.infrastructure.filters import parent_filter
 from telegramsales.modules.catalog.infrastructure.models import (
     BrandORM,
@@ -265,6 +265,7 @@ class ProductQueries(IProductQueries):
                 ProductORM.old_price,
                 ProductORM.currency,
                 ProductORM.variant_label,
+                ProductORM.media_layout,
                 ProductORM.published_at,
                 ProductORM.is_visible,
                 ProductORM.is_in_stock,
@@ -311,6 +312,7 @@ class ProductQueries(IProductQueries):
             variant_count=row.variant_count,
             photo_ids=photos,
             video_id=clip,
+            media_layout=MediaLayout(row.media_layout),
         )
 
     @override

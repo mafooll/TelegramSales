@@ -15,7 +15,7 @@ from telegramsales.modules.catalog.contracts import (
     ProductId,
 )
 from telegramsales.modules.catalog.domain.entities import Product
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.domain.services import (
     ensure_can_be_published,
     ensure_category_fits,
@@ -83,6 +83,12 @@ class ChangeProductVisibility:
 class ChangeProductStock:
     product_id: ProductId
     is_in_stock: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ChangeMediaLayout:
+    product_id: ProductId
+    layout: MediaLayout
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,6 +247,16 @@ class ChangeProductStockHandler(ProductHandler):
                 product.restock()
             else:
                 product.run_out()
+            await uow.products.save(product)
+
+
+class ChangeMediaLayoutHandler(ProductHandler):
+    async def handle(self, command: ChangeMediaLayout, actor: Actor) -> None:
+        ensure_can_manage(actor)
+
+        async with self._uow as uow:
+            product = await self._load(uow, command.product_id)
+            product.show_media_as(command.layout)
             await uow.products.save(product)
 
 

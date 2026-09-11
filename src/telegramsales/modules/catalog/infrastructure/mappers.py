@@ -16,7 +16,7 @@ from telegramsales.modules.catalog.domain.entities import (
     ProductMedia,
     ProductVariant,
 )
-from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.domain.values import Article, Description, Title
 from telegramsales.modules.catalog.infrastructure.models import (
     BrandORM,
@@ -130,6 +130,7 @@ class ProductMapper(IEntityMapper[Product, ProductORM]):
             variant_label=(
                 None if model.variant_label is None else Title(model.variant_label)
             ),
+            media_layout=MediaLayout(model.media_layout),
             published_at=model.published_at,
             is_visible=model.is_visible,
             is_in_stock=model.is_in_stock,
@@ -153,6 +154,7 @@ class ProductMapper(IEntityMapper[Product, ProductORM]):
             variant_label=(
                 None if entity.variant_label is None else entity.variant_label.value
             ),
+            media_layout=entity.media_layout.value,
             published_at=entity.published_at,
             is_visible=entity.is_visible,
             is_in_stock=entity.is_in_stock,

@@ -9,6 +9,7 @@ from telegramsales.modules.catalog.application.queries import (
     ProductView,
     VariantView,
 )
+from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
 from telegramsales.modules.catalog.presentation.bot import product_texts, texts
 from telegramsales.modules.catalog.presentation.bot.callbacks import (
@@ -21,6 +22,7 @@ from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
     ProductCallback,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
+    BrandPickView,
     ProductListView,
     media_item_key,
     product_item_key,
@@ -28,6 +30,8 @@ from telegramsales.modules.catalog.presentation.bot.views import (
 )
 from telegramsales.shared.presentation.bot.keyboard import Button, label
 from telegramsales.shared.presentation.bot.money import money_text
+
+SINGLE_PHOTO = 1
 
 OPEN_PRODUCTS: Button[CategoryView] = Button(
     text=label(product_texts.OPEN_PRODUCTS_BUTTON),
@@ -219,4 +223,49 @@ BACK_TO_CATEGORY_CARD: Button[ProductListView] = Button(
         target=CatalogTarget.CATEGORY,
         category_id=view.category_id,
     ),
+)
+
+
+SWITCH_LAYOUT: Button[ProductView] = Button(
+    text=lambda product, translate: translate(
+        product_texts.LAYOUT_SLIDESHOW_BUTTON
+        if product.media_layout is MediaLayout.COLLAGE
+        else product_texts.LAYOUT_COLLAGE_BUTTON
+    ),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.LAYOUT,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    when=lambda product: product.photo_count > SINGLE_PHOTO,
+)
+
+PICK_BRAND: Button[ProductView] = Button(
+    text=label(product_texts.BRAND_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.BRAND,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+BRAND_PICK: Button[BrandPickView] = Button(
+    text=lambda pick, translate: translate(
+        product_texts.BRAND_ENTRY, title=pick.title
+    ),
+    callback=lambda pick: ProductCallback(
+        action=ProductAction.SET_BRAND,
+        product_id=pick.product_id,
+        item_id=pick.brand_id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+NO_BRAND: Button[ProductView] = Button(
+    text=label(product_texts.NO_BRAND_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.SET_BRAND,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
 )

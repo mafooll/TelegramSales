@@ -75,17 +75,11 @@ MEDIA_PROMPTS: dict[ProductAction, tuple[MediaKind, str]] = {
 }
 
 
-VIDEO_MIME = "video/"
-
-
 def _attachment(message: Message) -> tuple[MediaKind, str] | None:
     if message.photo:
         return MediaKind.PHOTO, message.photo[-1].file_id
     if message.video is not None:
         return MediaKind.VIDEO, message.video.file_id
-    document = message.document
-    if document is not None and (document.mime_type or "").startswith(VIDEO_MIME):
-        return MediaKind.VIDEO, document.file_id
     return None
 
 
@@ -261,7 +255,12 @@ async def take_media(  # noqa: PLR0913
         attached += 1
 
     if attached == 0:
-        await message.answer(text=context.translate(texts.MEDIA_REJECTED))
+        rejected = (
+            texts.MEDIA_AS_FILE
+            if any(item.document is not None for item in album)
+            else texts.MEDIA_REJECTED
+        )
+        await message.answer(text=context.translate(rejected))
         return
 
     product = await queries.get_product(product_id)

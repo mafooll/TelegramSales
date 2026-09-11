@@ -1,9 +1,12 @@
+from aiogram.types import InputRichBlockUnion
+
 from telegramsales.modules.catalog.application.queries import (
     MediaView,
     ProductEntryView,
     ProductView,
     VariantView,
 )
+from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.presentation.bot import product_texts
 from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     ADD_PHOTO,
@@ -12,6 +15,7 @@ from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     BACK_TO_CATEGORY,
     BACK_TO_CATEGORY_CARD,
     BACK_TO_PRODUCT,
+    BRAND_PICK,
     DELETE_PRODUCT,
     DONE_WITH_MEDIA,
     EDIT_DESCRIPTION,
@@ -22,15 +26,19 @@ from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     MARK_OUT,
     MEDIA_ENTRY,
     NEW_PRODUCT,
+    NO_BRAND,
     OPEN_MEDIA,
     OPEN_VARIANTS,
+    PICK_BRAND,
     PRODUCT_ENTRY,
     PUBLISH,
     SET_AXIS,
     SHOW_PRODUCT,
+    SWITCH_LAYOUT,
     VARIANT_ENTRY,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
+    BrandPickView,
     ProductListView,
     product_card_key,
     variant_screen_key,
@@ -40,6 +48,7 @@ from telegramsales.shared.presentation.bot.content import (
     Content,
     gallery,
     paragraph,
+    slideshow,
     video,
 )
 from telegramsales.shared.presentation.bot.keyboard import ListScreen, Screen
@@ -60,9 +69,15 @@ PRODUCT_LIST: ListScreen[ProductEntryView, ProductListView] = ListScreen(
 def _card_content(product: ProductView, translate: ITranslator) -> Content:
     return [
         paragraph(_card_text(product, translate)),
-        *gallery(product.photo_ids),
+        *_photos(product),
         *([] if product.video_id is None else [video(product.video_id)]),
     ]
+
+
+def _photos(product: ProductView) -> list[InputRichBlockUnion]:
+    if product.media_layout is MediaLayout.SLIDESHOW:
+        return slideshow(product.photo_ids)
+    return gallery(product.photo_ids)
 
 
 def _card_text(product: ProductView, translate: ITranslator) -> str:
@@ -90,6 +105,7 @@ PRODUCT_CARD: Screen[ProductView] = Screen(
         EDIT_PRICE,
         OPEN_MEDIA,
         OPEN_VARIANTS,
+        PICK_BRAND,
         PUBLISH,
         HIDE_PRODUCT,
         SHOW_PRODUCT,
@@ -98,6 +114,8 @@ PRODUCT_CARD: Screen[ProductView] = Screen(
         DELETE_PRODUCT,
         BACK_TO_CATEGORY,
     ],
+    row_width=2,
+    layout=(2, 2, 2, 2),
 )
 
 MEDIA_BOARD: ListScreen[MediaView, ProductView] = ListScreen(
@@ -110,10 +128,11 @@ MEDIA_BOARD: ListScreen[MediaView, ProductView] = ListScreen(
                 videos=product.video_count,
             )
         ),
-        *gallery(product.photo_ids),
+        *_photos(product),
     ],
     item=MEDIA_ENTRY,
-    footer=[ADD_PHOTO, ADD_VIDEO, DONE_WITH_MEDIA],
+    footer=[ADD_PHOTO, ADD_VIDEO, SWITCH_LAYOUT, DONE_WITH_MEDIA],
+    footer_layout=(2, 1, 1),
 )
 
 VARIANT_BOARD: ListScreen[VariantView, ProductView] = ListScreen(
@@ -125,4 +144,16 @@ VARIANT_BOARD: ListScreen[VariantView, ProductView] = ListScreen(
     ),
     item=VARIANT_ENTRY,
     footer=[SET_AXIS, ADD_VARIANT, BACK_TO_PRODUCT],
+)
+
+
+BRAND_PICKER: ListScreen[BrandPickView, ProductView] = ListScreen(
+    content=lambda product, translate: translate(
+        product_texts.BRAND_PICKER,
+        title=product.title,
+        brand=product.brand_title or translate(product_texts.BRAND_UNKNOWN),
+    ),
+    item=BRAND_PICK,
+    footer=[NO_BRAND, BACK_TO_PRODUCT],
+    footer_layout=(2,),
 )
