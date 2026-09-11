@@ -6,6 +6,7 @@ from dishka.integrations.aiogram import setup_dishka
 from telegramsales.apps.bot.menu import router as menu_router
 from telegramsales.modules.catalog import catalog_router
 from telegramsales.modules.staff import ActorMiddleware, staff_router
+from telegramsales.shared.presentation.bot.album import AlbumMiddleware
 from telegramsales.shared.presentation.bot.middlewares import (
     RenderContextMiddleware,
     TranslatorMiddleware,
@@ -20,6 +21,8 @@ def build_dispatcher(container: AsyncContainer, storage: BaseStorage) -> Dispatc
         observer.outer_middleware(TranslatorMiddleware())
         observer.outer_middleware(ActorMiddleware())
         observer.outer_middleware(RenderContextMiddleware())
+
+    dispatcher.message.outer_middleware(AlbumMiddleware())
 
     dispatcher.include_router(menu_router)
     dispatcher.include_router(catalog_router)

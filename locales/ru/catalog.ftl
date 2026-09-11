@@ -64,3 +64,78 @@ catalog-cancelled = Отменено.
 catalog-delete-question = Удалить «{ $title }»?
 catalog-title-rejected = Название не подходит: до 48 символов и не пустое.
 catalog-title-taken = Такое название уже есть.
+
+catalog-product-list =
+    { $total ->
+        [one] { $total } товар
+        [few] { $total } товара
+       *[other] { $total } товаров
+    }
+catalog-product-list-empty = Товаров в этой категории пока нет.
+catalog-product-item = { $title } · { $price }
+catalog-product-item-draft = ✏️ { $title } · { $price }
+catalog-product-item-hidden = 🚫 { $title } · { $price }
+
+catalog-product-card =
+    { $title }
+    Артикул: { $article }
+    Цена: { $price }
+
+    { $description }
+
+    Фото: { $photos } · Видео: { $videos } · Варианты: { $variants }
+catalog-product-card-sale =
+    { $title }
+    Артикул: { $article }
+    Цена: { $price } (было { $old_price })
+
+    { $description }
+
+    Фото: { $photos } · Видео: { $videos } · Варианты: { $variants }
+
+catalog-open-products-button = 📦 Товары
+catalog-new-product-button = ➕ Новый товар
+catalog-product-name-button = ✏️ Название
+catalog-product-description-button = 📝 Описание
+catalog-product-price-button = 💰 Цена
+catalog-product-publish-button = ✅ Опубликовать
+catalog-product-stock-button = 📦 В наличии
+catalog-product-out-button = 📭 Нет в наличии
+catalog-product-media-button = 🖼 Фото и видео
+catalog-product-variants-button = 📐 Варианты
+
+catalog-product-ask-title = Пришлите название товара.
+catalog-product-ask-description = Пришлите описание товара.
+catalog-product-ask-price = Пришлите цену — только число, например 12900.
+catalog-product-ask-new-title = Пришлите новое название товара.
+catalog-product-ask-new-description = Пришлите новое описание товара.
+catalog-product-ask-new-price = Пришлите новую цену.
+catalog-product-price-rejected = Цена не распознана. Пришлите число, например 12900.
+
+catalog-media-screen =
+    { $title }
+    Фото: { $photos } из 10 · Видео: { $videos } из 1
+
+    Пришлите снимки — можно альбомом. Нажмите на файл в списке, чтобы удалить.
+catalog-media-item = 🖼 Удалить фото
+catalog-media-video-item = 🎬 Удалить видео
+catalog-ask-photo = Пришлите фотографии — можно альбомом.
+catalog-ask-video = Пришлите видеообзор.
+catalog-add-photo-button = ➕ Фото
+catalog-add-video-button = ➕ Видео
+catalog-done-button = ✅ Готово
+
+catalog-variant-screen =
+    { $title }
+    Ось: { $label } · вариантов: { $total }
+
+    Нажмите на вариант, чтобы переключить наличие.
+catalog-variant-screen-closed =
+    { $title }
+    Варианты не заданы. Назовите ось — например «Размер» или «Объём».
+catalog-variant-item = { $title } · { $price }
+catalog-variant-item-out = 🚫 { $title } · { $price }
+catalog-ask-axis = Как называется ось вариантов? Например «Размер».
+catalog-ask-variant = Пришлите название варианта — например «M».
+catalog-axis-button = 📐 Ось вариантов
+catalog-add-variant-button = ➕ Вариант

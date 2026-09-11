@@ -16,7 +16,7 @@ PACKAGE_ROOT = Path(telegramsales.__file__).resolve().parent
 
 def declared_keys() -> set[str]:
     keys: set[str] = set()
-    for path in PACKAGE_ROOT.rglob("texts.py"):
+    for path in sorted(PACKAGE_ROOT.rglob("*texts.py")):
         relative = path.relative_to(PACKAGE_ROOT.parent).with_suffix("")
         module = importlib.import_module(".".join(relative.parts))
         keys.update(

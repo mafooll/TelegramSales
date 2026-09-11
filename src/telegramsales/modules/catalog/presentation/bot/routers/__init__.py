@@ -3,6 +3,8 @@ from aiogram import Router
 from telegramsales.modules.catalog.presentation.bot.routers import (
     browse,
     edit,
+    product_form,
+    products,
     titles,
 )
 from telegramsales.shared.presentation.bot.errors import report_domain_errors
@@ -14,6 +16,8 @@ catalog_router.callback_query.filter(HasActorFilter())
 
 catalog_router.include_router(browse.router)
 catalog_router.include_router(edit.router)
+catalog_router.include_router(products.router)
+catalog_router.include_router(product_form.router)
 catalog_router.include_router(titles.router)
 
 report_domain_errors(catalog_router)

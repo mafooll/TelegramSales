@@ -394,3 +394,19 @@ class ProductQueries(IProductQueries):
             )
             for row in rows
         ]
+
+    @override
+    async def product_of_media(self, media_id: MediaId) -> ProductId | None:
+        query = select(ProductMediaORM.product_id).where(
+            ProductMediaORM.id == media_id
+        )
+        found = (await self._session.execute(query)).scalar_one_or_none()
+        return None if found is None else ProductId(found)
+
+    @override
+    async def product_of_variant(self, variant_id: VariantId) -> ProductId | None:
+        query = select(ProductVariantORM.product_id).where(
+            ProductVariantORM.id == variant_id
+        )
+        found = (await self._session.execute(query)).scalar_one_or_none()
+        return None if found is None else ProductId(found)

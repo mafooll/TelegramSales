@@ -264,3 +264,12 @@ class IProductQueries(ABC):
 
     @abstractmethod
     async def list_media(self, product_id: ProductId) -> list[MediaView]: ...
+
+    @abstractmethod
+    async def product_of_media(self, media_id: MediaId) -> ProductId | None: ...
+
+    @abstractmethod
+    async def product_of_variant(
+        self,
+        variant_id: VariantId,
+    ) -> ProductId | None: ...

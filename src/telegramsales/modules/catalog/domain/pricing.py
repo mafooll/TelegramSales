@@ -4,9 +4,10 @@ from telegramsales.modules.catalog.domain.exceptions import (
     NonPositivePriceError,
     PriceNotDiscountedError,
 )
-from telegramsales.shared.domain.money import Money
+from telegramsales.shared.domain.money import Currency, Money
 
 FREE = Decimal(0)
+SHOP_CURRENCY = Currency.RUB
 
 
 def ensure_positive_price(price: Money) -> None:

@@ -1,0 +1,222 @@
+from collections.abc import Callable
+
+from aiogram.enums import ButtonStyle
+
+from telegramsales.modules.catalog.application.queries import (
+    CategoryView,
+    MediaView,
+    ProductEntryView,
+    ProductView,
+    VariantView,
+)
+from telegramsales.modules.catalog.domain.permissions import CatalogPermission
+from telegramsales.modules.catalog.presentation.bot import product_texts, texts
+from telegramsales.modules.catalog.presentation.bot.callbacks import (
+    CatalogAction,
+    CatalogCallback,
+    CatalogTarget,
+)
+from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
+    ProductAction,
+    ProductCallback,
+)
+from telegramsales.modules.catalog.presentation.bot.views import (
+    ProductListView,
+    media_item_key,
+    product_item_key,
+    variant_item_key,
+)
+from telegramsales.shared.presentation.bot.keyboard import Button, label
+from telegramsales.shared.presentation.bot.money import money_text
+
+OPEN_PRODUCTS: Button[CategoryView] = Button(
+    text=label(product_texts.OPEN_PRODUCTS_BUTTON),
+    callback=lambda category: ProductCallback(
+        action=ProductAction.LIST,
+        category_id=category.id,
+    ),
+)
+
+PRODUCT_ENTRY: Button[ProductEntryView] = Button(
+    text=lambda product, translate: translate(
+        product_item_key(product),
+        title=product.title,
+        price=money_text(product.price),
+    ),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.CARD,
+        product_id=product.id,
+    ),
+)
+
+NEW_PRODUCT: Button[ProductListView] = Button(
+    text=label(product_texts.NEW_PRODUCT_BUTTON),
+    callback=lambda view: ProductCallback(
+        action=ProductAction.NEW,
+        category_id=view.category_id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    style=ButtonStyle.PRIMARY,
+)
+
+
+def _product_button(
+    key: str,
+    action: ProductAction,
+    *,
+    style: ButtonStyle | None = None,
+    when: Callable[[ProductView], bool] | None = None,
+) -> Button[ProductView]:
+    return Button(
+        text=label(key),
+        callback=lambda product: ProductCallback(
+            action=action,
+            product_id=product.id,
+        ),
+        permission=CatalogPermission.MANAGE,
+        when=when,
+        style=style,
+    )
+
+
+EDIT_NAME = _product_button(product_texts.NAME_BUTTON, ProductAction.NAME)
+EDIT_DESCRIPTION = _product_button(
+    product_texts.DESCRIPTION_BUTTON, ProductAction.DESC
+)
+EDIT_PRICE = _product_button(product_texts.PRICE_BUTTON, ProductAction.PRICE)
+OPEN_MEDIA = _product_button(product_texts.MEDIA_BUTTON, ProductAction.MEDIA)
+OPEN_VARIANTS = _product_button(
+    product_texts.VARIANTS_BUTTON, ProductAction.VARIANTS
+)
+PUBLISH = _product_button(
+    product_texts.PUBLISH_BUTTON,
+    ProductAction.PUBLISH,
+    style=ButtonStyle.SUCCESS,
+    when=lambda product: not product.is_published,
+)
+HIDE_PRODUCT = _product_button(
+    texts.HIDE_BUTTON,
+    ProductAction.HIDE,
+    when=lambda product: product.is_published and product.is_visible,
+)
+SHOW_PRODUCT = _product_button(
+    texts.SHOW_BUTTON,
+    ProductAction.SHOW,
+    style=ButtonStyle.SUCCESS,
+    when=lambda product: product.is_published and not product.is_visible,
+)
+MARK_OUT = _product_button(
+    product_texts.OUT_BUTTON,
+    ProductAction.OUT,
+    when=lambda product: product.is_in_stock,
+)
+MARK_IN_STOCK = _product_button(
+    product_texts.STOCK_BUTTON,
+    ProductAction.STOCK,
+    when=lambda product: not product.is_in_stock,
+)
+DELETE_PRODUCT = _product_button(
+    texts.DELETE_BUTTON,
+    ProductAction.ASK_DELETE,
+    style=ButtonStyle.DANGER,
+)
+
+BACK_TO_CATEGORY: Button[ProductView] = Button(
+    text=label(texts.BACK_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.LIST,
+        category_id=product.category_id,
+    ),
+)
+
+MEDIA_ENTRY: Button[MediaView] = Button(
+    text=lambda media, translate: translate(media_item_key(media)),
+    callback=lambda media: ProductCallback(
+        action=ProductAction.DROP_MEDIA,
+        item_id=media.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    style=ButtonStyle.DANGER,
+)
+
+ADD_PHOTO: Button[ProductView] = Button(
+    text=label(product_texts.ADD_PHOTO_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.ADD_PHOTO,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    style=ButtonStyle.PRIMARY,
+)
+
+ADD_VIDEO: Button[ProductView] = Button(
+    text=label(product_texts.ADD_VIDEO_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.ADD_VIDEO,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    when=lambda product: product.video_count == 0,
+)
+
+VARIANT_ENTRY: Button[VariantView] = Button(
+    text=lambda variant, translate: translate(
+        variant_item_key(variant),
+        title=variant.title,
+        price=money_text(variant.price),
+    ),
+    callback=lambda variant: ProductCallback(
+        action=ProductAction.VARIANT_OFF
+        if variant.is_available
+        else ProductAction.VARIANT_ON,
+        item_id=variant.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+SET_AXIS: Button[ProductView] = Button(
+    text=label(product_texts.AXIS_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.AXIS,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+ADD_VARIANT: Button[ProductView] = Button(
+    text=label(product_texts.ADD_VARIANT_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.ADD_VARIANT,
+        product_id=product.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    when=lambda product: product.variant_label is not None,
+    style=ButtonStyle.PRIMARY,
+)
+
+BACK_TO_PRODUCT: Button[ProductView] = Button(
+    text=label(texts.BACK_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.CARD,
+        product_id=product.id,
+    ),
+)
+
+DONE_WITH_MEDIA: Button[ProductView] = Button(
+    text=label(product_texts.DONE_BUTTON),
+    callback=lambda product: ProductCallback(
+        action=ProductAction.CARD,
+        product_id=product.id,
+    ),
+    style=ButtonStyle.SUCCESS,
+)
+
+
+BACK_TO_CATEGORY_CARD: Button[ProductListView] = Button(
+    text=label(texts.BACK_BUTTON),
+    callback=lambda view: CatalogCallback(
+        action=CatalogAction.CARD,
+        target=CatalogTarget.CATEGORY,
+        category_id=view.category_id,
+    ),
+)
