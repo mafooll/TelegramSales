@@ -26,14 +26,30 @@ def _to_button[ViewType](
     )
 
 
+def _widths(count: int, row_width: int, layout: Sequence[int]) -> list[int]:
+    widths = list(layout)
+    placed = sum(widths)
+    while placed < count:
+        widths.append(row_width)
+        placed += row_width
+    return widths
+
+
 def _rows(
     buttons: Sequence[RichMessageButton],
     row_width: int,
+    layout: Sequence[int] = (),
 ) -> list[InputRichBlockUnion]:
-    return [
-        InputRichBlockButtons(buttons=list(buttons[start : start + row_width]))
-        for start in range(0, len(buttons), row_width)
-    ]
+    rows: list[InputRichBlockUnion] = []
+    start = 0
+    for width in _widths(len(buttons), row_width, layout):
+        if start >= len(buttons):
+            break
+        rows.append(
+            InputRichBlockButtons(buttons=list(buttons[start : start + width]))
+        )
+        start += width
+    return rows
 
 
 def button_blocks[ViewType](
@@ -41,13 +57,14 @@ def button_blocks[ViewType](
     row_width: int,
     view: ViewType,
     context: RenderContext,
+    layout: Sequence[int] = (),
 ) -> list[InputRichBlockUnion]:
     allowed = [
         _to_button(button, view, context)
         for button in buttons
         if button.is_allowed(view, context)
     ]
-    return _rows(allowed, row_width)
+    return _rows(allowed, row_width, layout)
 
 
 def _navigation_blocks[ItemType](
@@ -94,7 +111,9 @@ def rich_screen[ViewType](
     return InputRichMessage(
         blocks=[
             *content_blocks(screen.render(view, context)),
-            *button_blocks(screen.buttons, screen.row_width, view, context),
+            *button_blocks(
+                screen.buttons, screen.row_width, view, context, screen.layout
+            ),
         ]
     )
 
@@ -115,6 +134,12 @@ def rich_paged_screen[ItemType, ViewType](
             *content_blocks(screen.render(view, context)),
             *_rows(items, screen.row_width),
             *_navigation_blocks(pagination, context),
-            *button_blocks(screen.footer, screen.footer_row_width, view, context),
+            *button_blocks(
+                screen.footer,
+                screen.footer_row_width,
+                view,
+                context,
+                screen.footer_layout,
+            ),
         ]
     )

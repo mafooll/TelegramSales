@@ -60,9 +60,12 @@ class Screen[ViewType]:
     content: ContentRef[ViewType]
     buttons: Sequence[Button[ViewType]]
     row_width: int = 1
+    layout: Sequence[int] = ()
 
     def __post_init__(self) -> None:
         check_row_width(self.row_width)
+        for width in self.layout:
+            check_row_width(width)
 
     def render(self, view: ViewType, context: RenderContext) -> Content:
         return self.content(view, context.translate)
@@ -75,10 +78,13 @@ class ListScreen[ItemType, ViewType]:
     footer: Sequence[Button[ViewType]]
     row_width: int = 1
     footer_row_width: int = 1
+    footer_layout: Sequence[int] = ()
 
     def __post_init__(self) -> None:
         check_row_width(self.row_width)
         check_row_width(self.footer_row_width)
+        for width in self.footer_layout:
+            check_row_width(width)
 
     def render(self, view: ViewType, context: RenderContext) -> Content:
         return self.content(view, context.translate)
