@@ -1,13 +1,19 @@
 from telegramsales.modules.catalog.contracts import CatalogId
-from telegramsales.modules.catalog.domain.entities import Category
+from telegramsales.modules.catalog.domain.entities import Category, Product
 from telegramsales.modules.catalog.domain.exceptions import (
     CatalogNotEmptyError,
     CategoryNotEmptyError,
     ForeignCatalogError,
     NestingTooDeepError,
+    ProductWithoutPhotoError,
+    TooManyPhotosError,
+    TooManyVideosError,
+    VariantsNotAllowedError,
 )
 
 EMPTY = 0
+MAX_PHOTOS = 10
+MAX_VIDEOS = 1
 
 
 def ensure_can_hold_children(parent: Category, catalog_id: CatalogId) -> None:
@@ -30,4 +36,32 @@ def ensure_category_is_empty(category: Category, child_count: int) -> None:
         raise CategoryNotEmptyError(
             category_id=category.id,
             child_count=child_count,
+        )
+
+
+def ensure_variants_allowed(product: Product) -> None:
+    if not product.has_variants:
+        raise VariantsNotAllowedError(product_id=product.id)
+
+
+def ensure_photo_fits(photo_count: int) -> None:
+    if photo_count >= MAX_PHOTOS:
+        raise TooManyPhotosError(limit=MAX_PHOTOS)
+
+
+def ensure_video_fits(video_count: int) -> None:
+    if video_count >= MAX_VIDEOS:
+        raise TooManyVideosError(limit=MAX_VIDEOS)
+
+
+def ensure_can_be_published(product: Product, photo_count: int) -> None:
+    if photo_count == EMPTY:
+        raise ProductWithoutPhotoError(product_id=product.id)
+
+
+def ensure_category_fits(product_category: Category, catalog_id: CatalogId) -> None:
+    if product_category.catalog_id != catalog_id:
+        raise ForeignCatalogError(
+            category_id=product_category.id,
+            catalog_id=catalog_id,
         )

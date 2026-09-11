@@ -1,8 +1,10 @@
 from telegramsales.modules.catalog.contracts import (
     CatalogId,
     CategoryId,
+    ProductId,
 )
 from telegramsales.shared.domain.exceptions import DomainError
+from telegramsales.shared.domain.money import Money
 
 
 class EmptyTitleError(DomainError):
@@ -47,4 +49,62 @@ class CategoryNotEmptyError(DomainError):
         super().__init__(
             f"category {category_id} still holds {child_count} subcategories",
             details={"category_id": category_id, "child_count": child_count},
+        )
+
+
+class EmptyDescriptionError(DomainError):
+    def __init__(self) -> None:
+        super().__init__("description must not be empty")
+
+
+class DescriptionTooLongError(DomainError):
+    def __init__(self, *, length: int, limit: int) -> None:
+        super().__init__(
+            f"description must be at most {limit} characters, got {length}",
+            details={"length": length, "limit": limit},
+        )
+
+
+class NonPositivePriceError(DomainError):
+    def __init__(self) -> None:
+        super().__init__("price must be greater than zero")
+
+
+class PriceNotDiscountedError(DomainError):
+    def __init__(self, *, price: Money, old_price: Money) -> None:
+        super().__init__(
+            f"old price {old_price} must be greater than price {price}",
+            details={"price": str(price), "old_price": str(old_price)},
+        )
+
+
+class TooManyPhotosError(DomainError):
+    def __init__(self, *, limit: int) -> None:
+        super().__init__(
+            f"a product holds at most {limit} photos",
+            details={"limit": limit},
+        )
+
+
+class TooManyVideosError(DomainError):
+    def __init__(self, *, limit: int) -> None:
+        super().__init__(
+            f"a product holds at most {limit} videos",
+            details={"limit": limit},
+        )
+
+
+class VariantsNotAllowedError(DomainError):
+    def __init__(self, *, product_id: ProductId) -> None:
+        super().__init__(
+            f"product {product_id} has no variant axis",
+            details={"product_id": str(product_id)},
+        )
+
+
+class ProductWithoutPhotoError(DomainError):
+    def __init__(self, *, product_id: ProductId) -> None:
+        super().__init__(
+            f"product {product_id} needs at least one photo to be published",
+            details={"product_id": str(product_id)},
         )
