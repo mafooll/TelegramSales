@@ -8,7 +8,7 @@ from dishka import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from telegramsales.modules.staff.application.commands import (
+from telegramsales.modules.staff.application.commands.staff_members import (
     ChangeStaffRoleHandler,
     GrantStaffAccessHandler,
     RevokeStaffAccessHandler,

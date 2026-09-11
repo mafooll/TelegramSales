@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from dishka.integrations.aiogram import FromDishka
 
-from telegramsales.modules.staff.application.commands import (
+from telegramsales.modules.staff.application.commands.staff_members import (
     ChangeStaffRole,
     ChangeStaffRoleHandler,
     GrantStaffAccess,
