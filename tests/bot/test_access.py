@@ -75,13 +75,18 @@ def test_unknown_role_grants_nothing() -> None:
     assert RESOLVER.permissions_of("courier") == NOTHING
 
 
+SHOP = "🛍 Магазин"
+CATALOG = "🗂 Управление каталогом"
+STAFF = "👥 Персонал"
+
+
 def test_owner_sees_both_sections() -> None:
-    assert menu_of(StaffRole.OWNER) == ["🗂 Управление каталогом", "👥 Персонал"]
+    assert menu_of(StaffRole.OWNER) == [SHOP, CATALOG, STAFF]
 
 
 def test_manager_sees_both_sections() -> None:
-    assert menu_of(StaffRole.MANAGER) == ["🗂 Управление каталогом", "👥 Персонал"]
+    assert menu_of(StaffRole.MANAGER) == [SHOP, CATALOG, STAFF]
 
 
-def test_customer_sees_no_admin_buttons() -> None:
-    assert menu_of(None) == []
+def test_customer_sees_only_the_shop() -> None:
+    assert menu_of(None) == [SHOP]

@@ -8,6 +8,10 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
     CatalogAction,
     CatalogCallback,
 )
+from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
+    ShopAction,
+    ShopCallback,
+)
 from telegramsales.modules.staff.domain.permissions import StaffPermission
 from telegramsales.modules.staff.presentation.bot.callbacks import (
     StaffAction,
@@ -19,6 +23,11 @@ from telegramsales.shared.presentation.bot.keyboard import Button, Screen, label
 from telegramsales.shared.presentation.bot.navigation import HomeCallback
 from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_screen
+
+OPEN_SHOP: Button[None] = Button(
+    text=label(texts.OPEN_SHOP_BUTTON),
+    callback=lambda _: ShopCallback(action=ShopAction.CATALOGS),
+)
 
 OPEN_STAFF: Button[None] = Button(
     text=label(texts.OPEN_STAFF_BUTTON),
@@ -34,7 +43,7 @@ OPEN_CATALOG: Button[None] = Button(
 
 MAIN_MENU: Screen[None] = Screen(
     content=label(texts.GREETING),
-    buttons=[OPEN_CATALOG, OPEN_STAFF],
+    buttons=[OPEN_SHOP, OPEN_CATALOG, OPEN_STAFF],
 )
 
 router = Router(name="menu")
