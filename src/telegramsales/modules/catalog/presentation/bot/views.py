@@ -9,11 +9,19 @@ from telegramsales.modules.catalog.application.queries import (
     MediaView,
     ProductEntryView,
     ProductView,
+    ShopCatalogView,
+    ShopCategoryView,
+    ShopProductEntryView,
+    ShopProductView,
     VariantView,
 )
 from telegramsales.modules.catalog.contracts import BrandId, CategoryId, ProductId
 from telegramsales.modules.catalog.domain.enums import MediaKind
-from telegramsales.modules.catalog.presentation.bot import product_texts, texts
+from telegramsales.modules.catalog.presentation.bot import (
+    product_texts,
+    shop_texts,
+    texts,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,6 +38,18 @@ class PromptView:
 @dataclass(frozen=True, slots=True)
 class ProductListView:
     category_id: CategoryId
+    total: int
+
+
+@dataclass(frozen=True, slots=True)
+class ShopCatalogPageView:
+    catalog: ShopCatalogView
+    total: int
+
+
+@dataclass(frozen=True, slots=True)
+class ShopProductsView:
+    category: ShopCategoryView
     total: int
 
 
@@ -82,3 +102,15 @@ def variant_screen_key(product: ProductView) -> str:
     if product.variant_label is None:
         return product_texts.VARIANT_SCREEN_CLOSED
     return product_texts.VARIANT_SCREEN
+
+
+def shop_product_item_key(product: ShopProductEntryView) -> str:
+    if product.is_in_stock:
+        return shop_texts.PRODUCT_ENTRY
+    return shop_texts.PRODUCT_ENTRY_OUT
+
+
+def shop_product_card_key(product: ShopProductView) -> str:
+    if product.old_price is not None:
+        return shop_texts.PRODUCT_CARD_SALE
+    return shop_texts.PRODUCT_CARD

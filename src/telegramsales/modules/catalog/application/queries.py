@@ -83,3 +83,52 @@ class MediaView:
     id: MediaId
     kind: MediaKind
     file_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class ShopCatalogView:
+    id: CatalogId
+    title: str
+
+
+@dataclass(frozen=True, slots=True)
+class ShopCategoryView:
+    id: CategoryId
+    catalog_id: CatalogId
+    parent_id: CategoryId | None
+    title: str
+    child_count: int
+    product_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ShopVariantView:
+    title: str
+    price: Money
+
+
+@dataclass(frozen=True, slots=True)
+class ShopProductEntryView:
+    id: ProductId
+    title: str
+    price: Money
+    is_in_stock: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ShopProductView:
+    id: ProductId
+    catalog_id: CatalogId
+    category_id: CategoryId
+    article: str
+    title: str
+    description: str
+    price: Money
+    old_price: Money | None
+    brand_title: str | None
+    variant_label: str | None
+    is_in_stock: bool
+    photo_ids: tuple[str, ...]
+    video_id: str | None
+    media_layout: MediaLayout
+    variants: tuple[ShopVariantView, ...]

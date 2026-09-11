@@ -1,0 +1,130 @@
+from telegramsales.modules.catalog.application.queries import (
+    ShopCatalogView,
+    ShopCategoryView,
+    ShopProductEntryView,
+    ShopProductView,
+)
+from telegramsales.modules.catalog.presentation.bot import shop_texts
+from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
+    ShopAction,
+    ShopCallback,
+)
+from telegramsales.modules.catalog.presentation.bot.views import (
+    ShopProductsView,
+    shop_product_item_key,
+)
+from telegramsales.shared.presentation.bot.keyboard import Button, label
+from telegramsales.shared.presentation.bot.money import money_text
+
+CATALOG_ENTRY: Button[ShopCatalogView] = Button(
+    text=lambda catalog, translate: translate(
+        shop_texts.CATALOG_ENTRY, title=catalog.title
+    ),
+    callback=lambda catalog: ShopCallback(
+        action=ShopAction.CATALOG,
+        catalog_id=catalog.id,
+    ),
+)
+
+CATEGORY_ENTRY: Button[ShopCategoryView] = Button(
+    text=lambda category, translate: translate(
+        shop_texts.CATEGORY_ENTRY, title=category.title
+    ),
+    callback=lambda category: ShopCallback(
+        action=ShopAction.CATEGORY,
+        catalog_id=category.catalog_id,
+        category_id=category.id,
+    ),
+)
+
+OPEN_PRODUCTS: Button[ShopCategoryView] = Button(
+    text=lambda category, translate: translate(
+        shop_texts.OPEN_PRODUCTS_BUTTON, count=category.product_count
+    ),
+    callback=lambda category: ShopCallback(
+        action=ShopAction.PRODUCTS,
+        category_id=category.id,
+    ),
+    when=lambda category: category.product_count > 0,
+)
+
+PRODUCT_ENTRY: Button[ShopProductEntryView] = Button(
+    text=lambda product, translate: translate(
+        shop_product_item_key(product),
+        title=product.title,
+        price=money_text(product.price),
+    ),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.PRODUCT,
+        product_id=product.id,
+    ),
+)
+
+
+def back_to_catalogs[ViewType]() -> Button[ViewType]:
+    return Button(
+        text=label(shop_texts.BACK_BUTTON),
+        callback=lambda _: ShopCallback(action=ShopAction.CATALOGS),
+    )
+
+
+BACK_TO_CATALOG: Button[ShopCategoryView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda category: ShopCallback(
+        action=ShopAction.CATALOG,
+        catalog_id=category.catalog_id,
+    ),
+    when=lambda category: category.parent_id is None,
+)
+
+BACK_TO_PARENT: Button[ShopCategoryView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda category: ShopCallback(
+        action=ShopAction.CATEGORY,
+        catalog_id=category.catalog_id,
+        category_id=category.parent_id,
+    ),
+    when=lambda category: category.parent_id is not None,
+)
+
+
+def _is_leaf(view: ShopProductsView) -> bool:
+    return view.category.child_count == 0
+
+
+PRODUCTS_BACK_TO_CATEGORY: Button[ShopProductsView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda view: ShopCallback(
+        action=ShopAction.CATEGORY,
+        catalog_id=view.category.catalog_id,
+        category_id=view.category.id,
+    ),
+    when=lambda view: not _is_leaf(view),
+)
+
+PRODUCTS_BACK_TO_PARENT: Button[ShopProductsView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda view: ShopCallback(
+        action=ShopAction.CATEGORY,
+        catalog_id=view.category.catalog_id,
+        category_id=view.category.parent_id,
+    ),
+    when=lambda view: _is_leaf(view) and view.category.parent_id is not None,
+)
+
+PRODUCTS_BACK_TO_CATALOG: Button[ShopProductsView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda view: ShopCallback(
+        action=ShopAction.CATALOG,
+        catalog_id=view.category.catalog_id,
+    ),
+    when=lambda view: _is_leaf(view) and view.category.parent_id is None,
+)
+
+BACK_TO_PRODUCTS: Button[ShopProductView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.PRODUCTS,
+        category_id=product.category_id,
+    ),
+)

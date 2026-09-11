@@ -1,0 +1,24 @@
+CATALOGS = "shop-catalogs"
+CATALOGS_EMPTY = "shop-catalogs-empty"
+CATALOG_ENTRY = "shop-catalog-entry"
+
+CATALOG = "shop-catalog"
+CATALOG_EMPTY = "shop-catalog-empty"
+CATEGORY = "shop-category"
+CATEGORY_ENTRY = "shop-category-entry"
+OPEN_PRODUCTS_BUTTON = "shop-open-products-button"
+
+PRODUCT_LIST = "shop-product-list"
+PRODUCT_LIST_EMPTY = "shop-product-list-empty"
+PRODUCT_ENTRY = "shop-product-entry"
+PRODUCT_ENTRY_OUT = "shop-product-entry-out"
+
+PRODUCT_CARD = "shop-product-card"
+PRODUCT_CARD_SALE = "shop-product-card-sale"
+PRODUCT_BRAND = "shop-product-brand"
+PRODUCT_VARIANTS = "shop-product-variants"
+PRODUCT_VARIANT_ITEM = "shop-product-variant-item"
+PRODUCT_OUT = "shop-product-out"
+
+BACK_BUTTON = "shop-back-button"
+GONE = "shop-gone"

@@ -9,6 +9,10 @@ from telegramsales.modules.catalog.application.queries import (
     MediaView,
     ProductEntryView,
     ProductView,
+    ShopCatalogView,
+    ShopCategoryView,
+    ShopProductEntryView,
+    ShopProductView,
     VariantView,
 )
 from telegramsales.modules.catalog.contracts import (
@@ -273,3 +277,41 @@ class IProductQueries(ABC):
         self,
         variant_id: VariantId,
     ) -> ProductId | None: ...
+
+
+class IShopQueries(ABC):
+    @abstractmethod
+    async def list_catalogs(
+        self,
+        number: int,
+        size: int,
+    ) -> Page[ShopCatalogView]: ...
+
+    @abstractmethod
+    async def get_catalog(self, catalog_id: CatalogId) -> ShopCatalogView | None: ...
+
+    @abstractmethod
+    async def get_category(
+        self,
+        category_id: CategoryId,
+    ) -> ShopCategoryView | None: ...
+
+    @abstractmethod
+    async def list_categories(
+        self,
+        catalog_id: CatalogId,
+        parent_id: CategoryId | None,
+        number: int,
+        size: int,
+    ) -> Page[ShopCategoryView]: ...
+
+    @abstractmethod
+    async def list_products(
+        self,
+        category_id: CategoryId,
+        number: int,
+        size: int,
+    ) -> Page[ShopProductEntryView]: ...
+
+    @abstractmethod
+    async def get_product(self, product_id: ProductId) -> ShopProductView | None: ...

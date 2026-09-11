@@ -5,6 +5,7 @@ from telegramsales.modules.catalog.presentation.bot.routers import (
     edit,
     product_form,
     products,
+    shop,
     titles,
 )
 from telegramsales.shared.presentation.bot.errors import report_domain_errors
@@ -14,6 +15,7 @@ catalog_router = Router(name="catalog")
 catalog_router.message.filter(HasActorFilter())
 catalog_router.callback_query.filter(HasActorFilter())
 
+catalog_router.include_router(shop.router)
 catalog_router.include_router(browse.router)
 catalog_router.include_router(edit.router)
 catalog_router.include_router(products.router)
