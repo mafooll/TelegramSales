@@ -37,6 +37,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="catalog.edit")
@@ -73,9 +74,7 @@ async def set_catalog_visibility(
 
     catalog = await queries.get_catalog(catalog_id)
     if catalog is not None:
-        await render.show(
-            callback, await render.catalog_card(queries, context, catalog, 0)
-        )
+        await show(callback, await render.catalog_card(queries, context, catalog, 0))
 
 
 @router.callback_query(
@@ -103,7 +102,7 @@ async def set_category_visibility(
 
     category = await queries.get_category(category_id)
     if category is not None:
-        await render.show(
+        await show(
             callback, await render.category_card(queries, context, category, 0)
         )
 
@@ -133,7 +132,7 @@ async def set_brand_visibility(
 
     brand = await queries.get_brand(brand_id)
     if brand is not None:
-        await render.show(callback, render.brand_card(context, brand))
+        await show(callback, render.brand_card(context, brand))
 
 
 async def _title_of(
@@ -174,7 +173,7 @@ async def ask_delete(
         confirm=callback_data.model_copy(update={"action": CatalogAction.DELETE}),
         cancel=callback_data.model_copy(update={"action": CatalogAction.CARD}),
     )
-    await render.show(callback, rich_screen(CONFIRMATION_SCREEN, view, context))
+    await show(callback, rich_screen(CONFIRMATION_SCREEN, view, context))
 
 
 @router.callback_query(
@@ -197,7 +196,7 @@ async def delete_catalog(
         DeleteCatalog(catalog_id=CatalogId(callback_data.catalog_id)), context.actor
     )
     await callback.answer(text=context.translate(texts.DELETED))
-    await render.show(callback, await render.catalog_list(queries, context, 0))
+    await show(callback, await render.catalog_list(queries, context, 0))
 
 
 @router.callback_query(
@@ -224,9 +223,7 @@ async def delete_category(
 
     catalog = await queries.get_catalog(CatalogId(callback_data.catalog_id))
     if catalog is not None:
-        await render.show(
-            callback, await render.catalog_card(queries, context, catalog, 0)
-        )
+        await show(callback, await render.catalog_card(queries, context, catalog, 0))
 
 
 @router.callback_query(
@@ -249,4 +246,4 @@ async def delete_brand(
         DeleteBrand(brand_id=BrandId(callback_data.brand_id)), context.actor
     )
     await callback.answer(text=context.translate(texts.DELETED))
-    await render.show(callback, await render.brand_list(queries, context, 0))
+    await show(callback, await render.brand_list(queries, context, 0))

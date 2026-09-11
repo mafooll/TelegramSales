@@ -13,6 +13,11 @@ class CountedView:
     total: int
 
 
+@dataclass(frozen=True, slots=True)
+class PromptView:
+    message_key: str
+
+
 def catalog_item_key(catalog: CatalogView) -> str:
     return texts.CATALOG_ITEM if catalog.is_active else texts.CATALOG_ITEM_HIDDEN
 

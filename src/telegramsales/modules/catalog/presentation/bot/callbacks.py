@@ -17,6 +17,7 @@ class CatalogAction(StrEnum):
     ASK_RENAME = "rename"
     SHOW = "show"
     HIDE = "hide"
+    CANCEL = "cancel"
     ASK_DELETE = "ask_del"
     DELETE = "del"
 

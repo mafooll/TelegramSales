@@ -14,11 +14,17 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
+    PromptView,
     brand_item_key,
     catalog_item_key,
     category_item_key,
 )
 from telegramsales.shared.presentation.bot.keyboard import Button, label
+
+CANCEL_INPUT: Button[PromptView] = Button(
+    text=label(texts.CANCEL_BUTTON),
+    callback=lambda _: CatalogCallback(action=CatalogAction.CANCEL),
+)
 
 OPEN_CATALOGS: Button[None] = Button(
     text=label(texts.HUB_CATALOGS_BUTTON),

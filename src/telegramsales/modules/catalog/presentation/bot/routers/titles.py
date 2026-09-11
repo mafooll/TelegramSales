@@ -1,15 +1,9 @@
 from collections.abc import Awaitable, Callable
 
 from aiogram import F, Router
-from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
-from aiogram.types import (
-    CallbackQuery,
-    InputRichMessage,
-    Message,
-    ReplyKeyboardRemove,
-)
+from aiogram.types import CallbackQuery, InputRichMessage, Message
 from dishka.integrations.aiogram import FromDishka
 
 from telegramsales.modules.catalog.application.commands.brands import (
@@ -44,13 +38,10 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
     CatalogCallback,
     CatalogTarget,
 )
-from telegramsales.modules.catalog.presentation.bot.keyboards import (
-    build_cancel_keyboard,
-)
 from telegramsales.modules.catalog.presentation.bot.states import TitleForm
 from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.filters import TranslatedTextFilter
+from telegramsales.shared.presentation.bot.render import show
 
 router = Router(name="catalog.titles")
 
@@ -105,23 +96,18 @@ async def ask_title(
         category_id=callback_data.category_id,
         brand_id=callback_data.brand_id,
     )
-    await callback.message.answer(
-        text=context.translate(key),
-        reply_markup=build_cancel_keyboard(context.translate),
-    )
+    await show(callback, render.prompt(context, key))
 
 
-@router.message(StateFilter(TitleForm), TranslatedTextFilter(texts.CANCEL_BUTTON))
+@router.callback_query(CatalogCallback.filter(F.action == CatalogAction.CANCEL))
 async def cancel(
-    message: Message,
-    state: FSMContext,
+    callback: CallbackQuery,
     context: RenderContext,
+    state: FSMContext,
 ) -> None:
+    await callback.answer(text=context.translate(texts.CANCELLED))
     await state.clear()
-    await message.answer(
-        text=context.translate(texts.CANCELLED),
-        reply_markup=ReplyKeyboardRemove(),
-    )
+    await show(callback, render.hub(context))
 
 
 async def _apply(
@@ -150,7 +136,6 @@ async def _apply(
         await message.bot.send_rich_message(
             chat_id=message.chat.id,
             rich_message=rendered,
-            reply_markup=ReplyKeyboardRemove(),
         )
 
 

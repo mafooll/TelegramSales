@@ -1,4 +1,4 @@
-from aiogram.types import CallbackQuery, InputRichMessage, Message
+from aiogram.types import InputRichMessage
 
 from telegramsales.modules.catalog.application.ports import ICatalogQueries
 from telegramsales.modules.catalog.application.queries import (
@@ -18,8 +18,12 @@ from telegramsales.modules.catalog.presentation.bot.screens import (
     CATALOG_LIST,
     CATEGORY_CARD,
     HUB,
+    PROMPT,
 )
-from telegramsales.modules.catalog.presentation.bot.views import CountedView
+from telegramsales.modules.catalog.presentation.bot.views import (
+    CountedView,
+    PromptView,
+)
 from telegramsales.shared.application.pagination import DEFAULT_PAGE_SIZE
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.pagination import Pagination
@@ -28,6 +32,10 @@ from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_s
 
 def hub(context: RenderContext) -> InputRichMessage:
     return rich_screen(HUB, None, context)
+
+
+def prompt(context: RenderContext, message_key: str) -> InputRichMessage:
+    return rich_screen(PROMPT, PromptView(message_key=message_key), context)
 
 
 async def catalog_list(
@@ -111,8 +119,3 @@ async def brand_list(
 
 def brand_card(context: RenderContext, brand: BrandView) -> InputRichMessage:
     return rich_screen(BRAND_CARD, brand, context)
-
-
-async def show(callback: CallbackQuery, message: InputRichMessage) -> None:
-    if isinstance(callback.message, Message):
-        await callback.message.edit_text(rich_message=message)

@@ -8,6 +8,7 @@ from telegramsales.modules.catalog.presentation.bot.buttons import (
     BACK_TO_CATALOG,
     BACK_TO_PARENT,
     BRAND_ENTRY,
+    CANCEL_INPUT,
     CATALOG_ENTRY,
     CATEGORY_ENTRY,
     CREATE_BRAND,
@@ -32,9 +33,17 @@ from telegramsales.modules.catalog.presentation.bot.buttons import (
     back_to_catalogs,
     back_to_hub,
 )
-from telegramsales.modules.catalog.presentation.bot.views import CountedView
+from telegramsales.modules.catalog.presentation.bot.views import (
+    CountedView,
+    PromptView,
+)
 from telegramsales.shared.presentation.bot.keyboard import ListScreen, Screen, label
 from telegramsales.shared.presentation.bot.navigation import home_button
+
+PROMPT: Screen[PromptView] = Screen(
+    content=lambda view, translate: translate(view.message_key),
+    buttons=[CANCEL_INPUT],
+)
 
 HUB: Screen[None] = Screen(
     content=label(texts.HUB),

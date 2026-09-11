@@ -12,6 +12,7 @@ from telegramsales.modules.catalog.application.queries import (
     CategoryView,
 )
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
+from telegramsales.modules.catalog.presentation.bot import texts as catalog_texts
 from telegramsales.modules.catalog.presentation.bot.callbacks import (
     CatalogAction,
     CatalogCallback,
@@ -23,8 +24,12 @@ from telegramsales.modules.catalog.presentation.bot.screens import (
     CATALOG_LIST,
     CATEGORY_CARD,
     HUB,
+    PROMPT,
 )
-from telegramsales.modules.catalog.presentation.bot.views import CountedView
+from telegramsales.modules.catalog.presentation.bot.views import (
+    CountedView,
+    PromptView,
+)
 from telegramsales.shared.application.pagination import Page
 from telegramsales.shared.infrastructure.i18n.fluent import FluentTranslations
 from telegramsales.shared.presentation.bot.context import RenderContext
@@ -262,3 +267,23 @@ def test_brand_list_counts_in_plural() -> None:
     )
 
     assert paragraphs_of(message) == ["1 бренд"]
+
+
+def test_prompt_offers_only_a_way_out() -> None:
+    view = PromptView(message_key=catalog_texts.CATALOG_ASK_TITLE)
+
+    assert texts_of(rich_screen(PROMPT, view, MANAGER)) == ["Отмена"]
+
+
+def test_prompt_shows_the_requested_text() -> None:
+    view = PromptView(message_key=catalog_texts.BRAND_ASK_TITLE)
+
+    assert paragraphs_of(rich_screen(PROMPT, view, MANAGER)) == [
+        "Пришлите название бренда."
+    ]
+
+
+def test_prompt_needs_no_permission() -> None:
+    view = PromptView(message_key=catalog_texts.CATALOG_ASK_TITLE)
+
+    assert texts_of(rich_screen(PROMPT, view, OUTSIDER)) == ["Отмена"]

@@ -15,6 +15,7 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
     CatalogTarget,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.render import show
 
 router = Router(name="catalog.browse")
 
@@ -22,7 +23,7 @@ router = Router(name="catalog.browse")
 @router.callback_query(CatalogCallback.filter(F.action == CatalogAction.HUB))
 async def open_hub(callback: CallbackQuery, context: RenderContext) -> None:
     await callback.answer()
-    await render.show(callback, render.hub(context))
+    await show(callback, render.hub(context))
 
 
 @router.callback_query(
@@ -37,7 +38,7 @@ async def show_catalogs(
     queries: FromDishka[ICatalogQueries],
 ) -> None:
     await callback.answer()
-    await render.show(
+    await show(
         callback,
         await render.catalog_list(queries, context, callback_data.page),
     )
@@ -62,7 +63,7 @@ async def show_catalog(
     if catalog is None:
         return
 
-    await render.show(
+    await show(
         callback,
         await render.catalog_card(queries, context, catalog, callback_data.page),
     )
@@ -87,7 +88,7 @@ async def show_category(
     if category is None:
         return
 
-    await render.show(
+    await show(
         callback,
         await render.category_card(queries, context, category, callback_data.page),
     )
@@ -105,7 +106,7 @@ async def show_brands(
     queries: FromDishka[ICatalogQueries],
 ) -> None:
     await callback.answer()
-    await render.show(
+    await show(
         callback,
         await render.brand_list(queries, context, callback_data.page),
     )
@@ -130,4 +131,4 @@ async def show_brand(
     if brand is None:
         return
 
-    await render.show(callback, render.brand_card(context, brand))
+    await show(callback, render.brand_card(context, brand))
