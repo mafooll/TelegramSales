@@ -35,6 +35,13 @@ from telegramsales.modules.catalog.presentation.bot.views import (
     product_card_key,
     variant_screen_key,
 )
+from telegramsales.shared.application.i18n import ITranslator
+from telegramsales.shared.presentation.bot.content import (
+    Content,
+    gallery,
+    paragraph,
+    video,
+)
 from telegramsales.shared.presentation.bot.keyboard import ListScreen, Screen
 from telegramsales.shared.presentation.bot.money import money_text
 
@@ -49,8 +56,17 @@ PRODUCT_LIST: ListScreen[ProductEntryView, ProductListView] = ListScreen(
     footer=[NEW_PRODUCT, BACK_TO_CATEGORY_CARD],
 )
 
-PRODUCT_CARD: Screen[ProductView] = Screen(
-    content=lambda product, translate: translate(
+
+def _card_content(product: ProductView, translate: ITranslator) -> Content:
+    return [
+        paragraph(_card_text(product, translate)),
+        *gallery(product.photo_ids),
+        *([] if product.video_id is None else [video(product.video_id)]),
+    ]
+
+
+def _card_text(product: ProductView, translate: ITranslator) -> str:
+    return translate(
         product_card_key(product),
         title=product.title,
         article=product.article,
@@ -63,7 +79,11 @@ PRODUCT_CARD: Screen[ProductView] = Screen(
         photos=product.photo_count,
         videos=product.video_count,
         variants=product.variant_count,
-    ),
+    )
+
+
+PRODUCT_CARD: Screen[ProductView] = Screen(
+    content=_card_content,
     buttons=[
         EDIT_NAME,
         EDIT_DESCRIPTION,
@@ -78,19 +98,22 @@ PRODUCT_CARD: Screen[ProductView] = Screen(
         DELETE_PRODUCT,
         BACK_TO_CATEGORY,
     ],
-    row_width=2,
 )
 
 MEDIA_BOARD: ListScreen[MediaView, ProductView] = ListScreen(
-    content=lambda product, translate: translate(
-        product_texts.MEDIA_SCREEN,
-        title=product.title,
-        photos=product.photo_count,
-        videos=product.video_count,
-    ),
+    content=lambda product, translate: [
+        paragraph(
+            translate(
+                product_texts.MEDIA_SCREEN,
+                title=product.title,
+                photos=product.photo_count,
+                videos=product.video_count,
+            )
+        ),
+        *gallery(product.photo_ids),
+    ],
     item=MEDIA_ENTRY,
     footer=[ADD_PHOTO, ADD_VIDEO, DONE_WITH_MEDIA],
-    row_width=2,
 )
 
 VARIANT_BOARD: ListScreen[VariantView, ProductView] = ListScreen(

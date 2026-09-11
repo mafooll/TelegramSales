@@ -9,6 +9,7 @@ from telegramsales.modules.staff import ActorMiddleware, staff_router
 from telegramsales.shared.presentation.bot.album import AlbumMiddleware
 from telegramsales.shared.presentation.bot.middlewares import (
     RenderContextMiddleware,
+    StateResetMiddleware,
     TranslatorMiddleware,
 )
 
@@ -22,6 +23,7 @@ def build_dispatcher(container: AsyncContainer, storage: BaseStorage) -> Dispatc
         observer.outer_middleware(ActorMiddleware())
         observer.outer_middleware(RenderContextMiddleware())
 
+    dispatcher.callback_query.outer_middleware(StateResetMiddleware())
     dispatcher.message.outer_middleware(AlbumMiddleware())
 
     dispatcher.include_router(menu_router)

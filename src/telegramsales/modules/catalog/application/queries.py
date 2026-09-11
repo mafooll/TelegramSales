@@ -55,6 +55,8 @@ class ProductView:
     photo_count: int
     video_count: int
     variant_count: int
+    photo_ids: tuple[str, ...]
+    video_id: str | None
 
 
 @dataclass(frozen=True, slots=True)

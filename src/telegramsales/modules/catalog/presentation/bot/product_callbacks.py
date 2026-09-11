@@ -23,7 +23,6 @@ class ProductAction(StrEnum):
     ADD_PHOTO = "addpic"
     ADD_VIDEO = "addvid"
     DROP_MEDIA = "delpic"
-    DONE = "done"
     VARIANTS = "vars"
     AXIS = "axis"
     ADD_VARIANT = "addvar"

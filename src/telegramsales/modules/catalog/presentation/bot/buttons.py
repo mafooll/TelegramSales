@@ -23,7 +23,7 @@ from telegramsales.shared.presentation.bot.keyboard import Button, label
 
 CANCEL_INPUT: Button[PromptView] = Button(
     text=label(texts.CANCEL_BUTTON),
-    callback=lambda _: CatalogCallback(action=CatalogAction.CANCEL),
+    callback=lambda view: view.back,
 )
 
 OPEN_CATALOGS: Button[None] = Button(

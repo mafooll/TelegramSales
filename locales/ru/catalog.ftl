@@ -60,7 +60,6 @@ catalog-back-button = ⬅️ Назад
 catalog-cancel-button = Отмена
 
 catalog-deleted = Удалено.
-catalog-cancelled = Отменено.
 catalog-delete-question = Удалить «{ $title }»?
 catalog-title-rejected = Название не подходит: до 48 символов и не пустое.
 catalog-title-taken = Такое название уже есть.
@@ -139,3 +138,5 @@ catalog-ask-axis = Как называется ось вариантов? Нап
 catalog-ask-variant = Пришлите название варианта — например «M».
 catalog-axis-button = 📐 Ось вариантов
 catalog-add-variant-button = ➕ Вариант
+catalog-media-rejected =
+    Это не фото и не видео. Пришлите снимок или видеофайл — кружок и голосовое не подойдут.

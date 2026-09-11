@@ -280,6 +280,14 @@ class ProductQueries(IProductQueries):
         if row is None:
             return None
 
+        media = await self.list_media(ProductId(row.id))
+        photos = tuple(
+            item.file_id for item in media if item.kind is MediaKind.PHOTO
+        )
+        clip = next(
+            (item.file_id for item in media if item.kind is MediaKind.VIDEO), None
+        )
+
         return ProductView(
             id=ProductId(row.id),
             catalog_id=CatalogId(row.catalog_id),
@@ -301,6 +309,8 @@ class ProductQueries(IProductQueries):
             photo_count=row.photo_count,
             video_count=row.video_count,
             variant_count=row.variant_count,
+            photo_ids=photos,
+            video_id=clip,
         )
 
     @override

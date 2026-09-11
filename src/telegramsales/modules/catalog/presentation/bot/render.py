@@ -1,3 +1,4 @@
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InputRichMessage
 
 from telegramsales.modules.catalog.application.ports import ICatalogQueries
@@ -34,8 +35,13 @@ def hub(context: RenderContext) -> InputRichMessage:
     return rich_screen(HUB, None, context)
 
 
-def prompt(context: RenderContext, message_key: str) -> InputRichMessage:
-    return rich_screen(PROMPT, PromptView(message_key=message_key), context)
+def prompt(
+    context: RenderContext,
+    message_key: str,
+    back: CallbackData,
+) -> InputRichMessage:
+    view = PromptView(message_key=message_key, back=back)
+    return rich_screen(PROMPT, view, context)
 
 
 async def catalog_list(

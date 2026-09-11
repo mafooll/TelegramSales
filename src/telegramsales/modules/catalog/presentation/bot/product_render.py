@@ -1,3 +1,4 @@
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InputRichMessage
 
 from telegramsales.modules.catalog.application.ports import IProductQueries
@@ -78,5 +79,10 @@ def variant_board(
     return rich_paged_screen(VARIANT_BOARD, _whole(variants), product, context)
 
 
-def prompt(context: RenderContext, message_key: str) -> InputRichMessage:
-    return rich_screen(PROMPT, PromptView(message_key=message_key), context)
+def prompt(
+    context: RenderContext,
+    message_key: str,
+    back: CallbackData,
+) -> InputRichMessage:
+    view = PromptView(message_key=message_key, back=back)
+    return rich_screen(PROMPT, view, context)

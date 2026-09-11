@@ -73,6 +73,33 @@ PROMPTS: dict[tuple[CatalogAction, CatalogTarget], tuple[State, str]] = {
 }
 
 
+def _back_to(callback_data: CatalogCallback) -> CatalogCallback:
+    if callback_data.target is CatalogTarget.BRAND:
+        if callback_data.brand_id is None:
+            return CatalogCallback(
+                action=CatalogAction.LIST, target=CatalogTarget.BRAND
+            )
+        return CatalogCallback(
+            action=CatalogAction.CARD,
+            target=CatalogTarget.BRAND,
+            brand_id=callback_data.brand_id,
+        )
+    if callback_data.category_id is not None:
+        return CatalogCallback(
+            action=CatalogAction.CARD,
+            target=CatalogTarget.CATEGORY,
+            catalog_id=callback_data.catalog_id,
+            category_id=callback_data.category_id,
+        )
+    if callback_data.catalog_id is not None:
+        return CatalogCallback(
+            action=CatalogAction.CARD,
+            target=CatalogTarget.CATALOG,
+            catalog_id=callback_data.catalog_id,
+        )
+    return CatalogCallback(action=CatalogAction.LIST, target=CatalogTarget.CATALOG)
+
+
 @router.callback_query(
     CatalogCallback.filter(
         F.action.in_({CatalogAction.ASK_CREATE, CatalogAction.ASK_RENAME})
@@ -96,18 +123,7 @@ async def ask_title(
         category_id=callback_data.category_id,
         brand_id=callback_data.brand_id,
     )
-    await show(callback, render.prompt(context, key))
-
-
-@router.callback_query(CatalogCallback.filter(F.action == CatalogAction.CANCEL))
-async def cancel(
-    callback: CallbackQuery,
-    context: RenderContext,
-    state: FSMContext,
-) -> None:
-    await callback.answer(text=context.translate(texts.CANCELLED))
-    await state.clear()
-    await show(callback, render.hub(context))
+    await show(callback, render.prompt(context, key, _back_to(callback_data)))
 
 
 async def _apply(

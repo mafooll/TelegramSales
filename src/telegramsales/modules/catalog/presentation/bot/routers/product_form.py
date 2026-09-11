@@ -75,12 +75,35 @@ MEDIA_PROMPTS: dict[ProductAction, tuple[MediaKind, str]] = {
 }
 
 
+VIDEO_MIME = "video/"
+
+
 def _attachment(message: Message) -> tuple[MediaKind, str] | None:
     if message.photo:
         return MediaKind.PHOTO, message.photo[-1].file_id
     if message.video is not None:
         return MediaKind.VIDEO, message.video.file_id
+    document = message.document
+    if document is not None and (document.mime_type or "").startswith(VIDEO_MIME):
+        return MediaKind.VIDEO, document.file_id
     return None
+
+
+VARIANT_ACTIONS = frozenset({ProductAction.AXIS, ProductAction.ADD_VARIANT})
+
+
+def _return_action(action: ProductAction) -> ProductAction:
+    if action in VARIANT_ACTIONS:
+        return ProductAction.VARIANTS
+    return ProductAction.CARD
+
+
+async def _back_to_list(state: FSMContext) -> ProductCallback:
+    stored = await state.get_data()
+    return ProductCallback(
+        action=ProductAction.LIST,
+        category_id=stored[CATEGORY_KEY],
+    )
 
 
 async def _stored_product(state: FSMContext) -> ProductId:
@@ -92,8 +115,9 @@ async def _ask(
     callback: CallbackQuery,
     context: RenderContext,
     message_key: str,
+    back: ProductCallback,
 ) -> None:
-    await show(callback, product_render.prompt(context, message_key))
+    await show(callback, product_render.prompt(context, message_key, back))
 
 
 async def _apply_text(
@@ -136,7 +160,12 @@ async def start_product(
     await state.update_data(
         {CATALOG_KEY: category.catalog_id, CATEGORY_KEY: category.id}
     )
-    await _ask(callback, context, texts.ASK_TITLE)
+    await _ask(
+        callback,
+        context,
+        texts.ASK_TITLE,
+        ProductCallback(action=ProductAction.LIST, category_id=category.id),
+    )
 
 
 @router.message(ProductForm.title, F.text)
@@ -145,10 +174,12 @@ async def take_title(
     state: FSMContext,
     context: RenderContext,
 ) -> None:
+    back = await _back_to_list(state)
+
     async def apply(raw: str) -> InputRichMessage:
         await state.update_data({TITLE_KEY: Title(raw).value})
         await state.set_state(ProductForm.description)
-        return product_render.prompt(context, texts.ASK_DESCRIPTION)
+        return product_render.prompt(context, texts.ASK_DESCRIPTION, back)
 
     await _apply_text(message, context, apply)
 
@@ -159,10 +190,12 @@ async def take_description(
     state: FSMContext,
     context: RenderContext,
 ) -> None:
+    back = await _back_to_list(state)
+
     async def apply(raw: str) -> InputRichMessage:
         await state.update_data({DESCRIPTION_KEY: Description(raw).value})
         await state.set_state(ProductForm.price)
-        return product_render.prompt(context, texts.ASK_PRICE)
+        return product_render.prompt(context, texts.ASK_PRICE, back)
 
     await _apply_text(message, context, apply)
 
@@ -203,7 +236,7 @@ async def take_price(
         await message.answer(text=context.translate(texts.PRICE_REJECTED))
 
 
-@router.message(ProductForm.photos, F.photo | F.video)
+@router.message(ProductForm.photos)
 async def take_media(  # noqa: PLR0913
     message: Message,
     *,
@@ -215,6 +248,7 @@ async def take_media(  # noqa: PLR0913
 ) -> None:
     product_id = await _stored_product(state)
 
+    attached = 0
     for item in album:
         attachment = _attachment(item)
         if attachment is None:
@@ -224,6 +258,11 @@ async def take_media(  # noqa: PLR0913
             AttachMedia(product_id=product_id, kind=kind, file_id=file_id),
             context.actor,
         )
+        attached += 1
+
+    if attached == 0:
+        await message.answer(text=context.translate(texts.MEDIA_REJECTED))
+        return
 
     product = await queries.get_product(product_id)
     if product is None or message.bot is None:
@@ -257,7 +296,14 @@ async def ask_media(
     await state.update_data(
         {PRODUCT_KEY: str(callback_data.product_id), KIND_KEY: kind.value}
     )
-    await _ask(callback, context, message_key)
+    await _ask(
+        callback,
+        context,
+        message_key,
+        ProductCallback(
+            action=ProductAction.MEDIA, product_id=callback_data.product_id
+        ),
+    )
 
 
 @router.callback_query(ProductCallback.filter(F.action.in_(set(EDIT_PROMPTS))))
@@ -275,7 +321,15 @@ async def ask_edit(
     form, message_key = prompt
     await state.set_state(form)
     await state.update_data({PRODUCT_KEY: str(callback_data.product_id)})
-    await _ask(callback, context, message_key)
+    await _ask(
+        callback,
+        context,
+        message_key,
+        ProductCallback(
+            action=_return_action(callback_data.action),
+            product_id=callback_data.product_id,
+        ),
+    )
 
 
 @router.message(ProductForm.rename, F.text)

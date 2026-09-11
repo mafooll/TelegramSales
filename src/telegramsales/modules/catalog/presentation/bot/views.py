@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from aiogram.filters.callback_data import CallbackData
+
 from telegramsales.modules.catalog.application.queries import (
     BrandView,
     CatalogView,
@@ -22,6 +24,7 @@ class CountedView:
 @dataclass(frozen=True, slots=True)
 class PromptView:
     message_key: str
+    back: CallbackData
 
 
 @dataclass(frozen=True, slots=True)

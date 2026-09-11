@@ -101,6 +101,13 @@ def paragraphs_of(message: InputRichMessage) -> list[str]:
     ]
 
 
+def prompt_view(message_key: str) -> PromptView:
+    return PromptView(
+        message_key=message_key,
+        back=CatalogCallback(action=CatalogAction.HUB),
+    )
+
+
 def empty_pagination[ItemType]() -> Pagination[ItemType]:
     return Pagination(
         page=Page(items=[], number=0, size=PAGE_SIZE, total=0),
@@ -270,13 +277,13 @@ def test_brand_list_counts_in_plural() -> None:
 
 
 def test_prompt_offers_only_a_way_out() -> None:
-    view = PromptView(message_key=catalog_texts.CATALOG_ASK_TITLE)
+    view = prompt_view(catalog_texts.CATALOG_ASK_TITLE)
 
     assert texts_of(rich_screen(PROMPT, view, MANAGER)) == ["Отмена"]
 
 
 def test_prompt_shows_the_requested_text() -> None:
-    view = PromptView(message_key=catalog_texts.BRAND_ASK_TITLE)
+    view = prompt_view(catalog_texts.BRAND_ASK_TITLE)
 
     assert paragraphs_of(rich_screen(PROMPT, view, MANAGER)) == [
         "Пришлите название бренда."
@@ -284,6 +291,6 @@ def test_prompt_shows_the_requested_text() -> None:
 
 
 def test_prompt_needs_no_permission() -> None:
-    view = PromptView(message_key=catalog_texts.CATALOG_ASK_TITLE)
+    view = prompt_view(catalog_texts.CATALOG_ASK_TITLE)
 
     assert texts_of(rich_screen(PROMPT, view, OUTSIDER)) == ["Отмена"]

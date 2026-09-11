@@ -36,7 +36,6 @@ BACK_BUTTON = "catalog-back-button"
 CANCEL_BUTTON = "catalog-cancel-button"
 
 DELETED = "catalog-deleted"
-CANCELLED = "catalog-cancelled"
 
 DELETE_QUESTION = "catalog-delete-question"
 TITLE_REJECTED = "catalog-title-rejected"
