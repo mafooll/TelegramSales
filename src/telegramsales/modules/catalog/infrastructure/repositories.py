@@ -1,4 +1,5 @@
 from typing import override
+from uuid import UUID, uuid4
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,24 +8,45 @@ from telegramsales.modules.catalog.application.ports import (
     IBrandRepository,
     ICatalogRepository,
     ICategoryRepository,
+    IProductMediaRepository,
+    IProductRepository,
+    IProductVariantRepository,
 )
 from telegramsales.modules.catalog.contracts import (
     BrandId,
     CatalogId,
     CategoryId,
+    MediaId,
+    ProductId,
+    VariantId,
 )
-from telegramsales.modules.catalog.domain.entities import Brand, Catalog, Category
-from telegramsales.modules.catalog.domain.values import Title
+from telegramsales.modules.catalog.domain.entities import (
+    Brand,
+    Catalog,
+    Category,
+    Product,
+    ProductMedia,
+    ProductVariant,
+)
+from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.values import Article, Title
 from telegramsales.modules.catalog.infrastructure.filters import parent_filter
 from telegramsales.modules.catalog.infrastructure.mappers import (
     BrandMapper,
     CatalogMapper,
     CategoryMapper,
+    ProductMapper,
+    ProductMediaMapper,
+    ProductVariantMapper,
 )
 from telegramsales.modules.catalog.infrastructure.models import (
+    ARTICLE_SEQUENCE,
     BrandORM,
     CatalogORM,
     CategoryORM,
+    ProductMediaORM,
+    ProductORM,
+    ProductVariantORM,
 )
 from telegramsales.shared.infrastructure.database.repository import Repository
 
@@ -185,3 +207,152 @@ class BrandRepository(IBrandRepository):
         if excluding is not None:
             query = query.where(BrandORM.id != excluding)
         return await _exists(self._session, query)
+
+
+class ProductRepository(IProductRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session: AsyncSession = session
+        self._models: Repository[ProductORM, UUID] = Repository(session, ProductORM)
+
+    @override
+    async def next_id(self) -> ProductId:
+        return ProductId(uuid4())
+
+    @override
+    async def next_article(self) -> Article:
+        query = select(ARTICLE_SEQUENCE.next_value())
+        return Article.of((await self._session.execute(query)).scalar_one())
+
+    @override
+    async def get(self, product_id: ProductId) -> Product | None:
+        model = await self._models.get(product_id)
+        return ProductMapper.to_entity(model) if model is not None else None
+
+    @override
+    async def add(self, product: Product) -> None:
+        await self._models.add(ProductMapper.to_model(product))
+
+    @override
+    async def save(self, product: Product) -> None:
+        await self._models.merge(ProductMapper.to_model(product))
+
+    @override
+    async def delete(self, product: Product) -> None:
+        model = await self._models.get(product.id)
+        if model is not None:
+            await self._models.delete(model)
+
+    @override
+    async def count_in_category(self, category_id: CategoryId) -> int:
+        query = (
+            select(func.count())
+            .select_from(ProductORM)
+            .where(ProductORM.category_id == category_id)
+        )
+        return (await self._session.execute(query)).scalar_one()
+
+    @override
+    async def count_of_brand(self, brand_id: BrandId) -> int:
+        query = (
+            select(func.count())
+            .select_from(ProductORM)
+            .where(ProductORM.brand_id == brand_id)
+        )
+        return (await self._session.execute(query)).scalar_one()
+
+
+class ProductVariantRepository(IProductVariantRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session: AsyncSession = session
+        self._models: Repository[ProductVariantORM, int] = Repository(
+            session, ProductVariantORM
+        )
+
+    @override
+    async def next_id(self) -> VariantId:
+        return VariantId(
+            await _next_id(self._session, ProductVariantORM.__tablename__)
+        )
+
+    @override
+    async def get(self, variant_id: VariantId) -> ProductVariant | None:
+        model = await self._models.get(variant_id)
+        return ProductVariantMapper.to_entity(model) if model is not None else None
+
+    @override
+    async def add(self, variant: ProductVariant) -> None:
+        await self._models.add(ProductVariantMapper.to_model(variant))
+
+    @override
+    async def save(self, variant: ProductVariant) -> None:
+        await self._models.merge(ProductVariantMapper.to_model(variant))
+
+    @override
+    async def delete(self, variant: ProductVariant) -> None:
+        model = await self._models.get(variant.id)
+        if model is not None:
+            await self._models.delete(model)
+
+    @override
+    async def count_for(self, product_id: ProductId) -> int:
+        query = (
+            select(func.count())
+            .select_from(ProductVariantORM)
+            .where(ProductVariantORM.product_id == product_id)
+        )
+        return (await self._session.execute(query)).scalar_one()
+
+    @override
+    async def exists_with_title(
+        self,
+        title: Title,
+        *,
+        product_id: ProductId,
+        excluding: VariantId | None = None,
+    ) -> bool:
+        query = select(ProductVariantORM.id).where(
+            ProductVariantORM.product_id == product_id,
+            ProductVariantORM.title == title.value,
+        )
+        if excluding is not None:
+            query = query.where(ProductVariantORM.id != excluding)
+        return await _exists(self._session, query)
+
+
+class ProductMediaRepository(IProductMediaRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session: AsyncSession = session
+        self._models: Repository[ProductMediaORM, int] = Repository(
+            session, ProductMediaORM
+        )
+
+    @override
+    async def next_id(self) -> MediaId:
+        return MediaId(await _next_id(self._session, ProductMediaORM.__tablename__))
+
+    @override
+    async def get(self, media_id: MediaId) -> ProductMedia | None:
+        model = await self._models.get(media_id)
+        return ProductMediaMapper.to_entity(model) if model is not None else None
+
+    @override
+    async def add(self, media: ProductMedia) -> None:
+        await self._models.add(ProductMediaMapper.to_model(media))
+
+    @override
+    async def delete(self, media: ProductMedia) -> None:
+        model = await self._models.get(media.id)
+        if model is not None:
+            await self._models.delete(model)
+
+    @override
+    async def count_of_kind(self, product_id: ProductId, kind: MediaKind) -> int:
+        query = (
+            select(func.count())
+            .select_from(ProductMediaORM)
+            .where(
+                ProductMediaORM.product_id == product_id,
+                ProductMediaORM.kind == kind.value,
+            )
+        )
+        return (await self._session.execute(query)).scalar_one()

@@ -2,19 +2,34 @@ from datetime import datetime
 from enum import StrEnum
 from types import TracebackType
 from typing import Self, override
+from uuid import uuid4
 
 from telegramsales.modules.catalog.application.ports import (
     IBrandRepository,
     ICatalogRepository,
     ICategoryRepository,
+    IProductMediaRepository,
+    IProductRepository,
+    IProductVariantRepository,
 )
 from telegramsales.modules.catalog.contracts import (
     BrandId,
     CatalogId,
     CategoryId,
+    MediaId,
+    ProductId,
+    VariantId,
 )
-from telegramsales.modules.catalog.domain.entities import Brand, Catalog, Category
-from telegramsales.modules.catalog.domain.values import Title
+from telegramsales.modules.catalog.domain.entities import (
+    Brand,
+    Catalog,
+    Category,
+    Product,
+    ProductMedia,
+    ProductVariant,
+)
+from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.values import Article, Title
 from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.clock import IClock
 from telegramsales.shared.domain.event import DomainEvent, IEventSource
@@ -158,19 +173,151 @@ class FakeBrandRepository(IBrandRepository):
         )
 
 
+class FakeProductRepository(IProductRepository):
+    def __init__(self, *products: Product) -> None:
+        self.items: dict[ProductId, Product] = {item.id: item for item in products}
+        self._article: int = 0
+
+    @override
+    async def next_id(self) -> ProductId:
+        return ProductId(uuid4())
+
+    @override
+    async def next_article(self) -> Article:
+        self._article += 1
+        return Article.of(self._article)
+
+    @override
+    async def get(self, product_id: ProductId) -> Product | None:
+        return self.items.get(product_id)
+
+    @override
+    async def add(self, product: Product) -> None:
+        self.items[product.id] = product
+
+    @override
+    async def save(self, product: Product) -> None:
+        self.items[product.id] = product
+
+    @override
+    async def delete(self, product: Product) -> None:
+        self.items.pop(product.id, None)
+
+    @override
+    async def count_in_category(self, category_id: CategoryId) -> int:
+        return sum(
+            1 for item in self.items.values() if item.category_id == category_id
+        )
+
+    @override
+    async def count_of_brand(self, brand_id: BrandId) -> int:
+        return sum(1 for item in self.items.values() if item.brand_id == brand_id)
+
+
+class FakeProductVariantRepository(IProductVariantRepository):
+    def __init__(self, *variants: ProductVariant) -> None:
+        self.items: dict[VariantId, ProductVariant] = {
+            item.id: item for item in variants
+        }
+        self._next: int = FIRST_ID
+
+    @override
+    async def next_id(self) -> VariantId:
+        self._next += 1
+        return VariantId(self._next)
+
+    @override
+    async def get(self, variant_id: VariantId) -> ProductVariant | None:
+        return self.items.get(variant_id)
+
+    @override
+    async def add(self, variant: ProductVariant) -> None:
+        self.items[variant.id] = variant
+
+    @override
+    async def save(self, variant: ProductVariant) -> None:
+        self.items[variant.id] = variant
+
+    @override
+    async def delete(self, variant: ProductVariant) -> None:
+        self.items.pop(variant.id, None)
+
+    @override
+    async def count_for(self, product_id: ProductId) -> int:
+        return sum(
+            1 for item in self.items.values() if item.product_id == product_id
+        )
+
+    @override
+    async def exists_with_title(
+        self,
+        title: Title,
+        *,
+        product_id: ProductId,
+        excluding: VariantId | None = None,
+    ) -> bool:
+        return any(
+            item.title == title
+            and item.product_id == product_id
+            and item.id != excluding
+            for item in self.items.values()
+        )
+
+
+class FakeProductMediaRepository(IProductMediaRepository):
+    def __init__(self, *media: ProductMedia) -> None:
+        self.items: dict[MediaId, ProductMedia] = {item.id: item for item in media}
+        self._next: int = FIRST_ID
+
+    @override
+    async def next_id(self) -> MediaId:
+        self._next += 1
+        return MediaId(self._next)
+
+    @override
+    async def get(self, media_id: MediaId) -> ProductMedia | None:
+        return self.items.get(media_id)
+
+    @override
+    async def add(self, media: ProductMedia) -> None:
+        self.items[media.id] = media
+
+    @override
+    async def delete(self, media: ProductMedia) -> None:
+        self.items.pop(media.id, None)
+
+    @override
+    async def count_of_kind(self, product_id: ProductId, kind: MediaKind) -> int:
+        return sum(
+            1
+            for item in self.items.values()
+            if item.product_id == product_id and item.kind is kind
+        )
+
+
 class FakeCatalogUnitOfWork:
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         catalogs: FakeCatalogRepository | None = None,
         categories: FakeCategoryRepository | None = None,
         brands: FakeBrandRepository | None = None,
+        products: FakeProductRepository | None = None,
+        variants: FakeProductVariantRepository | None = None,
+        media: FakeProductMediaRepository | None = None,
     ) -> None:
         self._catalogs: FakeCatalogRepository = catalogs or FakeCatalogRepository()
         self._categories: FakeCategoryRepository = (
             categories or FakeCategoryRepository()
         )
         self._brands: FakeBrandRepository = brands or FakeBrandRepository()
+        self._products: FakeProductRepository = products or FakeProductRepository()
+        self._variants: FakeProductVariantRepository = (
+            variants or FakeProductVariantRepository()
+        )
+        self._media: FakeProductMediaRepository = (
+            media or FakeProductMediaRepository()
+        )
         self._tracked: list[IEventSource] = []
         self.committed: bool = False
         self.rolled_back: bool = False
@@ -186,6 +333,18 @@ class FakeCatalogUnitOfWork:
     @property
     def brands(self) -> FakeBrandRepository:
         return self._brands
+
+    @property
+    def products(self) -> FakeProductRepository:
+        return self._products
+
+    @property
+    def variants(self) -> FakeProductVariantRepository:
+        return self._variants
+
+    @property
+    def media(self) -> FakeProductMediaRepository:
+        return self._media
 
     async def __aenter__(self) -> Self:
         self._tracked = []

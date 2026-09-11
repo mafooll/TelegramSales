@@ -134,6 +134,7 @@ class DeleteCategoryHandler:
                 raise CategoryNotFoundError(category_id=command.category_id)
 
             children = await uow.categories.count_children(category.id)
-            ensure_category_is_empty(category, children)
+            products = await uow.products.count_in_category(category.id)
+            ensure_category_is_empty(category, children, products)
 
             await uow.categories.delete(category)

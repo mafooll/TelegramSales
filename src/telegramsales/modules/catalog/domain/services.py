@@ -1,7 +1,9 @@
 from telegramsales.modules.catalog.contracts import CatalogId
-from telegramsales.modules.catalog.domain.entities import Category, Product
+from telegramsales.modules.catalog.domain.entities import Brand, Category, Product
 from telegramsales.modules.catalog.domain.exceptions import (
+    BrandInUseError,
     CatalogNotEmptyError,
+    CategoryHoldsProductsError,
     CategoryNotEmptyError,
     ForeignCatalogError,
     NestingTooDeepError,
@@ -31,12 +33,26 @@ def ensure_catalog_is_empty(catalog_id: CatalogId, category_count: int) -> None:
         )
 
 
-def ensure_category_is_empty(category: Category, child_count: int) -> None:
+def ensure_category_is_empty(
+    category: Category,
+    child_count: int,
+    product_count: int = EMPTY,
+) -> None:
     if child_count > EMPTY:
         raise CategoryNotEmptyError(
             category_id=category.id,
             child_count=child_count,
         )
+    if product_count > EMPTY:
+        raise CategoryHoldsProductsError(
+            category_id=category.id,
+            product_count=product_count,
+        )
+
+
+def ensure_brand_is_unused(brand: Brand, product_count: int) -> None:
+    if product_count > EMPTY:
+        raise BrandInUseError(brand_id=brand.id, product_count=product_count)
 
 
 def ensure_variants_allowed(product: Product) -> None:

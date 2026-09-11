@@ -29,8 +29,12 @@ from telegramsales.modules.catalog.application.commands.categories import (
 from telegramsales.modules.catalog.application.ports import (
     ICatalogQueries,
     ICatalogUnitOfWork,
+    IProductQueries,
 )
-from telegramsales.modules.catalog.infrastructure.queries import CatalogQueries
+from telegramsales.modules.catalog.infrastructure.queries import (
+    CatalogQueries,
+    ProductQueries,
+)
 from telegramsales.modules.catalog.infrastructure.uow import CatalogUnitOfWork
 from telegramsales.shared.infrastructure.database.manager import DatabaseManager
 
@@ -46,6 +50,10 @@ class CatalogProvider(Provider):
     @provide
     def queries(self, session: AsyncSession) -> ICatalogQueries:
         return CatalogQueries(session)
+
+    @provide
+    def product_queries(self, session: AsyncSession) -> IProductQueries:
+        return ProductQueries(session)
 
     handlers = provide_all(
         CreateCatalogHandler,

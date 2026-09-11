@@ -1,4 +1,5 @@
 from telegramsales.modules.catalog.contracts import (
+    BrandId,
     CatalogId,
     CategoryId,
     ProductId,
@@ -107,4 +108,20 @@ class ProductWithoutPhotoError(DomainError):
         super().__init__(
             f"product {product_id} needs at least one photo to be published",
             details={"product_id": str(product_id)},
+        )
+
+
+class CategoryHoldsProductsError(DomainError):
+    def __init__(self, *, category_id: CategoryId, product_count: int) -> None:
+        super().__init__(
+            f"category {category_id} still holds {product_count} products",
+            details={"category_id": category_id, "product_count": product_count},
+        )
+
+
+class BrandInUseError(DomainError):
+    def __init__(self, *, brand_id: BrandId, product_count: int) -> None:
+        super().__init__(
+            f"brand {brand_id} is used by {product_count} products",
+            details={"brand_id": brand_id, "product_count": product_count},
         )

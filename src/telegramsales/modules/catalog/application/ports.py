@@ -6,14 +6,29 @@ from telegramsales.modules.catalog.application.queries import (
     BrandView,
     CatalogView,
     CategoryView,
+    MediaView,
+    ProductEntryView,
+    ProductView,
+    VariantView,
 )
 from telegramsales.modules.catalog.contracts import (
     BrandId,
     CatalogId,
     CategoryId,
+    MediaId,
+    ProductId,
+    VariantId,
 )
-from telegramsales.modules.catalog.domain.entities import Brand, Catalog, Category
-from telegramsales.modules.catalog.domain.values import Title
+from telegramsales.modules.catalog.domain.entities import (
+    Brand,
+    Catalog,
+    Category,
+    Product,
+    ProductMedia,
+    ProductVariant,
+)
+from telegramsales.modules.catalog.domain.enums import MediaKind
+from telegramsales.modules.catalog.domain.values import Article, Title
 from telegramsales.shared.application.pagination import Page
 from telegramsales.shared.domain.event import DomainEvent, IEventSource
 
@@ -101,6 +116,78 @@ class IBrandRepository(ABC):
     ) -> bool: ...
 
 
+class IProductRepository(ABC):
+    @abstractmethod
+    async def next_id(self) -> ProductId: ...
+
+    @abstractmethod
+    async def next_article(self) -> Article: ...
+
+    @abstractmethod
+    async def get(self, product_id: ProductId) -> Product | None: ...
+
+    @abstractmethod
+    async def add(self, product: Product) -> None: ...
+
+    @abstractmethod
+    async def save(self, product: Product) -> None: ...
+
+    @abstractmethod
+    async def delete(self, product: Product) -> None: ...
+
+    @abstractmethod
+    async def count_in_category(self, category_id: CategoryId) -> int: ...
+
+    @abstractmethod
+    async def count_of_brand(self, brand_id: BrandId) -> int: ...
+
+
+class IProductVariantRepository(ABC):
+    @abstractmethod
+    async def next_id(self) -> VariantId: ...
+
+    @abstractmethod
+    async def get(self, variant_id: VariantId) -> ProductVariant | None: ...
+
+    @abstractmethod
+    async def add(self, variant: ProductVariant) -> None: ...
+
+    @abstractmethod
+    async def save(self, variant: ProductVariant) -> None: ...
+
+    @abstractmethod
+    async def delete(self, variant: ProductVariant) -> None: ...
+
+    @abstractmethod
+    async def count_for(self, product_id: ProductId) -> int: ...
+
+    @abstractmethod
+    async def exists_with_title(
+        self,
+        title: Title,
+        *,
+        product_id: ProductId,
+        excluding: VariantId | None = None,
+    ) -> bool: ...
+
+
+class IProductMediaRepository(ABC):
+    @abstractmethod
+    async def next_id(self) -> MediaId: ...
+
+    @abstractmethod
+    async def get(self, media_id: MediaId) -> ProductMedia | None: ...
+
+    @abstractmethod
+    async def add(self, media: ProductMedia) -> None: ...
+
+    @abstractmethod
+    async def delete(self, media: ProductMedia) -> None: ...
+
+    @abstractmethod
+    async def count_of_kind(self, product_id: ProductId, kind: MediaKind) -> int: ...
+
+
 class ICatalogUnitOfWork(Protocol):
     @property
     def catalogs(self) -> ICatalogRepository: ...
@@ -110,6 +197,15 @@ class ICatalogUnitOfWork(Protocol):
 
     @property
     def brands(self) -> IBrandRepository: ...
+
+    @property
+    def products(self) -> IProductRepository: ...
+
+    @property
+    def variants(self) -> IProductVariantRepository: ...
+
+    @property
+    def media(self) -> IProductMediaRepository: ...
 
     async def __aenter__(self) -> Self: ...
 
@@ -149,3 +245,22 @@ class ICatalogQueries(ABC):
 
     @abstractmethod
     async def list_brands(self, number: int, size: int) -> Page[BrandView]: ...
+
+
+class IProductQueries(ABC):
+    @abstractmethod
+    async def get_product(self, product_id: ProductId) -> ProductView | None: ...
+
+    @abstractmethod
+    async def list_products(
+        self,
+        category_id: CategoryId,
+        number: int,
+        size: int,
+    ) -> Page[ProductEntryView]: ...
+
+    @abstractmethod
+    async def list_variants(self, product_id: ProductId) -> list[VariantView]: ...
+
+    @abstractmethod
+    async def list_media(self, product_id: ProductId) -> list[MediaView]: ...

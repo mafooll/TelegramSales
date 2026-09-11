@@ -8,6 +8,7 @@ from telegramsales.modules.catalog.application.exceptions import (
 from telegramsales.modules.catalog.application.ports import ICatalogUnitOfWork
 from telegramsales.modules.catalog.contracts import BrandId
 from telegramsales.modules.catalog.domain.entities import Brand
+from telegramsales.modules.catalog.domain.services import ensure_brand_is_unused
 from telegramsales.modules.catalog.domain.values import Title
 from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.clock import IClock
@@ -107,5 +108,8 @@ class DeleteBrandHandler:
         async with self._uow as uow:
             if not (brand := await uow.brands.get(command.brand_id)):
                 raise BrandNotFoundError(brand_id=command.brand_id)
+
+            products = await uow.products.count_of_brand(brand.id)
+            ensure_brand_is_unused(brand, products)
 
             await uow.brands.delete(brand)
