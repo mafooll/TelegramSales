@@ -26,6 +26,30 @@ from telegramsales.modules.catalog.application.commands.categories import (
     DeleteCategoryHandler,
     RenameCategoryHandler,
 )
+from telegramsales.modules.catalog.application.commands.media import (
+    AttachMediaHandler,
+    DetachMediaHandler,
+)
+from telegramsales.modules.catalog.application.commands.products import (
+    ChangeProductStockHandler,
+    ChangeProductVisibilityHandler,
+    CreateProductHandler,
+    DeleteProductHandler,
+    DescribeProductHandler,
+    MoveProductHandler,
+    PublishProductHandler,
+    RebrandProductHandler,
+    RenameProductHandler,
+    RepriceProductHandler,
+)
+from telegramsales.modules.catalog.application.commands.variants import (
+    AddVariantHandler,
+    ChangeVariantAvailabilityHandler,
+    ChangeVariantAxisHandler,
+    DeleteVariantHandler,
+    RenameVariantHandler,
+    RepriceVariantHandler,
+)
 from telegramsales.modules.catalog.application.ports import (
     ICatalogQueries,
     ICatalogUnitOfWork,
@@ -68,4 +92,22 @@ class CatalogProvider(Provider):
         RenameBrandHandler,
         ChangeBrandVisibilityHandler,
         DeleteBrandHandler,
+        CreateProductHandler,
+        RenameProductHandler,
+        DescribeProductHandler,
+        RepriceProductHandler,
+        MoveProductHandler,
+        RebrandProductHandler,
+        PublishProductHandler,
+        ChangeProductVisibilityHandler,
+        ChangeProductStockHandler,
+        DeleteProductHandler,
+        ChangeVariantAxisHandler,
+        AddVariantHandler,
+        RenameVariantHandler,
+        RepriceVariantHandler,
+        ChangeVariantAvailabilityHandler,
+        DeleteVariantHandler,
+        AttachMediaHandler,
+        DetachMediaHandler,
     )
