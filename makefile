@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := check
+.NOTPARALLEL:
 .PHONY: lint format typecheck test check quick run db-shell db-reset migration migrate downgrade history
 
 DC := docker compose
