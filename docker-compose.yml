@@ -50,6 +50,7 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       APP_ROOT_ID: ${APP_ROOT_ID:?APP_ROOT_ID not set, see .env.example}
+      APP_WORK_CHAT_ID: ${APP_WORK_CHAT_ID:?APP_WORK_CHAT_ID not set, see .env.example}
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,6 +72,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       APP_ROOT_ID: ${APP_ROOT_ID:?APP_ROOT_ID not set, see .env.example}
+      APP_WORK_CHAT_ID: ${APP_WORK_CHAT_ID:?APP_WORK_CHAT_ID not set, see .env.example}
       APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-ru}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       APP_LOG_JSON: ${APP_LOG_JSON:-false}

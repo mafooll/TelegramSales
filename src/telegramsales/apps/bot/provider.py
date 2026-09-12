@@ -13,8 +13,15 @@ from dishka import (
 )
 
 from telegramsales.apps.bot.access import StaticPermissionResolver
+from telegramsales.modules.desk import (
+    ICustomerChat,
+    IWorkChat,
+    TelegramCustomerChat,
+    TelegramWorkChat,
+)
 from telegramsales.shared.application.access import IPermissionResolver
-from telegramsales.shared.settings import BotSettings, RedisSettings
+from telegramsales.shared.application.i18n import ITranslatorFactory
+from telegramsales.shared.settings import AppSettings, BotSettings, RedisSettings
 
 
 @final
@@ -38,6 +45,23 @@ class BotProvider(Provider):
     @provide
     def permission_resolver(self) -> IPermissionResolver:
         return StaticPermissionResolver()
+
+    @provide
+    def work_chat(
+        self,
+        bot: Bot,
+        settings: AppSettings,
+        translations: ITranslatorFactory,
+    ) -> IWorkChat:
+        return TelegramWorkChat(
+            bot,
+            settings.work_chat_id,
+            translations(settings.default_locale),
+        )
+
+    @provide
+    def customer_chat(self, bot: Bot, settings: AppSettings) -> ICustomerChat:
+        return TelegramCustomerChat(bot, settings.work_chat_id)
 
     @provide
     async def bot(self, settings: BotSettings) -> AsyncIterator[Bot]:

@@ -5,7 +5,9 @@ from structlog.stdlib import BoundLogger
 import uvloop
 
 from telegramsales.apps.bot.container import container_context
+from telegramsales.apps.bot.desk import subscribe_desk
 from telegramsales.apps.bot.dispatcher import build_dispatcher
+from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
 from telegramsales.shared.logger_config import setup_logging
 from telegramsales.shared.settings import AppSettings, BotSettings
 
@@ -19,6 +21,8 @@ async def run() -> None:
             log_level=app_settings.log_level,
             use_json=app_settings.log_json,
         )
+
+        subscribe_desk(await container.get(InProcessEventBus), container)
 
         bot_settings = await container.get(BotSettings)
         bot = await container.get(Bot)

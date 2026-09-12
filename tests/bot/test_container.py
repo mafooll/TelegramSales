@@ -9,6 +9,19 @@ from telegramsales.modules.catalog.application.ports import (
 )
 from telegramsales.modules.catalog.contracts import ICatalogOffers
 from telegramsales.modules.customers.contracts import ICustomerDirectory
+from telegramsales.modules.desk.application.commands.cards import (
+    PublishOrderCardHandler,
+    RedrawOrderCardHandler,
+)
+from telegramsales.modules.desk.application.commands.relay import (
+    EditFromCustomerHandler,
+    EditFromTopicHandler,
+    ReactFromCustomerHandler,
+    ReactFromTopicHandler,
+    RelayToCustomerHandler,
+    RelayToTopicHandler,
+)
+from telegramsales.modules.desk.application.ports import ICustomerChat, IWorkChat
 from telegramsales.modules.orders.application.commands.cart import (
     AddToCartHandler,
     ClearCartHandler,
@@ -32,7 +45,11 @@ from telegramsales.modules.orders.application.readers import (
     CartReader,
     SelectionReader,
 )
-from telegramsales.modules.orders.contracts import IOrderDesk, IOrderPresence
+from telegramsales.modules.orders.contracts import (
+    IOrderCards,
+    IOrderDesk,
+    IOrderPresence,
+)
 from telegramsales.modules.staff.application.commands.preferences import (
     SwitchCustomerViewHandler,
 )
@@ -46,8 +63,9 @@ REQUESTED = [
     ICustomerDirectory,
     IStaffQueries,
     IOrderQueries,
-    IOrderPresence,
+    IOrderCards,
     IOrderDesk,
+    IOrderPresence,
     CartReader,
     SelectionReader,
     AddToCartHandler,
@@ -63,6 +81,16 @@ REQUESTED = [
     ChangeOrderStatusHandler,
     CancelOrderByManagerHandler,
     SwitchCustomerViewHandler,
+    IWorkChat,
+    ICustomerChat,
+    PublishOrderCardHandler,
+    RedrawOrderCardHandler,
+    RelayToTopicHandler,
+    RelayToCustomerHandler,
+    EditFromCustomerHandler,
+    EditFromTopicHandler,
+    ReactFromCustomerHandler,
+    ReactFromTopicHandler,
 ]
 
 

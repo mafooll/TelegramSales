@@ -6,6 +6,7 @@ from dishka.integrations.aiogram import setup_dishka
 from telegramsales.apps.bot.cart import router as cart_bridge_router
 from telegramsales.apps.bot.menu import router as menu_router
 from telegramsales.modules.catalog import catalog_router
+from telegramsales.modules.desk import desk_router
 from telegramsales.modules.orders import orders_router
 from telegramsales.modules.staff import ActorMiddleware, staff_router
 from telegramsales.shared.presentation.bot.album import AlbumMiddleware
@@ -33,4 +34,5 @@ def build_dispatcher(container: AsyncContainer, storage: BaseStorage) -> Dispatc
     dispatcher.include_router(cart_bridge_router)
     dispatcher.include_router(catalog_router)
     dispatcher.include_router(staff_router)
+    dispatcher.include_router(desk_router)
     return dispatcher
