@@ -36,6 +36,7 @@ from telegramsales.shared.presentation.bot.rich import rich_screen
 OPEN_SHOP: Button[None] = Button(
     text=label(texts.OPEN_SHOP_BUTTON),
     callback=lambda _: ShopCallback(action=ShopAction.CATALOGS),
+    for_customers=True,
 )
 
 OPEN_STAFF: Button[None] = Button(
@@ -54,8 +55,8 @@ MAIN_MENU: Screen[None] = Screen(
     content=label(texts.GREETING),
     buttons=[
         OPEN_SHOP,
-        open_cart(),
-        open_orders(),
+        open_cart(for_customers=True),
+        open_orders(for_customers=True),
         OPEN_CATALOG,
         OPEN_STAFF,
     ],

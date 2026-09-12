@@ -30,17 +30,19 @@ from telegramsales.shared.presentation.bot.keyboard import Button, label
 from telegramsales.shared.presentation.bot.money import money_text
 
 
-def open_cart[ViewType]() -> Button[ViewType]:
+def open_cart[ViewType](*, for_customers: bool = False) -> Button[ViewType]:
     return Button(
         text=label(texts.OPEN_CART_BUTTON),
         callback=lambda _: CartCallback(action=CartAction.OPEN),
+        for_customers=for_customers,
     )
 
 
-def open_orders[ViewType]() -> Button[ViewType]:
+def open_orders[ViewType](*, for_customers: bool = False) -> Button[ViewType]:
     return Button(
         text=label(texts.OPEN_ORDERS_BUTTON),
         callback=lambda _: OrderCallback(action=OrderAction.LIST),
+        for_customers=for_customers,
     )
 
 

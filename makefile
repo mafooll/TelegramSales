@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := check
-.PHONY: lint format typecheck test check run db-shell db-reset migration migrate downgrade history
+.PHONY: lint format typecheck test check quick run db-shell db-reset migration migrate downgrade history
 
 DC := docker compose
 
@@ -16,6 +16,11 @@ test:
 	uv run pytest
 
 check: lint typecheck test
+
+quick:
+	uv run ruff check --quiet src tests
+	uv run basedpyright
+	uv run pytest -x -q -m "not db"
 
 run:
 	uv run telegramsales-bot

@@ -12,6 +12,10 @@ class Actor:
     id: int
     permissions: frozenset[PermissionCode]
 
+    @property
+    def is_staff(self) -> bool:
+        return bool(self.permissions)
+
     def can(self, permission: StrEnum) -> bool:
         return permission.value in self.permissions
 

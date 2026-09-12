@@ -98,11 +98,14 @@ def button(
     permission: StrEnum | None = None,
     when: Callable[[ProbeView], bool] | None = None,
     style: ButtonStyle | None = None,
+    *,
+    for_customers: bool = False,
 ) -> Button[ProbeView]:
     return Button(
         text=label(text),
         callback=lambda _: ProbeCallback(value=text),
         permission=permission,
+        for_customers=for_customers,
         when=when,
         style=style,
     )
@@ -159,6 +162,18 @@ def test_button_with_permission_is_shown_with_it() -> None:
     screen = screen_of(button("Удалить", ProbePermission.MANAGE))
 
     assert texts_of(rich_screen(screen, VIEW, MANAGER)) == ["Удалить"]
+
+
+def test_customer_button_is_shown_without_permissions() -> None:
+    screen = screen_of(button("Корзина", for_customers=True))
+
+    assert texts_of(rich_screen(screen, VIEW, ANYONE)) == ["Корзина"]
+
+
+def test_customer_button_is_hidden_from_staff() -> None:
+    screen = screen_of(button("Корзина", for_customers=True))
+
+    assert texts_of(rich_screen(screen, VIEW, MANAGER)) == []
 
 
 def test_when_hides_the_button_even_with_permission() -> None:

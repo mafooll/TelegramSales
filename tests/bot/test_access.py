@@ -83,12 +83,12 @@ STAFF = "👥 Персонал"
 CUSTOMER_MENU = [SHOP, CART, ORDERS]
 
 
-def test_owner_sees_both_sections() -> None:
-    assert menu_of(StaffRole.OWNER) == [*CUSTOMER_MENU, CATALOG, STAFF]
+def test_owner_sees_only_the_staff_side() -> None:
+    assert menu_of(StaffRole.OWNER) == [CATALOG, STAFF]
 
 
-def test_manager_sees_both_sections() -> None:
-    assert menu_of(StaffRole.MANAGER) == [*CUSTOMER_MENU, CATALOG, STAFF]
+def test_manager_sees_only_the_staff_side() -> None:
+    assert menu_of(StaffRole.MANAGER) == [CATALOG, STAFF]
 
 
 def test_customer_sees_only_the_shop_side() -> None:

@@ -35,6 +35,14 @@ def test_permissions_of_different_modules_do_not_collide() -> None:
     assert not holder.can(BetaPermission.READ)
 
 
+def test_an_actor_with_permissions_is_staff() -> None:
+    assert actor(AlphaPermission.READ).is_staff
+
+
+def test_an_actor_without_permissions_is_not_staff() -> None:
+    assert not actor().is_staff
+
+
 def test_actor_context_is_immutable() -> None:
     holder = actor(AlphaPermission.READ)
 

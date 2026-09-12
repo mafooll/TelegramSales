@@ -43,11 +43,14 @@ class Button[ViewType]:
     text: TextRef[ViewType]
     callback: Callable[[ViewType], CallbackData]
     permission: StrEnum | None = None
+    for_customers: bool = False
     when: Callable[[ViewType], bool] | None = None
     style: ButtonStyle | None = None
 
     def is_allowed(self, view: ViewType, context: RenderContext) -> bool:
         if self.permission is not None and not context.actor.can(self.permission):
+            return False
+        if self.for_customers and context.actor.is_staff:
             return False
         return self.when is None or self.when(view)
 
