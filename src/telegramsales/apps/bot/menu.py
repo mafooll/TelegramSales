@@ -1,6 +1,7 @@
 from aiogram import Bot, Router
 from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, InputRichMessage, Message
+from dishka.integrations.aiogram import FromDishka
 
 from telegramsales.apps.bot import texts
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
@@ -11,6 +12,14 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
 from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopAction,
     ShopCallback,
+)
+from telegramsales.modules.customers.contracts import (
+    CustomerId,
+    ICustomerDirectory,
+)
+from telegramsales.modules.orders.presentation.bot.buttons import (
+    open_cart,
+    open_orders,
 )
 from telegramsales.modules.staff.domain.permissions import StaffPermission
 from telegramsales.modules.staff.presentation.bot.callbacks import (
@@ -43,7 +52,14 @@ OPEN_CATALOG: Button[None] = Button(
 
 MAIN_MENU: Screen[None] = Screen(
     content=label(texts.GREETING),
-    buttons=[OPEN_SHOP, OPEN_CATALOG, OPEN_STAFF],
+    buttons=[
+        OPEN_SHOP,
+        open_cart(),
+        open_orders(),
+        OPEN_CATALOG,
+        OPEN_STAFF,
+    ],
+    layout=(1, 2),
 )
 
 router = Router(name="menu")
@@ -56,7 +72,18 @@ def _main_menu(context: RenderContext) -> InputRichMessage:
 
 
 @router.message(CommandStart())
-async def start(message: Message, bot: Bot, context: RenderContext) -> None:
+async def start(
+    message: Message,
+    bot: Bot,
+    context: RenderContext,
+    customers: FromDishka[ICustomerDirectory],
+) -> None:
+    if message.from_user is not None:
+        await customers.register(
+            CustomerId(message.from_user.id),
+            message.from_user.full_name,
+        )
+
     await bot.send_rich_message(
         chat_id=message.chat.id,
         rich_message=_main_menu(context),

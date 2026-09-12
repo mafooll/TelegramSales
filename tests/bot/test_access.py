@@ -76,17 +76,20 @@ def test_unknown_role_grants_nothing() -> None:
 
 
 SHOP = "🛍 Магазин"
+CART = "🧺 Корзина"
+ORDERS = "🧾 Мои заказы"
 CATALOG = "🗂 Управление каталогом"
 STAFF = "👥 Персонал"
+CUSTOMER_MENU = [SHOP, CART, ORDERS]
 
 
 def test_owner_sees_both_sections() -> None:
-    assert menu_of(StaffRole.OWNER) == [SHOP, CATALOG, STAFF]
+    assert menu_of(StaffRole.OWNER) == [*CUSTOMER_MENU, CATALOG, STAFF]
 
 
 def test_manager_sees_both_sections() -> None:
-    assert menu_of(StaffRole.MANAGER) == [SHOP, CATALOG, STAFF]
+    assert menu_of(StaffRole.MANAGER) == [*CUSTOMER_MENU, CATALOG, STAFF]
 
 
-def test_customer_sees_only_the_shop() -> None:
-    assert menu_of(None) == [SHOP]
+def test_customer_sees_only_the_shop_side() -> None:
+    assert menu_of(None) == CUSTOMER_MENU
