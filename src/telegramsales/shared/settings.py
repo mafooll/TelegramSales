@@ -82,6 +82,7 @@ class AppSettings(BaseSettings):
     )
 
     root_id: int
+    work_chat_id: int
     log_level: str = "INFO"
     log_json: bool = False
     default_locale: str = "ru"

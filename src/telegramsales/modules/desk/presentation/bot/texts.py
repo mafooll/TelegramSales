@@ -1,0 +1,27 @@
+FEED_TOPIC = "desk-feed-topic"
+CUSTOMER_TOPIC = "desk-customer-topic"
+
+CARD = "desk-card"
+CARD_LINE = "desk-card-line"
+CARD_COMMENT = "desk-card-comment"
+CARD_MANAGER = "desk-card-manager"
+CARD_UNTAKEN = "desk-card-untaken"
+VARIANT_SUFFIX = "desk-variant-suffix"
+
+TAKE_BUTTON = "desk-take-button"
+PAID_BUTTON = "desk-paid-button"
+SHIPPED_BUTTON = "desk-shipped-button"
+DONE_BUTTON = "desk-done-button"
+CANCEL_BUTTON = "desk-cancel-button"
+CANCEL_QUESTION = "desk-cancel-question"
+
+STATUS_PLACED = "desk-status-placed"
+STATUS_IN_WORK = "desk-status-in-work"
+STATUS_PAID = "desk-status-paid"
+STATUS_SHIPPED = "desk-status-shipped"
+STATUS_DONE = "desk-status-done"
+STATUS_CANCELLED = "desk-status-cancelled"
+
+ORDER_GONE = "desk-order-gone"
+TAKEN = "desk-taken"
+STATUS_CHANGED = "desk-status-changed"
