@@ -58,5 +58,5 @@ class StateResetMiddleware(BaseMiddleware):
     ) -> Any:
         state: FSMContext | None = data.get("state")
         if state is not None:
-            await state.clear()
+            await state.set_state(None)
         return await handler(event, data)

@@ -9,7 +9,7 @@ _BASE64_ALT_CHARS = b"-_"
 _BASE64_PADDING = "=="
 
 
-def _pack_uuid(value: UUID) -> str:
+def pack_uuid(value: UUID) -> str:
     return base64.urlsafe_b64encode(value.bytes).rstrip(b"=").decode()
 
 
@@ -25,8 +25,13 @@ def _unpack_uuid(value: object) -> object:
     )
 
 
+def unpack_uuid(value: str) -> UUID | None:
+    unpacked = _unpack_uuid(value)
+    return unpacked if isinstance(unpacked, UUID) else None
+
+
 PackedUUID = Annotated[
     UUID,
     BeforeValidator(_unpack_uuid),
-    PlainSerializer(_pack_uuid, return_type=str),
+    PlainSerializer(pack_uuid, return_type=str),
 ]
