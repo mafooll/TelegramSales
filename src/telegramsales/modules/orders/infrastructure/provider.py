@@ -37,9 +37,14 @@ from telegramsales.modules.orders.application.readers import (
     CartReader,
     SelectionReader,
 )
-from telegramsales.modules.orders.contracts import IOrderDesk, IOrderPresence
+from telegramsales.modules.orders.contracts import (
+    IOrderCards,
+    IOrderDesk,
+    IOrderPresence,
+)
 from telegramsales.modules.orders.infrastructure.queries import (
     CartQueries,
+    OrderCards,
     OrderPresence,
     OrderQueries,
     SelectionQueries,
@@ -67,6 +72,10 @@ class OrdersProvider(Provider):
     @provide
     def order_queries(self, session: AsyncSession) -> IOrderQueries:
         return OrderQueries(session)
+
+    @provide
+    def order_cards(self, session: AsyncSession) -> IOrderCards:
+        return OrderCards(session)
 
     @provide
     def order_presence(self, session: AsyncSession) -> IOrderPresence:

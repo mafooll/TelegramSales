@@ -21,7 +21,10 @@ from telegramsales.modules.orders.application.queries import (
 )
 from telegramsales.modules.orders.contracts import (
     CartItemId,
+    IOrderCards,
     IOrderPresence,
+    OrderCardLine,
+    OrderCardView,
     OrderId,
     SelectionId,
 )
@@ -34,6 +37,7 @@ from telegramsales.modules.orders.infrastructure.models import (
     SelectionLineORM,
     SelectionORM,
 )
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.application.pagination import Page
 from telegramsales.shared.domain.money import Currency, Money
 
@@ -251,3 +255,54 @@ class OrderPresence(IOrderPresence):
             select(OrderORM.id).where(OrderORM.customer_id == customer_id).exists()
         )
         return (await self._session.execute(query)).scalar_one()
+
+
+class OrderCards(IOrderCards):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session: AsyncSession = session
+
+    @override
+    async def card(self, order_id: OrderId) -> OrderCardView | None:
+        query = select(OrderORM).where(OrderORM.id == order_id)
+        order = (await self._session.execute(query)).scalar_one_or_none()
+        if order is None:
+            return None
+
+        lines = (
+            (
+                await self._session.execute(
+                    select(OrderLineORM)
+                    .where(OrderLineORM.order_id == order_id)
+                    .order_by(OrderLineORM.position, OrderLineORM.id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        return OrderCardView(
+            id=OrderId(order.id),
+            number=_number(order.order_date, order.sequence),
+            status=OrderStatus(order.status),
+            created_at=order.created_at,
+            customer_id=CustomerId(order.customer_id),
+            manager_id=(
+                None if order.manager_id is None else StaffId(order.manager_id)
+            ),
+            name=order.contact_name,
+            phone=order.contact_phone,
+            address=order.contact_address,
+            comment=order.comment,
+            lines=tuple(
+                OrderCardLine(
+                    title=line.title,
+                    article=line.article,
+                    variant_title=line.variant_title,
+                    quantity=line.quantity,
+                    price=_money(line.price, line.currency),
+                    total=_money(line.price * line.quantity, line.currency),
+                )
+                for line in lines
+            ),
+            total=_money(order.total, order.currency),
+        )
