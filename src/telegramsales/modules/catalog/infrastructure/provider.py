@@ -57,6 +57,8 @@ from telegramsales.modules.catalog.application.ports import (
     IProductQueries,
     IShopQueries,
 )
+from telegramsales.modules.catalog.contracts import ICatalogOffers
+from telegramsales.modules.catalog.infrastructure.offers import CatalogOffers
 from telegramsales.modules.catalog.infrastructure.queries import (
     CatalogQueries,
     ProductQueries,
@@ -81,6 +83,10 @@ class CatalogProvider(Provider):
     @provide
     def product_queries(self, session: AsyncSession) -> IProductQueries:
         return ProductQueries(session)
+
+    @provide
+    def offers(self, session: AsyncSession) -> ICatalogOffers:
+        return CatalogOffers(session)
 
     @provide
     def shop_queries(self, session: AsyncSession) -> IShopQueries:
