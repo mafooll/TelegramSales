@@ -13,6 +13,7 @@ from telegramsales.modules.catalog.application.queries import (
     ShopProductView,
     ShopVariantView,
 )
+from telegramsales.modules.catalog.contracts import VariantId
 from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopAction,
@@ -24,11 +25,13 @@ from telegramsales.modules.catalog.presentation.bot.shop_screens import (
     CATEGORY,
     PRODUCT_CARD,
     PRODUCT_LIST,
+    VARIANT_PICKER,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
     ShopCatalogPageView,
     ShopProductsView,
+    ShopVariantPickView,
 )
 from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.pagination import Page
@@ -38,10 +41,11 @@ from telegramsales.shared.presentation.bot.money import STRIKE
 from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 from telegramsales.shared.settings import LOCALES_PATH
-from tests.catalog.factories import CLOTHES, COAT, COATS, OUTERWEAR, rub
+from tests.catalog.factories import CLOTHES, COAT, COATS, OUTERWEAR, SIZE_M, rub
 
 DEFAULT_LOCALE = "ru"
 PAGE_SIZE = 8
+SIZE_L = VariantId(501)
 
 TRANSLATE = FluentTranslations(LOCALES_PATH, DEFAULT_LOCALE)(DEFAULT_LOCALE)
 CUSTOMER = RenderContext(
@@ -294,8 +298,8 @@ def test_a_product_without_a_brand_says_nothing_about_brands() -> None:
 
 def test_variants_are_listed_with_their_prices() -> None:
     variants = (
-        ShopVariantView(title="M", price=rub("12900")),
-        ShopVariantView(title="L", price=rub("13900")),
+        ShopVariantView(id=SIZE_M, title="M", price=rub("12900")),
+        ShopVariantView(id=SIZE_L, title="L", price=rub("13900")),
     )
 
     message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
@@ -341,13 +345,61 @@ def test_a_collage_is_the_other_layout() -> None:
 
 def test_the_card_goes_back_to_its_category() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
-    back = callbacks_of(message)[0]
+    back = next(
+        entry
+        for entry in callbacks_of(message)
+        if entry.action is ShopAction.PRODUCTS
+    )
 
-    assert back.action is ShopAction.PRODUCTS
     assert back.category_id == OUTERWEAR
 
 
 def test_the_customer_sees_no_admin_buttons() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert texts_of(message) == ["⬅️ Назад"]
+    assert texts_of(message) == ["🧺 В корзину", "🧺 Корзина", "⬅️ Назад"]
+
+
+def test_a_product_in_stock_can_go_to_the_cart() -> None:
+    message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    actions = [entry.action for entry in callbacks_of(message)]
+
+    assert ShopAction.ADD in actions
+
+
+def test_an_out_of_stock_product_cannot_go_to_the_cart() -> None:
+    message = rich_screen(PRODUCT_CARD, product_view(in_stock=False), CUSTOMER)
+    actions = [entry.action for entry in callbacks_of(message)]
+
+    assert ShopAction.ADD not in actions
+
+
+def test_a_product_with_variants_asks_to_pick_one_first() -> None:
+    variants = (ShopVariantView(id=SIZE_M, title="M", price=rub("12900")),)
+
+    message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
+    actions = [entry.action for entry in callbacks_of(message)]
+
+    assert ShopAction.VARIANTS in actions
+    assert ShopAction.ADD not in actions
+
+
+def test_a_picked_variant_carries_both_identifiers() -> None:
+    pick = ShopVariantPickView(
+        product_id=COAT,
+        variant_id=SIZE_M,
+        title="M",
+        price=rub("12900"),
+    )
+
+    message = rich_paged_screen(
+        VARIANT_PICKER, paged([pick]), product_view(), CUSTOMER
+    )
+    added = next(
+        entry
+        for entry in callbacks_of(message)
+        if entry.action is ShopAction.ADD
+    )
+
+    assert added.product_id == COAT
+    assert added.variant_id == SIZE_M

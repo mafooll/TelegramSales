@@ -41,3 +41,12 @@ shop-product-out = Нет в наличии
 
 shop-back-button = ⬅️ Назад
 shop-gone = Этого больше нет в магазине
+
+shop-add-to-cart-button = 🧺 В корзину
+shop-pick-variant-button = 🧺 Выбрать и в корзину
+shop-open-cart-button = 🧺 Корзина
+shop-variant-picker =
+    { $title }
+
+    Выберите { $label }:
+shop-variant-entry = { $title } · { $price }

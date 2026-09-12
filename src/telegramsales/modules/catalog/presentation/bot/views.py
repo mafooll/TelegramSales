@@ -15,13 +15,19 @@ from telegramsales.modules.catalog.application.queries import (
     ShopProductView,
     VariantView,
 )
-from telegramsales.modules.catalog.contracts import BrandId, CategoryId, ProductId
+from telegramsales.modules.catalog.contracts import (
+    BrandId,
+    CategoryId,
+    ProductId,
+    VariantId,
+)
 from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.presentation.bot import (
     product_texts,
     shop_texts,
     texts,
 )
+from telegramsales.shared.domain.money import Money
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +51,14 @@ class ProductListView:
 class ShopCatalogPageView:
     catalog: ShopCatalogView
     total: int
+
+
+@dataclass(frozen=True, slots=True)
+class ShopVariantPickView:
+    product_id: ProductId
+    variant_id: VariantId
+    title: str
+    price: Money
 
 
 @dataclass(frozen=True, slots=True)

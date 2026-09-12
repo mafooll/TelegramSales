@@ -103,6 +103,7 @@ class ShopCategoryView:
 
 @dataclass(frozen=True, slots=True)
 class ShopVariantView:
+    id: VariantId
     title: str
     price: Money
 

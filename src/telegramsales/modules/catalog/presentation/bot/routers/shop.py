@@ -141,3 +141,23 @@ async def _below_category(
     if category.child_count == 0:
         return await shop_render.product_list(queries, context, category, number)
     return await shop_render.category_card(queries, context, category, number)
+
+
+@router.callback_query(ShopCallback.filter(F.action == ShopAction.VARIANTS))
+async def show_variants(
+    callback: CallbackQuery,
+    callback_data: ShopCallback,
+    context: RenderContext,
+    queries: FromDishka[IShopQueries],
+) -> None:
+    product = (
+        None
+        if callback_data.product_id is None
+        else await queries.get_product(ProductId(callback_data.product_id))
+    )
+    if product is None:
+        await _gone(callback, context)
+        return
+
+    await callback.answer()
+    await show(callback, shop_render.variant_picker(context, product))

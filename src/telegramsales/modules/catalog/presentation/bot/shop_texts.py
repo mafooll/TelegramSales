@@ -22,3 +22,9 @@ PRODUCT_OUT = "shop-product-out"
 
 BACK_BUTTON = "shop-back-button"
 GONE = "shop-gone"
+
+ADD_TO_CART_BUTTON = "shop-add-to-cart-button"
+PICK_VARIANT_BUTTON = "shop-pick-variant-button"
+OPEN_CART_BUTTON = "shop-open-cart-button"
+VARIANT_PICKER = "shop-variant-picker"
+VARIANT_ENTRY = "shop-variant-entry"

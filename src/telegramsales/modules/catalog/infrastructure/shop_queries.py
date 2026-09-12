@@ -17,6 +17,7 @@ from telegramsales.modules.catalog.contracts import (
     CatalogId,
     CategoryId,
     ProductId,
+    VariantId,
 )
 from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.infrastructure.filters import parent_filter
@@ -307,6 +308,7 @@ class ShopQueries(IShopQueries):
     ) -> tuple[ShopVariantView, ...]:
         query = (
             select(
+                ProductVariantORM.id,
                 ProductVariantORM.title,
                 func.coalesce(
                     ProductVariantORM.price_override, ProductORM.price
@@ -321,6 +323,10 @@ class ShopQueries(IShopQueries):
         )
         rows = (await self._session.execute(query)).all()
         return tuple(
-            ShopVariantView(title=row.title, price=_money(row.price, currency))
+            ShopVariantView(
+                id=VariantId(row.id),
+                title=row.title,
+                price=_money(row.price, currency),
+            )
             for row in rows
         )

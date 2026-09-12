@@ -16,13 +16,15 @@ from telegramsales.modules.catalog.presentation.bot.shop_screens import (
     CATEGORY,
     PRODUCT_CARD,
     PRODUCT_LIST,
+    VARIANT_PICKER,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
     ShopCatalogPageView,
     ShopProductsView,
+    ShopVariantPickView,
 )
-from telegramsales.shared.application.pagination import DEFAULT_PAGE_SIZE
+from telegramsales.shared.application.pagination import DEFAULT_PAGE_SIZE, Page
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
@@ -110,3 +112,27 @@ def product_card(
     product: ShopProductView,
 ) -> InputRichMessage:
     return rich_screen(PRODUCT_CARD, product, context)
+
+
+def variant_picker(
+    context: RenderContext,
+    product: ShopProductView,
+) -> InputRichMessage:
+    picks = [
+        ShopVariantPickView(
+            product_id=product.id,
+            variant_id=variant.id,
+            title=variant.title,
+            price=variant.price,
+        )
+        for variant in product.variants
+    ]
+    pagination = Pagination(
+        page=Page(items=picks, number=0, size=len(picks) or 1, total=len(picks)),
+        callback=lambda value: ShopCallback(
+            action=ShopAction.VARIANTS,
+            product_id=product.id,
+            page=value,
+        ),
+    )
+    return rich_paged_screen(VARIANT_PICKER, pagination, product, context)

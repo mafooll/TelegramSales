@@ -11,6 +11,9 @@ class ShopAction(StrEnum):
     CATEGORY = "sub"
     PRODUCTS = "list"
     PRODUCT = "card"
+    VARIANTS = "vars"
+    ADD = "add"
+    CART = "cart"
 
 
 class ShopCallback(CallbackData, prefix="shop"):
@@ -18,4 +21,5 @@ class ShopCallback(CallbackData, prefix="shop"):
     catalog_id: int | None = None
     category_id: int | None = None
     product_id: PackedUUID | None = None
+    variant_id: int | None = None
     page: int = 0

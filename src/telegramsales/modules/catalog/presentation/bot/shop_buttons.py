@@ -1,3 +1,5 @@
+from aiogram.enums import ButtonStyle
+
 from telegramsales.modules.catalog.application.queries import (
     ShopCatalogView,
     ShopCategoryView,
@@ -11,6 +13,7 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     ShopProductsView,
+    ShopVariantPickView,
     shop_product_item_key,
 )
 from telegramsales.shared.presentation.bot.keyboard import Button, label
@@ -126,5 +129,55 @@ BACK_TO_PRODUCTS: Button[ShopProductView] = Button(
     callback=lambda product: ShopCallback(
         action=ShopAction.PRODUCTS,
         category_id=product.category_id,
+    ),
+)
+
+
+ADD_TO_CART: Button[ShopProductView] = Button(
+    text=label(shop_texts.ADD_TO_CART_BUTTON),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.ADD,
+        product_id=product.id,
+    ),
+    when=lambda product: product.is_in_stock and not product.variants,
+    style=ButtonStyle.PRIMARY,
+)
+
+PICK_VARIANT: Button[ShopProductView] = Button(
+    text=label(shop_texts.PICK_VARIANT_BUTTON),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.VARIANTS,
+        product_id=product.id,
+    ),
+    when=lambda product: product.is_in_stock and bool(product.variants),
+    style=ButtonStyle.PRIMARY,
+)
+
+VARIANT_PICK: Button[ShopVariantPickView] = Button(
+    text=lambda pick, translate: translate(
+        shop_texts.VARIANT_ENTRY,
+        title=pick.title,
+        price=money_text(pick.price),
+    ),
+    callback=lambda pick: ShopCallback(
+        action=ShopAction.ADD,
+        product_id=pick.product_id,
+        variant_id=pick.variant_id,
+    ),
+)
+
+
+def open_cart[ViewType]() -> Button[ViewType]:
+    return Button(
+        text=label(shop_texts.OPEN_CART_BUTTON),
+        callback=lambda _: ShopCallback(action=ShopAction.CART),
+    )
+
+
+BACK_TO_PRODUCT: Button[ShopProductView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.PRODUCT,
+        product_id=product.id,
     ),
 )

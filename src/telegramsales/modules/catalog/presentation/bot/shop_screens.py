@@ -9,22 +9,28 @@ from telegramsales.modules.catalog.application.queries import (
 from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.presentation.bot import shop_texts
 from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
+    ADD_TO_CART,
     BACK_TO_CATALOG,
     BACK_TO_PARENT,
+    BACK_TO_PRODUCT,
     BACK_TO_PRODUCTS,
     CATALOG_ENTRY,
     CATEGORY_ENTRY,
     OPEN_PRODUCTS,
+    PICK_VARIANT,
     PRODUCT_ENTRY,
     PRODUCTS_BACK_TO_CATALOG,
     PRODUCTS_BACK_TO_CATEGORY,
     PRODUCTS_BACK_TO_PARENT,
+    VARIANT_PICK,
     back_to_catalogs,
+    open_cart,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
     ShopCatalogPageView,
     ShopProductsView,
+    ShopVariantPickView,
     shop_product_card_key,
 )
 from telegramsales.shared.application.i18n import ITranslator
@@ -138,5 +144,16 @@ def _card_content(product: ShopProductView, translate: ITranslator) -> Content:
 
 PRODUCT_CARD: Screen[ShopProductView] = Screen(
     content=_card_content,
-    buttons=[BACK_TO_PRODUCTS],
+    buttons=[ADD_TO_CART, PICK_VARIANT, open_cart(), BACK_TO_PRODUCTS],
+    layout=(2, 1),
+)
+
+VARIANT_PICKER: ListScreen[ShopVariantPickView, ShopProductView] = ListScreen(
+    content=lambda product, translate: translate(
+        shop_texts.VARIANT_PICKER,
+        title=product.title,
+        label=product.variant_label or "",
+    ),
+    item=VARIANT_PICK,
+    footer=[BACK_TO_PRODUCT],
 )
