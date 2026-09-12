@@ -60,12 +60,14 @@ OPEN_STAFF: Button[MenuView] = Button(
     text=label(texts.OPEN_STAFF_BUTTON),
     callback=lambda _: StaffCallback(action=StaffAction.LIST),
     permission=StaffPermission.VIEW_STAFF,
+    when=lambda view: not view.is_shopping,
 )
 
 OPEN_CATALOG: Button[MenuView] = Button(
     text=label(texts.OPEN_CATALOG_BUTTON),
     callback=lambda _: CatalogCallback(action=CatalogAction.HUB),
     permission=CatalogPermission.MANAGE,
+    when=lambda view: not view.is_shopping,
 )
 
 SWITCH_VIEW: Button[MenuView] = Button(

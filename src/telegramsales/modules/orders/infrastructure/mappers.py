@@ -29,6 +29,7 @@ from telegramsales.modules.orders.infrastructure.models import (
     SelectionLineORM,
     SelectionORM,
 )
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.domain.contacts import (
     Address,
     Contacts,
@@ -152,6 +153,7 @@ def order_to_entity(model: OrderORM, lines: list[OrderLineORM]) -> Order:
         comment=Comment(model.comment),
         created_at=model.created_at,
         status=OrderStatus(model.status),
+        manager_id=None if model.manager_id is None else StaffId(model.manager_id),
         lines=tuple(
             OrderLine(
                 reference=_reference(line.product_id, line.variant_id),
@@ -175,6 +177,7 @@ def order_to_model(entity: Order) -> OrderORM:
     return OrderORM(
         id=entity.id,
         customer_id=entity.customer_id,
+        manager_id=entity.manager_id,
         order_date=entity.number.day,
         sequence=entity.number.sequence,
         status=entity.status.value,

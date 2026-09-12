@@ -117,6 +117,11 @@ class OrderORM(WithCreatedAtMixin, BaseORM):
         ForeignKey("customers.id", ondelete="RESTRICT"),
         index=True,
     )
+    manager_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("staff_members.id", ondelete="RESTRICT"),
+        index=True,
+    )
     order_date: Mapped[date] = mapped_column(Date, index=True)
     sequence: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(STATUS_LENGTH), index=True)

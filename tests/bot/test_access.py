@@ -6,6 +6,7 @@ import pytest
 from telegramsales.apps.bot.access import ROLE_PERMISSIONS, StaticPermissionResolver
 from telegramsales.apps.bot.menu import MAIN_MENU, MenuView
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
+from telegramsales.modules.orders.domain.permissions import OrdersPermission
 from telegramsales.modules.staff.domain.enums import StaffRole
 from telegramsales.modules.staff.domain.permissions import StaffPermission
 from telegramsales.shared.application.access import Actor, PermissionCode
@@ -18,7 +19,11 @@ DEFAULT_LOCALE = "ru"
 TRANSLATE = FluentTranslations(LOCALES_PATH, DEFAULT_LOCALE)(DEFAULT_LOCALE)
 RESOLVER = StaticPermissionResolver()
 
-MODULE_PERMISSIONS: tuple[StrEnum, ...] = (*StaffPermission, *CatalogPermission)
+MODULE_PERMISSIONS: tuple[StrEnum, ...] = (
+    *StaffPermission,
+    *CatalogPermission,
+    *OrdersPermission,
+)
 NOTHING: frozenset[PermissionCode] = frozenset()
 
 
@@ -68,6 +73,13 @@ def test_manager_runs_the_catalog() -> None:
     assert CatalogPermission.MANAGE.value in granted
 
 
+def test_manager_runs_the_orders() -> None:
+    granted = RESOLVER.permissions_of(StaffRole.MANAGER)
+
+    assert OrdersPermission.VIEW_ORDERS.value in granted
+    assert OrdersPermission.MANAGE_ORDERS.value in granted
+
+
 def test_manager_does_not_manage_staff() -> None:
     granted = RESOLVER.permissions_of(StaffRole.MANAGER)
 
@@ -97,12 +109,18 @@ def test_manager_sees_only_the_staff_side() -> None:
     assert menu_of(StaffRole.MANAGER) == [*STAFF_MENU, SHOP_MODE_ON]
 
 
-def test_staff_in_the_customer_view_sees_both_sides() -> None:
+def test_staff_in_the_customer_view_sees_the_shop_and_the_way_back() -> None:
     assert menu_of(StaffRole.MANAGER, is_shopping=True) == [
         *CUSTOMER_MENU,
-        *STAFF_MENU,
         SHOP_MODE_OFF,
     ]
+
+
+def test_staff_in_the_customer_view_keeps_no_admin_buttons() -> None:
+    shown = menu_of(StaffRole.OWNER, is_shopping=True)
+
+    assert CATALOG not in shown
+    assert STAFF not in shown
 
 
 def test_customer_sees_only_the_shop_side() -> None:

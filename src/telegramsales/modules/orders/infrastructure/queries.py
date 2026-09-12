@@ -19,7 +19,12 @@ from telegramsales.modules.orders.application.queries import (
     OrderView,
     SelectionRow,
 )
-from telegramsales.modules.orders.contracts import CartItemId, OrderId, SelectionId
+from telegramsales.modules.orders.contracts import (
+    CartItemId,
+    IOrderPresence,
+    OrderId,
+    SelectionId,
+)
 from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.values import OrderNumber
 from telegramsales.modules.orders.infrastructure.models import (
@@ -234,3 +239,15 @@ class OrderQueries(IOrderQueries):
             ),
             total=_money(order.total, order.currency),
         )
+
+
+class OrderPresence(IOrderPresence):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session: AsyncSession = session
+
+    @override
+    async def has_orders(self, customer_id: CustomerId) -> bool:
+        query = select(
+            select(OrderORM.id).where(OrderORM.customer_id == customer_id).exists()
+        )
+        return (await self._session.execute(query)).scalar_one()

@@ -25,6 +25,7 @@ from telegramsales.modules.orders.domain.entities import (
     OrderLine,
     Selection,
 )
+from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.values import (
     Comment,
     OrderNumber,
@@ -33,6 +34,7 @@ from telegramsales.modules.orders.domain.values import (
 )
 from telegramsales.modules.orders.infrastructure.queries import (
     CartQueries,
+    OrderPresence,
     OrderQueries,
     SelectionQueries,
 )
@@ -41,6 +43,7 @@ from telegramsales.modules.orders.infrastructure.repositories import (
     OrderRepository,
     SelectionRepository,
 )
+from telegramsales.modules.staff.infrastructure.repositories import StaffRepository
 from tests.catalog.test_product_persistence import store_product
 from tests.orders.factories import (
     NOW,
@@ -49,6 +52,7 @@ from tests.orders.factories import (
     make_selection_line,
     rub,
 )
+from tests.staff.factories import MEMBER, make_member
 
 pytestmark = pytest.mark.db
 
@@ -392,3 +396,39 @@ async def test_an_unknown_selection_has_no_author(
     found = await SelectionQueries(session).author_of(SelectionId(uuid4()))
 
     assert found is None
+
+
+async def store_manager(session: AsyncSession) -> None:
+    await StaffRepository(session).add(make_member())
+
+
+async def test_a_taken_order_remembers_its_manager(session: AsyncSession) -> None:
+    await store_customer(session)
+    await store_manager(session)
+    repository = OrderRepository(session)
+    stored = await make_order(session)
+    stored.take_in_work(MEMBER)
+    await repository.save(stored)
+
+    loaded = await repository.get(stored.id)
+
+    assert loaded is not None
+    assert loaded.manager_id == MEMBER
+    assert loaded.status is OrderStatus.IN_WORK
+
+
+async def test_a_customer_without_orders_is_absent(session: AsyncSession) -> None:
+    await store_customer(session)
+
+    assert not await OrderPresence(session).has_orders(BUYER)
+
+
+async def test_a_customer_with_an_order_is_present(session: AsyncSession) -> None:
+    await store_customer(session)
+    await store_customer(session, FRIEND, "Пётр")
+    await make_order(session)
+
+    presence = OrderPresence(session)
+
+    assert await presence.has_orders(BUYER)
+    assert not await presence.has_orders(FRIEND)

@@ -63,6 +63,32 @@ class MixedCurrencyOrderError(DomainError):
         super().__init__("all order lines must share one currency")
 
 
+class OrderIsClosedError(DomainError):
+    def __init__(self, *, order_id: OrderId, status: OrderStatus) -> None:
+        super().__init__(
+            f"order {order_id} is {status} and accepts no further changes",
+            details={"order_id": str(order_id), "status": status},
+        )
+
+
+class ForbiddenStatusChangeError(DomainError):
+    def __init__(
+        self,
+        *,
+        order_id: OrderId,
+        status: OrderStatus,
+        requested: OrderStatus,
+    ) -> None:
+        super().__init__(
+            f"order {order_id} cannot go from {status} to {requested}",
+            details={
+                "order_id": str(order_id),
+                "status": status,
+                "requested": requested,
+            },
+        )
+
+
 class OrderAlreadyTakenError(DomainError):
     def __init__(self, *, order_id: OrderId, status: OrderStatus) -> None:
         super().__init__(

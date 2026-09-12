@@ -3,26 +3,45 @@ import pytest
 from telegramsales.modules.customers.contracts import CustomerId
 from telegramsales.modules.orders.application.commands.orders import (
     CancelOrder,
+    CancelOrderByManager,
+    CancelOrderByManagerHandler,
     CancelOrderHandler,
+    ChangeOrderStatus,
+    ChangeOrderStatusHandler,
     PlaceOrder,
     PlaceOrderHandler,
+    TakeOrderInWork,
+    TakeOrderInWorkHandler,
 )
 from telegramsales.modules.orders.application.exceptions import (
     CartHasUnavailableLinesError,
     CustomerCannotOrderError,
     OrderNotFoundError,
 )
+from telegramsales.modules.orders.domain.entities import Order
 from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.events import (
     OrderCancelled,
     OrderPlaced,
+    OrderStatusChanged,
+    OrderTaken,
 )
-from telegramsales.modules.orders.domain.exceptions import EmptyCartError
+from telegramsales.modules.orders.domain.exceptions import (
+    EmptyCartError,
+    ForbiddenStatusChangeError,
+    OrderAlreadyTakenError,
+)
+from telegramsales.modules.orders.domain.permissions import OrdersPermission
 from telegramsales.modules.orders.domain.values import Comment
+from telegramsales.shared.application.access import (
+    Actor,
+    PermissionDeniedError,
+)
 from tests.orders.factories import (
     BUYER,
     COAT,
     DRESS,
+    MANAGER,
     NOW,
     ORDER,
     SIZE_M,
@@ -30,6 +49,7 @@ from tests.orders.factories import (
     make_cart_item,
     make_contacts,
     make_order,
+    make_taken_order,
     rub,
 )
 from tests.orders.fakes import (
@@ -45,6 +65,11 @@ from tests.orders.fakes import (
 )
 
 CLOCK = FixedClock(NOW)
+MANAGER_ACTOR = Actor(
+    id=MANAGER,
+    permissions=frozenset({OrdersPermission.MANAGE_ORDERS.value}),
+)
+CUSTOMER_ACTOR = Actor(id=BUYER, permissions=frozenset())
 
 
 def placing(
@@ -193,6 +218,11 @@ async def test_placing_publishes_the_event() -> None:
     assert [type(event) for event in events.published] == [OrderPlaced]
 
 
+def managing(order: Order) -> tuple[FakeOrdersUnitOfWork, FakeEventPublisher]:
+    uow = FakeOrdersUnitOfWork(orders=FakeOrderRepository(order))
+    return uow, FakeEventPublisher()
+
+
 async def test_a_customer_cancels_an_open_order() -> None:
     uow = FakeOrdersUnitOfWork(orders=FakeOrderRepository(make_order()))
     events = FakeEventPublisher()
@@ -214,7 +244,10 @@ async def test_cancelling_publishes_the_event() -> None:
         CancelOrder(customer_id=BUYER, order_id=ORDER)
     )
 
-    assert [type(event) for event in events.published] == [OrderCancelled]
+    assert [type(event) for event in events.published] == [
+        OrderStatusChanged,
+        OrderCancelled,
+    ]
 
 
 async def test_a_stranger_cannot_cancel_an_order() -> None:
@@ -232,4 +265,124 @@ async def test_an_unknown_order_cannot_be_cancelled() -> None:
     with pytest.raises(OrderNotFoundError):
         await CancelOrderHandler(uow, FakeEventPublisher()).handle(
             CancelOrder(customer_id=BUYER, order_id=ORDER)
+        )
+
+
+async def test_a_manager_takes_an_order_in_work() -> None:
+    uow, events = managing(make_order())
+
+    await TakeOrderInWorkHandler(uow, events).handle(
+        TakeOrderInWork(order_id=ORDER),
+        MANAGER_ACTOR,
+    )
+    taken = uow.order_repository.orders[ORDER]
+
+    assert taken.status is OrderStatus.IN_WORK
+    assert taken.manager_id == MANAGER
+
+
+async def test_taking_an_order_publishes_the_events() -> None:
+    uow, events = managing(make_order())
+
+    await TakeOrderInWorkHandler(uow, events).handle(
+        TakeOrderInWork(order_id=ORDER),
+        MANAGER_ACTOR,
+    )
+
+    assert [type(event) for event in events.published] == [
+        OrderPlaced,
+        OrderStatusChanged,
+        OrderTaken,
+    ]
+
+
+async def test_a_stranger_cannot_take_an_order_in_work() -> None:
+    uow, events = managing(make_order())
+
+    with pytest.raises(PermissionDeniedError):
+        await TakeOrderInWorkHandler(uow, events).handle(
+            TakeOrderInWork(order_id=ORDER),
+            CUSTOMER_ACTOR,
+        )
+
+
+async def test_an_unknown_order_cannot_be_taken() -> None:
+    uow = FakeOrdersUnitOfWork()
+
+    with pytest.raises(OrderNotFoundError):
+        await TakeOrderInWorkHandler(uow, FakeEventPublisher()).handle(
+            TakeOrderInWork(order_id=ORDER),
+            MANAGER_ACTOR,
+        )
+
+
+async def test_a_manager_moves_the_status() -> None:
+    uow, events = managing(make_taken_order())
+
+    await ChangeOrderStatusHandler(uow, events).handle(
+        ChangeOrderStatus(order_id=ORDER, status=OrderStatus.PAID),
+        MANAGER_ACTOR,
+    )
+
+    assert uow.order_repository.orders[ORDER].status is OrderStatus.PAID
+    assert [type(event) for event in events.published] == [OrderStatusChanged]
+
+
+async def test_a_fresh_order_cannot_skip_being_taken() -> None:
+    uow, events = managing(make_order())
+
+    with pytest.raises(ForbiddenStatusChangeError):
+        await ChangeOrderStatusHandler(uow, events).handle(
+            ChangeOrderStatus(order_id=ORDER, status=OrderStatus.PAID),
+            MANAGER_ACTOR,
+        )
+
+
+async def test_a_stranger_cannot_move_the_status() -> None:
+    uow, events = managing(make_taken_order())
+
+    with pytest.raises(PermissionDeniedError):
+        await ChangeOrderStatusHandler(uow, events).handle(
+            ChangeOrderStatus(order_id=ORDER, status=OrderStatus.PAID),
+            CUSTOMER_ACTOR,
+        )
+
+
+async def test_a_manager_cancels_an_order_the_customer_no_longer_can() -> None:
+    order = make_taken_order()
+    uow, events = managing(order)
+
+    with pytest.raises(OrderAlreadyTakenError):
+        await CancelOrderHandler(uow, events).handle(
+            CancelOrder(customer_id=BUYER, order_id=ORDER)
+        )
+
+    await CancelOrderByManagerHandler(uow, events).handle(
+        CancelOrderByManager(order_id=ORDER),
+        MANAGER_ACTOR,
+    )
+
+    assert uow.order_repository.orders[ORDER].status is OrderStatus.CANCELLED
+
+
+async def test_a_manager_cancellation_names_the_manager() -> None:
+    uow, events = managing(make_taken_order())
+
+    await CancelOrderByManagerHandler(uow, events).handle(
+        CancelOrderByManager(order_id=ORDER),
+        MANAGER_ACTOR,
+    )
+    cancelled = events.published[1]
+
+    assert isinstance(cancelled, OrderCancelled)
+    assert cancelled.manager_id == MANAGER
+
+
+async def test_a_stranger_cannot_cancel_as_a_manager() -> None:
+    uow, events = managing(make_taken_order())
+
+    with pytest.raises(PermissionDeniedError):
+        await CancelOrderByManagerHandler(uow, events).handle(
+            CancelOrderByManager(order_id=ORDER),
+            CUSTOMER_ACTOR,
         )

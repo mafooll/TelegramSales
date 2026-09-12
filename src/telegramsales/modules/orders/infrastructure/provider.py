@@ -16,13 +16,17 @@ from telegramsales.modules.orders.application.commands.cart import (
     RemoveCartItemHandler,
 )
 from telegramsales.modules.orders.application.commands.orders import (
+    CancelOrderByManagerHandler,
     CancelOrderHandler,
+    ChangeOrderStatusHandler,
     PlaceOrderHandler,
+    TakeOrderInWorkHandler,
 )
 from telegramsales.modules.orders.application.commands.selections import (
     AdoptSelectionHandler,
     ShareCartHandler,
 )
+from telegramsales.modules.orders.application.desk import OrderDesk
 from telegramsales.modules.orders.application.ports import (
     ICartQueries,
     IOrderQueries,
@@ -33,8 +37,10 @@ from telegramsales.modules.orders.application.readers import (
     CartReader,
     SelectionReader,
 )
+from telegramsales.modules.orders.contracts import IOrderDesk, IOrderPresence
 from telegramsales.modules.orders.infrastructure.queries import (
     CartQueries,
+    OrderPresence,
     OrderQueries,
     SelectionQueries,
 )
@@ -62,6 +68,19 @@ class OrdersProvider(Provider):
     def order_queries(self, session: AsyncSession) -> IOrderQueries:
         return OrderQueries(session)
 
+    @provide
+    def order_presence(self, session: AsyncSession) -> IOrderPresence:
+        return OrderPresence(session)
+
+    @provide
+    def order_desk(
+        self,
+        take: TakeOrderInWorkHandler,
+        change: ChangeOrderStatusHandler,
+        cancel: CancelOrderByManagerHandler,
+    ) -> IOrderDesk:
+        return OrderDesk(take, change, cancel)
+
     readers = provide_all(CartReader, SelectionReader)
 
     handlers = provide_all(
@@ -74,4 +93,7 @@ class OrdersProvider(Provider):
         AdoptSelectionHandler,
         PlaceOrderHandler,
         CancelOrderHandler,
+        TakeOrderInWorkHandler,
+        ChangeOrderStatusHandler,
+        CancelOrderByManagerHandler,
     )

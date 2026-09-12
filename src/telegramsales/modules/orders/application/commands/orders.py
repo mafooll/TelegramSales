@@ -6,6 +6,7 @@ from telegramsales.modules.customers.contracts import (
     CustomerId,
     ICustomerDirectory,
 )
+from telegramsales.modules.orders.application.access import ensure_can_manage
 from telegramsales.modules.orders.application.exceptions import (
     CartHasUnavailableLinesError,
     CustomerCannotOrderError,
@@ -14,8 +15,11 @@ from telegramsales.modules.orders.application.exceptions import (
 from telegramsales.modules.orders.application.ports import IOrdersUnitOfWork
 from telegramsales.modules.orders.contracts import OrderId
 from telegramsales.modules.orders.domain.entities import Order, OrderLine
+from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.services import ensure_cart_is_not_empty
 from telegramsales.modules.orders.domain.values import Comment, OrderNumber
+from telegramsales.modules.staff.contracts import StaffId
+from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.clock import IClock
 from telegramsales.shared.application.events import IEventPublisher
 from telegramsales.shared.domain.contacts import Contacts
@@ -32,6 +36,29 @@ class PlaceOrder:
 class CancelOrder:
     customer_id: CustomerId
     order_id: OrderId
+
+
+@dataclass(frozen=True, slots=True)
+class TakeOrderInWork:
+    order_id: OrderId
+
+
+@dataclass(frozen=True, slots=True)
+class ChangeOrderStatus:
+    order_id: OrderId
+    status: OrderStatus
+
+
+@dataclass(frozen=True, slots=True)
+class CancelOrderByManager:
+    order_id: OrderId
+
+
+async def _managed_order(uow: IOrdersUnitOfWork, order_id: OrderId) -> Order:
+    order = await uow.orders.get(order_id)
+    if order is None:
+        raise OrderNotFoundError(order_id=order_id)
+    return order
 
 
 class PlaceOrderHandler:
@@ -132,6 +159,57 @@ class CancelOrderHandler:
                 raise OrderNotFoundError(order_id=command.order_id)
 
             order.cancel_by_customer()
+            uow.track(order)
+            await uow.orders.save(order)
+
+        await self._events.publish_all(self._uow.collect_events())
+
+
+class TakeOrderInWorkHandler:
+    def __init__(self, uow: IOrdersUnitOfWork, events: IEventPublisher) -> None:
+        self._uow: IOrdersUnitOfWork = uow
+        self._events: IEventPublisher = events
+
+    async def handle(self, command: TakeOrderInWork, actor: Actor) -> None:
+        ensure_can_manage(actor)
+
+        async with self._uow as uow:
+            order = await _managed_order(uow, command.order_id)
+            order.take_in_work(StaffId(actor.id))
+            uow.track(order)
+            await uow.orders.save(order)
+
+        await self._events.publish_all(self._uow.collect_events())
+
+
+class ChangeOrderStatusHandler:
+    def __init__(self, uow: IOrdersUnitOfWork, events: IEventPublisher) -> None:
+        self._uow: IOrdersUnitOfWork = uow
+        self._events: IEventPublisher = events
+
+    async def handle(self, command: ChangeOrderStatus, actor: Actor) -> None:
+        ensure_can_manage(actor)
+
+        async with self._uow as uow:
+            order = await _managed_order(uow, command.order_id)
+            order.change_status(command.status)
+            uow.track(order)
+            await uow.orders.save(order)
+
+        await self._events.publish_all(self._uow.collect_events())
+
+
+class CancelOrderByManagerHandler:
+    def __init__(self, uow: IOrdersUnitOfWork, events: IEventPublisher) -> None:
+        self._uow: IOrdersUnitOfWork = uow
+        self._events: IEventPublisher = events
+
+    async def handle(self, command: CancelOrderByManager, actor: Actor) -> None:
+        ensure_can_manage(actor)
+
+        async with self._uow as uow:
+            order = await _managed_order(uow, command.order_id)
+            order.cancel_by_manager(StaffId(actor.id))
             uow.track(order)
             await uow.orders.save(order)
 

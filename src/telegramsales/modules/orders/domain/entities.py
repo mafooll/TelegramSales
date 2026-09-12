@@ -8,13 +8,24 @@ from telegramsales.modules.orders.contracts import (
     OrderId,
     SelectionId,
 )
-from telegramsales.modules.orders.domain.enums import OrderStatus
-from telegramsales.modules.orders.domain.events import OrderCancelled, OrderPlaced
+from telegramsales.modules.orders.domain.enums import (
+    CLOSED_STATUSES,
+    NEXT_STATUSES,
+    OrderStatus,
+)
+from telegramsales.modules.orders.domain.events import (
+    OrderCancelled,
+    OrderPlaced,
+    OrderStatusChanged,
+    OrderTaken,
+)
 from telegramsales.modules.orders.domain.exceptions import (
     EmptyOrderError,
     EmptySelectionError,
+    ForbiddenStatusChangeError,
     MixedCurrencyOrderError,
     OrderAlreadyTakenError,
+    OrderIsClosedError,
 )
 from telegramsales.modules.orders.domain.values import (
     Comment,
@@ -22,6 +33,7 @@ from telegramsales.modules.orders.domain.values import (
     ProductRef,
     Quantity,
 )
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.domain.contacts import Contacts
 from telegramsales.shared.domain.entity import DomainEntity
 from telegramsales.shared.domain.money import Money
@@ -117,6 +129,7 @@ class Order(DomainEntity[OrderId]):
     created_at: datetime
     lines: tuple[OrderLine, ...] = ()
     status: OrderStatus = OrderStatus.PLACED
+    manager_id: StaffId | None = None
     total: Money = field(init=False)
 
     def __post_init__(self) -> None:
@@ -168,15 +181,68 @@ class Order(DomainEntity[OrderId]):
     def is_open(self) -> bool:
         return self.status is OrderStatus.PLACED
 
+    @property
+    def is_closed(self) -> bool:
+        return self.status in CLOSED_STATUSES
+
+    def take_in_work(self, manager_id: StaffId) -> None:
+        if self.is_closed:
+            raise OrderIsClosedError(order_id=self.id, status=self.status)
+
+        self.manager_id = manager_id
+        if self.is_open:
+            self._move_to(OrderStatus.IN_WORK)
+        self.register_event(
+            OrderTaken(
+                order_id=self.id,
+                number=self.number.value,
+                customer_id=self.customer_id,
+                manager_id=manager_id,
+            )
+        )
+
+    def change_status(self, status: OrderStatus) -> None:
+        if status not in NEXT_STATUSES[self.status]:
+            raise ForbiddenStatusChangeError(
+                order_id=self.id,
+                status=self.status,
+                requested=status,
+            )
+
+        self._move_to(status)
+
     def cancel_by_customer(self) -> None:
         if not self.is_open:
             raise OrderAlreadyTakenError(order_id=self.id, status=self.status)
 
-        self.status = OrderStatus.CANCELLED
+        self._cancel(by_manager=None)
+
+    def cancel_by_manager(self, manager_id: StaffId) -> None:
+        if self.is_closed:
+            raise OrderIsClosedError(order_id=self.id, status=self.status)
+
+        self._cancel(by_manager=manager_id)
+
+    def _cancel(self, *, by_manager: StaffId | None) -> None:
+        self._move_to(OrderStatus.CANCELLED)
         self.register_event(
             OrderCancelled(
                 order_id=self.id,
                 number=self.number.value,
                 customer_id=self.customer_id,
+                manager_id=by_manager,
+            )
+        )
+
+    def _move_to(self, status: OrderStatus) -> None:
+        previous = self.status
+        self.status = status
+        self.register_event(
+            OrderStatusChanged(
+                order_id=self.id,
+                number=self.number.value,
+                customer_id=self.customer_id,
+                previous=previous,
+                status=status,
             )
         )

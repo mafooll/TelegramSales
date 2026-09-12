@@ -15,12 +15,14 @@ from telegramsales.modules.orders.domain.entities import (
     Selection,
     SelectionLine,
 )
+from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.values import (
     Comment,
     OrderNumber,
     ProductRef,
     Quantity,
 )
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.domain.contacts import (
     Address,
     Contacts,
@@ -34,6 +36,9 @@ TODAY = date(2026, 9, 12)
 
 BUYER = CustomerId(1000)
 STRANGER = CustomerId(2000)
+
+MANAGER = StaffId(3000)
+OTHER_MANAGER = StaffId(3001)
 
 COAT = ProductId(UUID("11111111-1111-1111-1111-111111111111"))
 DRESS = ProductId(UUID("22222222-2222-2222-2222-222222222222"))
@@ -121,6 +126,18 @@ def make_order(
         lines=lines or (make_order_line(),),
         now=NOW,
     )
+
+
+def make_taken_order(
+    status: OrderStatus = OrderStatus.IN_WORK,
+    *,
+    manager_id: StaffId = MANAGER,
+) -> Order:
+    order = make_order()
+    order.take_in_work(manager_id)
+    order.status = status
+    _ = order.collect_events()
+    return order
 
 
 def make_selection_line(

@@ -7,12 +7,16 @@ from telegramsales.modules.orders.domain.enums import OrderStatus
 from telegramsales.modules.orders.domain.events import (
     OrderCancelled,
     OrderPlaced,
+    OrderStatusChanged,
+    OrderTaken,
 )
 from telegramsales.modules.orders.domain.exceptions import (
     EmptyOrderError,
     EmptySelectionError,
+    ForbiddenStatusChangeError,
     MixedCurrencyOrderError,
     OrderAlreadyTakenError,
+    OrderIsClosedError,
     QuantityTooLargeError,
 )
 from telegramsales.modules.orders.domain.services import capped_quantity
@@ -24,8 +28,10 @@ from telegramsales.modules.orders.domain.values import (
 )
 from tests.orders.factories import (
     BUYER,
+    MANAGER,
     NOW,
     ORDER,
+    OTHER_MANAGER,
     SELECTION,
     SIZE_M,
     TODAY,
@@ -34,6 +40,7 @@ from tests.orders.factories import (
     make_order,
     make_order_line,
     make_selection,
+    make_taken_order,
     rub,
     usd,
 )
@@ -142,13 +149,27 @@ def test_a_customer_can_cancel_a_fresh_order() -> None:
     assert order.status is OrderStatus.CANCELLED
 
 
-def test_cancelling_registers_an_event() -> None:
+def test_cancelling_registers_both_events() -> None:
     order = make_order()
     _ = order.collect_events()
 
     order.cancel_by_customer()
 
-    assert [type(event) for event in order.collect_events()] == [OrderCancelled]
+    assert [type(event) for event in order.collect_events()] == [
+        OrderStatusChanged,
+        OrderCancelled,
+    ]
+
+
+def test_a_customer_cancellation_names_no_manager() -> None:
+    order = make_order()
+    _ = order.collect_events()
+
+    order.cancel_by_customer()
+    cancelled = order.collect_events()[1]
+
+    assert isinstance(cancelled, OrderCancelled)
+    assert cancelled.manager_id is None
 
 
 def test_a_taken_order_cannot_be_cancelled_by_the_customer() -> None:
@@ -165,6 +186,116 @@ def test_an_order_cannot_be_cancelled_twice() -> None:
 
     with pytest.raises(OrderAlreadyTakenError):
         order.cancel_by_customer()
+
+
+def test_taking_an_order_moves_it_into_work() -> None:
+    order = make_order()
+
+    order.take_in_work(MANAGER)
+
+    assert order.status is OrderStatus.IN_WORK
+    assert order.manager_id == MANAGER
+
+
+def test_taking_an_order_registers_both_events() -> None:
+    order = make_order()
+    _ = order.collect_events()
+
+    order.take_in_work(MANAGER)
+
+    assert [type(event) for event in order.collect_events()] == [
+        OrderStatusChanged,
+        OrderTaken,
+    ]
+
+
+def test_another_manager_takes_over_without_moving_the_status() -> None:
+    order = make_taken_order(OrderStatus.PAID)
+
+    order.take_in_work(OTHER_MANAGER)
+
+    assert order.manager_id == OTHER_MANAGER
+    assert order.status is OrderStatus.PAID
+    assert [type(event) for event in order.collect_events()] == [OrderTaken]
+
+
+def test_a_closed_order_cannot_be_taken() -> None:
+    order = make_taken_order(OrderStatus.DONE)
+
+    with pytest.raises(OrderIsClosedError):
+        order.take_in_work(MANAGER)
+
+
+@pytest.mark.parametrize(
+    ("status", "requested"),
+    [
+        (OrderStatus.IN_WORK, OrderStatus.PAID),
+        (OrderStatus.IN_WORK, OrderStatus.SHIPPED),
+        (OrderStatus.IN_WORK, OrderStatus.DONE),
+        (OrderStatus.PAID, OrderStatus.SHIPPED),
+        (OrderStatus.PAID, OrderStatus.DONE),
+        (OrderStatus.SHIPPED, OrderStatus.DONE),
+    ],
+)
+def test_a_manager_moves_the_order_forward(
+    status: OrderStatus,
+    requested: OrderStatus,
+) -> None:
+    order = make_taken_order(status)
+
+    order.change_status(requested)
+
+    assert order.status is requested
+
+
+@pytest.mark.parametrize(
+    ("status", "requested"),
+    [
+        (OrderStatus.PLACED, OrderStatus.PAID),
+        (OrderStatus.IN_WORK, OrderStatus.IN_WORK),
+        (OrderStatus.SHIPPED, OrderStatus.PAID),
+        (OrderStatus.DONE, OrderStatus.SHIPPED),
+        (OrderStatus.CANCELLED, OrderStatus.IN_WORK),
+        (OrderStatus.IN_WORK, OrderStatus.CANCELLED),
+    ],
+)
+def test_the_order_refuses_a_backward_step(
+    status: OrderStatus,
+    requested: OrderStatus,
+) -> None:
+    order = make_taken_order(status)
+
+    with pytest.raises(ForbiddenStatusChangeError):
+        order.change_status(requested)
+
+
+def test_a_status_change_carries_both_ends() -> None:
+    order = make_taken_order()
+
+    order.change_status(OrderStatus.PAID)
+    event = order.collect_events()[0]
+
+    assert isinstance(event, OrderStatusChanged)
+    assert event.previous is OrderStatus.IN_WORK
+    assert event.status is OrderStatus.PAID
+
+
+def test_a_manager_cancels_an_order_already_in_work() -> None:
+    order = make_taken_order()
+
+    order.cancel_by_manager(MANAGER)
+    cancelled = order.collect_events()[1]
+
+    assert order.status is OrderStatus.CANCELLED
+    assert isinstance(cancelled, OrderCancelled)
+    assert cancelled.manager_id == MANAGER
+
+
+def test_a_closed_order_cannot_be_cancelled_by_the_manager() -> None:
+    order = make_taken_order(OrderStatus.DONE)
+
+    with pytest.raises(OrderIsClosedError):
+        order.cancel_by_manager(MANAGER)
 
 
 def test_a_selection_without_lines_is_rejected() -> None:

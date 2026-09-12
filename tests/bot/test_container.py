@@ -17,8 +17,11 @@ from telegramsales.modules.orders.application.commands.cart import (
     RemoveCartItemHandler,
 )
 from telegramsales.modules.orders.application.commands.orders import (
+    CancelOrderByManagerHandler,
     CancelOrderHandler,
+    ChangeOrderStatusHandler,
     PlaceOrderHandler,
+    TakeOrderInWorkHandler,
 )
 from telegramsales.modules.orders.application.commands.selections import (
     AdoptSelectionHandler,
@@ -29,6 +32,7 @@ from telegramsales.modules.orders.application.readers import (
     CartReader,
     SelectionReader,
 )
+from telegramsales.modules.orders.contracts import IOrderDesk, IOrderPresence
 from telegramsales.modules.staff.application.commands.preferences import (
     SwitchCustomerViewHandler,
 )
@@ -42,6 +46,8 @@ REQUESTED = [
     ICustomerDirectory,
     IStaffQueries,
     IOrderQueries,
+    IOrderPresence,
+    IOrderDesk,
     CartReader,
     SelectionReader,
     AddToCartHandler,
@@ -53,6 +59,9 @@ REQUESTED = [
     AdoptSelectionHandler,
     PlaceOrderHandler,
     CancelOrderHandler,
+    TakeOrderInWorkHandler,
+    ChangeOrderStatusHandler,
+    CancelOrderByManagerHandler,
     SwitchCustomerViewHandler,
 ]
 
