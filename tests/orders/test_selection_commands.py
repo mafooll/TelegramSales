@@ -160,9 +160,7 @@ async def test_adopting_adds_up_with_what_is_already_there() -> None:
         ),
     )
 
-    await handler.handle(
-        AdoptSelection(customer_id=BUYER, selection_id=SELECTION)
-    )
+    await handler.handle(AdoptSelection(customer_id=BUYER, selection_id=SELECTION))
 
     assert uow.cart_repository.items[CART_ITEM].quantity == Quantity(5)
 
@@ -175,9 +173,7 @@ async def test_adopting_never_passes_the_limit() -> None:
         ),
     )
 
-    await handler.handle(
-        AdoptSelection(customer_id=BUYER, selection_id=SELECTION)
-    )
+    await handler.handle(AdoptSelection(customer_id=BUYER, selection_id=SELECTION))
 
     assert uow.cart_repository.items[CART_ITEM].quantity == Quantity(MAX_QUANTITY)
 

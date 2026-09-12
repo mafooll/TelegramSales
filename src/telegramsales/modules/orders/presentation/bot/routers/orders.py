@@ -67,9 +67,7 @@ async def show_order(
 ) -> None:
     order = await _order(queries, context, callback_data.order_id)
     if order is None:
-        await callback.answer(
-            context.translate(texts.ORDER_GONE), show_alert=True
-        )
+        await callback.answer(context.translate(texts.ORDER_GONE), show_alert=True)
         return
 
     await callback.answer()
@@ -85,9 +83,7 @@ async def ask_to_cancel(
 ) -> None:
     order = await _order(queries, context, callback_data.order_id)
     if order is None:
-        await callback.answer(
-            context.translate(texts.ORDER_GONE), show_alert=True
-        )
+        await callback.answer(context.translate(texts.ORDER_GONE), show_alert=True)
         return
 
     await callback.answer()

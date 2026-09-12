@@ -75,9 +75,7 @@ def order_for(customer_id: CustomerId = BUYER) -> PlaceOrder:
 
 
 async def test_an_order_takes_its_lines_from_the_cart() -> None:
-    handler, uow, _ = placing(
-        carts=FakeCartRepository(make_cart_item(quantity=2))
-    )
+    handler, uow, _ = placing(carts=FakeCartRepository(make_cart_item(quantity=2)))
 
     await handler.handle(order_for())
     placed = next(iter(uow.order_repository.orders.values()))
@@ -102,9 +100,7 @@ async def test_an_order_snapshots_the_current_price() -> None:
 async def test_a_variant_title_reaches_the_order() -> None:
     handler, uow, _ = placing(
         carts=FakeCartRepository(make_cart_item(variant_id=SIZE_M)),
-        offers=FakeCatalogOffers(
-            offer(COAT, variant_id=SIZE_M, variant_title="M")
-        ),
+        offers=FakeCatalogOffers(offer(COAT, variant_id=SIZE_M, variant_title="M")),
     )
 
     await handler.handle(order_for())
@@ -186,9 +182,7 @@ async def test_contacts_are_remembered_for_the_next_time() -> None:
 
     await handler.handle(order_for())
 
-    assert [snapshot.phone for snapshot in directory.remembered] == [
-        "+79991234567"
-    ]
+    assert [snapshot.phone for snapshot in directory.remembered] == ["+79991234567"]
 
 
 async def test_placing_publishes_the_event() -> None:

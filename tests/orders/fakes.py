@@ -74,9 +74,7 @@ class FakeCartRepository(ICartRepository):
     @override
     async def items_of(self, customer_id: CustomerId) -> list[CartItem]:
         return [
-            item
-            for item in self.items.values()
-            if item.customer_id == customer_id
+            item for item in self.items.values() if item.customer_id == customer_id
         ]
 
     @override
@@ -264,9 +262,7 @@ class FakeCatalogOffers(ICatalogOffers):
         self,
         keys: Sequence[OfferKey],
     ) -> Mapping[OfferKey, ProductOffer]:
-        return {
-            key: self.catalogue[key] for key in keys if key in self.catalogue
-        }
+        return {key: self.catalogue[key] for key in keys if key in self.catalogue}
 
 
 class FakeCustomerDirectory(ICustomerDirectory):

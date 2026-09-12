@@ -296,9 +296,7 @@ def test_the_confirmation_can_be_placed_or_edited() -> None:
 
 
 def test_a_placed_order_names_its_number() -> None:
-    message = rich_screen(
-        PLACED, PlacedView(number="2026-09-12-0001"), CUSTOMER
-    )
+    message = rich_screen(PLACED, PlacedView(number="2026-09-12-0001"), CUSTOMER)
 
     assert "2026-09-12-0001" in paragraphs_of(message)[0]
 
@@ -368,17 +366,13 @@ def test_the_cancel_button_carries_the_order() -> None:
 
 
 def test_a_shared_cart_lists_its_lines() -> None:
-    message = rich_screen(
-        SELECTION, selection_view(selection_line()), CUSTOMER
-    )
+    message = rich_screen(SELECTION, selection_view(selection_line()), CUSTOMER)
 
     assert "• Пальто оверсайз · 1 шт · 12 900 ₽" in paragraphs_of(message)[0]
 
 
 def test_a_shared_cart_can_be_adopted() -> None:
-    message = rich_screen(
-        SELECTION, selection_view(selection_line()), CUSTOMER
-    )
+    message = rich_screen(SELECTION, selection_view(selection_line()), CUSTOMER)
 
     assert "📥 Перенести себе" in texts_of(message)
 

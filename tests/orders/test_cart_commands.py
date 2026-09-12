@@ -101,9 +101,7 @@ async def test_a_full_line_refuses_more() -> None:
 
 
 async def test_a_sold_out_product_is_not_added() -> None:
-    handler, _ = adding(
-        offers=FakeCatalogOffers(offer(COAT, is_available=False))
-    )
+    handler, _ = adding(offers=FakeCatalogOffers(offer(COAT, is_available=False)))
 
     with pytest.raises(ProductNotOfferedError):
         await handler.handle(AddToCart(customer_id=BUYER, product_id=COAT))
@@ -127,9 +125,7 @@ async def test_a_line_can_take_one_more() -> None:
 
 
 async def test_a_line_can_give_one_back() -> None:
-    uow = FakeOrdersUnitOfWork(
-        carts=FakeCartRepository(make_cart_item(quantity=3))
-    )
+    uow = FakeOrdersUnitOfWork(carts=FakeCartRepository(make_cart_item(quantity=3)))
 
     await DecreaseCartItemHandler(uow).handle(
         DecreaseCartItem(customer_id=BUYER, item_id=CART_ITEM)
@@ -149,9 +145,7 @@ async def test_the_last_item_leaves_with_the_line() -> None:
 
 
 async def test_a_line_can_be_removed() -> None:
-    uow = FakeOrdersUnitOfWork(
-        carts=FakeCartRepository(make_cart_item(quantity=5))
-    )
+    uow = FakeOrdersUnitOfWork(carts=FakeCartRepository(make_cart_item(quantity=5)))
 
     await RemoveCartItemHandler(uow).handle(
         RemoveCartItem(customer_id=BUYER, item_id=CART_ITEM)

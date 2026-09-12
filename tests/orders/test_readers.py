@@ -133,9 +133,7 @@ async def test_a_variant_line_shows_its_title() -> None:
 
 
 async def test_an_unknown_selection_reads_as_nothing() -> None:
-    reader = SelectionReader(
-        FakeSelectionQueries(author=None), FakeCatalogOffers()
-    )
+    reader = SelectionReader(FakeSelectionQueries(author=None), FakeCatalogOffers())
 
     assert await reader.read(SELECTION) is None
 

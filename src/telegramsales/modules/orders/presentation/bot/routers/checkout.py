@@ -122,12 +122,14 @@ async def start_checkout(
         await _ask_name(callback, context, state)
         return
 
-    await state.update_data({
-        NAME_KEY: card.contacts.name,
-        PHONE_KEY: card.contacts.phone,
-        ADDRESS_KEY: card.contacts.address,
-        COMMENT_KEY: "",
-    })
+    await state.update_data(
+        {
+            NAME_KEY: card.contacts.name,
+            PHONE_KEY: card.contacts.phone,
+            ADDRESS_KEY: card.contacts.address,
+            COMMENT_KEY: "",
+        }
+    )
     view = await _view(state, reader, context)
     if view is None:
         await _ask_name(callback, context, state)

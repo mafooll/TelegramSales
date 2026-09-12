@@ -94,9 +94,7 @@ class SelectionLineORM(BaseORM):
     product_id: Mapped[UUID] = mapped_column(Uuid)
     variant_id: Mapped[int | None] = mapped_column(Integer)
     title: Mapped[str] = mapped_column(String(TITLE_SNAPSHOT_LENGTH))
-    variant_title: Mapped[str | None] = mapped_column(
-        String(TITLE_SNAPSHOT_LENGTH)
-    )
+    variant_title: Mapped[str | None] = mapped_column(String(TITLE_SNAPSHOT_LENGTH))
     quantity: Mapped[int] = mapped_column(SmallInteger)
     position: Mapped[int] = mapped_column(
         SmallInteger,
@@ -145,9 +143,7 @@ class OrderLineORM(BaseORM):
     variant_id: Mapped[int | None] = mapped_column(Integer)
     title: Mapped[str] = mapped_column(String(TITLE_SNAPSHOT_LENGTH))
     article: Mapped[str] = mapped_column(String(ARTICLE_SNAPSHOT_LENGTH))
-    variant_title: Mapped[str | None] = mapped_column(
-        String(TITLE_SNAPSHOT_LENGTH)
-    )
+    variant_title: Mapped[str | None] = mapped_column(String(TITLE_SNAPSHOT_LENGTH))
     price: Mapped[Decimal] = mapped_column(Numeric(PRICE_PRECISION, PRICE_SCALE))
     old_price: Mapped[Decimal | None] = mapped_column(
         Numeric(PRICE_PRECISION, PRICE_SCALE)

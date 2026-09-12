@@ -38,9 +38,7 @@ class CartReader:
 
     async def read(self, customer_id: CustomerId) -> CartView:
         rows = await self._queries.rows_of(customer_id)
-        keys: list[OfferKey] = [
-            (row.product_id, row.variant_id) for row in rows
-        ]
+        keys: list[OfferKey] = [(row.product_id, row.variant_id) for row in rows]
         offers = await self._offers.offers(keys)
 
         lines: list[CartLineView] = []
@@ -75,9 +73,7 @@ class SelectionReader:
             return None
 
         rows = await self._queries.rows_of(selection_id)
-        keys: list[OfferKey] = [
-            (row.product_id, row.variant_id) for row in rows
-        ]
+        keys: list[OfferKey] = [(row.product_id, row.variant_id) for row in rows]
         offers = await self._offers.offers(keys)
 
         return SelectionView(

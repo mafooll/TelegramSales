@@ -114,9 +114,7 @@ def product_view(  # noqa: PLR0913
 def paged[ItemType](items: list[ItemType]) -> Pagination[ItemType]:
     return Pagination(
         page=Page(items=items, number=0, size=PAGE_SIZE, total=len(items)),
-        callback=lambda value: ShopCallback(
-            action=ShopAction.CATALOGS, page=value
-        ),
+        callback=lambda value: ShopCallback(action=ShopAction.CATALOGS, page=value),
     )
 
 
@@ -159,9 +157,7 @@ def test_catalogs_are_listed_by_title() -> None:
 
 
 def test_an_empty_shop_says_so() -> None:
-    message = rich_paged_screen(
-        CATALOGS, paged([]), CountedView(total=0), CUSTOMER
-    )
+    message = rich_paged_screen(CATALOGS, paged([]), CountedView(total=0), CUSTOMER)
 
     assert paragraphs_of(message) == ["Магазин пока пуст, загляните позже."]
 
@@ -248,9 +244,7 @@ def test_a_branching_category_sends_the_list_back_to_itself() -> None:
 
 
 def test_a_leaf_subcategory_sends_the_list_back_to_its_parent() -> None:
-    view = ShopProductsView(
-        category=category_view(products=1, parent_id=1), total=1
-    )
+    view = ShopProductsView(category=category_view(products=1, parent_id=1), total=1)
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
     back = callbacks_of(message)
@@ -320,15 +314,12 @@ def test_a_card_in_stock_stays_silent_about_stock() -> None:
 
 
 def test_photos_follow_the_chosen_layout() -> None:
-    product = product_view(
-        photos=("one", "two"), layout=MediaLayout.SLIDESHOW
-    )
+    product = product_view(photos=("one", "two"), layout=MediaLayout.SLIDESHOW)
 
     message = rich_screen(PRODUCT_CARD, product, CUSTOMER)
 
     assert any(
-        isinstance(block, InputRichBlockSlideshow)
-        for block in message.blocks or []
+        isinstance(block, InputRichBlockSlideshow) for block in message.blocks or []
     )
 
 
@@ -338,8 +329,7 @@ def test_a_collage_is_the_other_layout() -> None:
     message = rich_screen(PRODUCT_CARD, product, CUSTOMER)
 
     assert any(
-        isinstance(block, InputRichBlockCollage)
-        for block in message.blocks or []
+        isinstance(block, InputRichBlockCollage) for block in message.blocks or []
     )
 
 
@@ -396,9 +386,7 @@ def test_a_picked_variant_carries_both_identifiers() -> None:
         VARIANT_PICKER, paged([pick]), product_view(), CUSTOMER
     )
     added = next(
-        entry
-        for entry in callbacks_of(message)
-        if entry.action is ShopAction.ADD
+        entry for entry in callbacks_of(message) if entry.action is ShopAction.ADD
     )
 
     assert added.product_id == COAT

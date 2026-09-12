@@ -57,9 +57,7 @@ class CartRepository(ICartRepository):
 
     @override
     async def next_id(self) -> CartItemId:
-        return CartItemId(
-            await _next_id(self._session, CartItemORM.__tablename__)
-        )
+        return CartItemId(await _next_id(self._session, CartItemORM.__tablename__))
 
     @override
     async def get(self, item_id: CartItemId) -> CartItem | None:
@@ -141,9 +139,7 @@ class SelectionRepository(ISelectionRepository):
     async def add(self, selection: Selection) -> None:
         await self._models.add(selection_to_model(selection))
         for position, line in enumerate(selection.lines):
-            self._session.add(
-                selection_line_to_model(selection.id, line, position)
-            )
+            self._session.add(selection_line_to_model(selection.id, line, position))
         await self._session.flush()
 
 
@@ -158,9 +154,7 @@ class OrderRepository(IOrderRepository):
 
     @override
     async def next_sequence(self, day: date) -> int:
-        query = select(func.max(OrderORM.sequence)).where(
-            OrderORM.order_date == day
-        )
+        query = select(func.max(OrderORM.sequence)).where(OrderORM.order_date == day)
         highest = (await self._session.execute(query)).scalar_one_or_none()
         return FIRST_SEQUENCE if highest is None else highest + FIRST_SEQUENCE
 

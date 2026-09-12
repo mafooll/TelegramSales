@@ -57,9 +57,7 @@ async def open_cart(
     await callback.answer()
     await show(
         callback,
-        await render.cart_of(
-            reader, context, CustomerId(context.actor.id)
-        ),
+        await render.cart_of(reader, context, CustomerId(context.actor.id)),
     )
 
 

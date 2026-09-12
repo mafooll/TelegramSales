@@ -247,8 +247,7 @@ class ShopQueries(IShopQueries):
             )
             .outerjoin(
                 BrandORM,
-                (ProductORM.brand_id == BrandORM.id)
-                & BrandORM.is_active.is_(True),
+                (ProductORM.brand_id == BrandORM.id) & BrandORM.is_active.is_(True),
             )
             .where(
                 ProductORM.id == product_id,

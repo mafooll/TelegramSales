@@ -104,9 +104,7 @@ class SelectionQueries(ISelectionQueries):
 
     @override
     async def author_of(self, selection_id: SelectionId) -> CustomerId | None:
-        query = select(SelectionORM.author_id).where(
-            SelectionORM.id == selection_id
-        )
+        query = select(SelectionORM.author_id).where(SelectionORM.id == selection_id)
         found = (await self._session.execute(query)).scalar_one_or_none()
         return None if found is None else CustomerId(found)
 
@@ -198,12 +196,16 @@ class OrderQueries(IOrderQueries):
             return None
 
         lines = (
-            await self._session.execute(
-                select(OrderLineORM)
-                .where(OrderLineORM.order_id == order_id)
-                .order_by(OrderLineORM.position, OrderLineORM.id)
+            (
+                await self._session.execute(
+                    select(OrderLineORM)
+                    .where(OrderLineORM.order_id == order_id)
+                    .order_by(OrderLineORM.position, OrderLineORM.id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         return OrderView(
             id=OrderId(order.id),

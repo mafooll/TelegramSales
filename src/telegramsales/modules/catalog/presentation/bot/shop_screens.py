@@ -127,9 +127,7 @@ def _card_content(product: ShopProductView, translate: ITranslator) -> Content:
     blocks: list[InputRichBlockUnion] = [paragraph(_header(product, translate))]
     if product.brand_title is not None:
         blocks.append(
-            paragraph(
-                translate(shop_texts.PRODUCT_BRAND, brand=product.brand_title)
-            )
+            paragraph(translate(shop_texts.PRODUCT_BRAND, brand=product.brand_title))
         )
     blocks.append(paragraph(product.description))
     if product.variants:

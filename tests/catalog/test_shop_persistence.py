@@ -91,9 +91,7 @@ async def test_an_empty_category_stays_out_of_the_shop(
     await make_category(session, catalog.id, "Пустая категория")
     await session.flush()
 
-    page = await ShopQueries(session).list_categories(
-        catalog.id, None, 0, PAGE_SIZE
-    )
+    page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert page.items == []
 
@@ -104,9 +102,7 @@ async def test_a_category_with_a_product_is_offered(session: AsyncSession) -> No
     await make_product(session, catalog.id, category.id)
     await session.flush()
 
-    page = await ShopQueries(session).list_categories(
-        catalog.id, None, 0, PAGE_SIZE
-    )
+    page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert [(item.id, item.product_count) for item in page.items] == [
         (category.id, 1)
@@ -122,9 +118,7 @@ async def test_a_hidden_category_stays_out_of_the_shop(
     category.archive()
     await CategoryRepository(session).save(category)
 
-    page = await ShopQueries(session).list_categories(
-        catalog.id, None, 0, PAGE_SIZE
-    )
+    page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert page.items == []
 
@@ -138,9 +132,7 @@ async def test_a_parent_is_offered_for_the_sake_of_its_children(
     await make_product(session, catalog.id, child.id)
     await session.flush()
 
-    page = await ShopQueries(session).list_categories(
-        catalog.id, None, 0, PAGE_SIZE
-    )
+    page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert [(item.id, item.child_count) for item in page.items] == [(parent.id, 1)]
 
@@ -153,9 +145,7 @@ async def test_an_empty_child_does_not_keep_its_parent_alive(
     await make_category(session, catalog.id, "Пальто", parent.id)
     await session.flush()
 
-    page = await ShopQueries(session).list_categories(
-        catalog.id, None, 0, PAGE_SIZE
-    )
+    page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert page.items == []
 
@@ -229,9 +219,7 @@ async def test_a_card_carries_its_brand(session: AsyncSession) -> None:
     category = await make_category(session, catalog.id, "Верхняя одежда")
     brand = await make_brand(session, "Acme")
     await session.flush()
-    product = await make_product(
-        session, catalog.id, category.id, brand_id=brand.id
-    )
+    product = await make_product(session, catalog.id, category.id, brand_id=brand.id)
     await session.flush()
 
     view = await ShopQueries(session).get_product(product.id)
@@ -245,9 +233,7 @@ async def test_a_hidden_brand_is_not_named(session: AsyncSession) -> None:
     category = await make_category(session, catalog.id, "Верхняя одежда")
     brand = await make_brand(session, "Скрытый бренд")
     await session.flush()
-    product = await make_product(
-        session, catalog.id, category.id, brand_id=brand.id
-    )
+    product = await make_product(session, catalog.id, category.id, brand_id=brand.id)
     brand.archive()
     await BrandRepository(session).save(brand)
 

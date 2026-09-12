@@ -188,9 +188,7 @@ async def share_cart(
     handler: FromDishka[ShareCartHandler],
 ) -> None:
     await callback.answer()
-    selection_id = await handler.handle(
-        ShareCart(customer_id=_customer(context))
-    )
+    selection_id = await handler.handle(ShareCart(customer_id=_customer(context)))
     me = await bot.me()
     link = LINK_TEMPLATE.format(
         username=me.username,

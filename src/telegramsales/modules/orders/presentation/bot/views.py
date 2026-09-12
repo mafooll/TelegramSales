@@ -52,17 +52,11 @@ def cart_line_key(line: CartLineView) -> str:
 
 
 def cart_line_card_key(line: CartLineView) -> str:
-    return (
-        texts.CART_LINE_CARD if line.is_available else texts.CART_LINE_CARD_GONE
-    )
+    return texts.CART_LINE_CARD if line.is_available else texts.CART_LINE_CARD_GONE
 
 
 def selection_line_key(line: SelectionLineView) -> str:
-    return (
-        texts.SELECTION_LINE
-        if line.is_available
-        else texts.SELECTION_LINE_GONE
-    )
+    return texts.SELECTION_LINE if line.is_available else texts.SELECTION_LINE_GONE
 
 
 def status_key(status: OrderStatus) -> str:
