@@ -36,9 +36,15 @@ class ActorMiddleware(BaseMiddleware):
         member = await queries.get(StaffId(user.id))
 
         permissions = NO_PERMISSIONS
+        is_shopping = True
         if member is not None and member.is_active:
             resolver = await container.get(IPermissionResolver)
             permissions = resolver.permissions_of(member.role)
+            is_shopping = member.customer_view
 
-        data["actor"] = Actor(id=user.id, permissions=permissions)
+        data["actor"] = Actor(
+            id=user.id,
+            permissions=permissions,
+            is_shopping=is_shopping,
+        )
         return await handler(event, data)

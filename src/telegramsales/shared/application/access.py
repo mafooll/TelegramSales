@@ -11,6 +11,7 @@ type PermissionCode = str
 class Actor:
     id: int
     permissions: frozenset[PermissionCode]
+    is_shopping: bool = True
 
     @property
     def is_staff(self) -> bool:

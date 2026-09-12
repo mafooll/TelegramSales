@@ -52,6 +52,7 @@ def view(
         id=MEMBER,
         role=role,
         is_active=is_active,
+        customer_view=False,
         created_at=NOW,
     )
 

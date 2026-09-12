@@ -36,6 +36,45 @@ async def test_member_survives_a_round_trip(session: AsyncSession) -> None:
     assert loaded.created_at == NOW
 
 
+async def test_a_stored_member_does_not_shop(session: AsyncSession) -> None:
+    repository = await store(session, make_member())
+
+    loaded = await repository.get(MEMBER)
+
+    assert loaded is not None
+    assert not loaded.customer_view
+
+
+async def test_the_customer_view_survives_a_round_trip(
+    session: AsyncSession,
+) -> None:
+    repository = await store(session, make_member())
+    member = await repository.get(MEMBER)
+    assert member is not None
+
+    member.switch_customer_view(enabled=True)
+    await repository.save(member)
+
+    loaded = await repository.get(MEMBER)
+    assert loaded is not None
+    assert loaded.customer_view
+
+
+async def test_the_customer_view_reaches_the_reader(
+    session: AsyncSession,
+) -> None:
+    repository = await store(session, make_member())
+    member = await repository.get(MEMBER)
+    assert member is not None
+    member.switch_customer_view(enabled=True)
+    await repository.save(member)
+
+    view = await StaffQueries(session).get(MEMBER)
+
+    assert view is not None
+    assert view.customer_view
+
+
 async def test_loading_registers_no_events(session: AsyncSession) -> None:
     repository = await store(session, make_member(StaffRole.MANAGER))
 
@@ -161,8 +200,9 @@ async def test_unknown_role_is_rejected_by_the_database(
 ) -> None:
 
     statement = text("""
-        insert into staff_members (id, role, is_active, created_at)
-        values (1, 'wizard', true, now())
+        insert into staff_members
+            (id, role, is_active, customer_view, created_at)
+        values (1, 'wizard', true, false, now())
     """)
 
     with pytest.raises(IntegrityError, match="known_role"):

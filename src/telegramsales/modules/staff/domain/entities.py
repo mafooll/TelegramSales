@@ -24,6 +24,7 @@ class StaffMember(DomainEntity[StaffId]):
     role: StaffRole
     created_at: datetime
     is_active: bool = True
+    customer_view: bool = False
 
     @classmethod
     def create(
@@ -43,6 +44,12 @@ class StaffMember(DomainEntity[StaffId]):
     @property
     def is_owner(self) -> bool:
         return self.is_active and self.role is StaffRole.OWNER
+
+    def switch_customer_view(self, *, enabled: bool) -> None:
+        if not self.is_active:
+            raise InactiveStaffMemberError(staff_id=self.id)
+
+        self.customer_view = enabled
 
     def change_role(self, new_role: StaffRole, changed_by: StaffId) -> None:
         if not self.is_active:

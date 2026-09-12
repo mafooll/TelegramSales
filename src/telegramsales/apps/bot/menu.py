@@ -1,5 +1,8 @@
+from dataclasses import dataclass, replace
+
 from aiogram import Bot, Router
 from aiogram.filters import CommandStart
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery, InputRichMessage, Message
 from dishka.integrations.aiogram import FromDishka
 
@@ -21,6 +24,10 @@ from telegramsales.modules.orders.presentation.bot.buttons import (
     open_cart,
     open_orders,
 )
+from telegramsales.modules.staff.application.commands.preferences import (
+    SwitchCustomerView,
+    SwitchCustomerViewHandler,
+)
 from telegramsales.modules.staff.domain.permissions import StaffPermission
 from telegramsales.modules.staff.presentation.bot.callbacks import (
     StaffAction,
@@ -33,25 +40,43 @@ from telegramsales.shared.presentation.bot.navigation import HomeCallback
 from telegramsales.shared.presentation.bot.render import show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
-OPEN_SHOP: Button[None] = Button(
+
+@dataclass(frozen=True, slots=True)
+class MenuView:
+    is_shopping: bool
+
+
+class ViewModeCallback(CallbackData, prefix="mode"):
+    pass
+
+
+OPEN_SHOP: Button[MenuView] = Button(
     text=label(texts.OPEN_SHOP_BUTTON),
     callback=lambda _: ShopCallback(action=ShopAction.CATALOGS),
     for_customers=True,
 )
 
-OPEN_STAFF: Button[None] = Button(
+OPEN_STAFF: Button[MenuView] = Button(
     text=label(texts.OPEN_STAFF_BUTTON),
     callback=lambda _: StaffCallback(action=StaffAction.LIST),
     permission=StaffPermission.VIEW_STAFF,
 )
 
-OPEN_CATALOG: Button[None] = Button(
+OPEN_CATALOG: Button[MenuView] = Button(
     text=label(texts.OPEN_CATALOG_BUTTON),
     callback=lambda _: CatalogCallback(action=CatalogAction.HUB),
     permission=CatalogPermission.MANAGE,
 )
 
-MAIN_MENU: Screen[None] = Screen(
+SWITCH_VIEW: Button[MenuView] = Button(
+    text=lambda view, translate: translate(
+        texts.HIDE_SHOP_BUTTON if view.is_shopping else texts.SHOW_SHOP_BUTTON
+    ),
+    callback=lambda _: ViewModeCallback(),
+    for_staff=True,
+)
+
+MAIN_MENU: Screen[MenuView] = Screen(
     content=label(texts.GREETING),
     buttons=[
         OPEN_SHOP,
@@ -59,6 +84,7 @@ MAIN_MENU: Screen[None] = Screen(
         open_orders(for_customers=True),
         OPEN_CATALOG,
         OPEN_STAFF,
+        SWITCH_VIEW,
     ],
     layout=(1, 2),
 )
@@ -69,7 +95,8 @@ router.callback_query.filter(HasActorFilter())
 
 
 def _main_menu(context: RenderContext) -> InputRichMessage:
-    return rich_screen(MAIN_MENU, None, context)
+    view = MenuView(is_shopping=context.actor.is_shopping)
+    return rich_screen(MAIN_MENU, view, context)
 
 
 @router.message(CommandStart())
@@ -95,3 +122,21 @@ async def start(
 async def open_menu(callback: CallbackQuery, context: RenderContext) -> None:
     await callback.answer()
     await show(callback, _main_menu(context))
+
+
+@router.callback_query(ViewModeCallback.filter())
+async def switch_view(
+    callback: CallbackQuery,
+    context: RenderContext,
+    handler: FromDishka[SwitchCustomerViewHandler],
+) -> None:
+    await callback.answer()
+    enabled = await handler.handle(
+        SwitchCustomerView(enabled=not context.actor.is_shopping),
+        context.actor,
+    )
+    switched = replace(
+        context,
+        actor=replace(context.actor, is_shopping=enabled),
+    )
+    await show(callback, _main_menu(switched))

@@ -21,6 +21,7 @@ class StaffQueries(IStaffQueries):
             StaffMemberORM.id,
             StaffMemberORM.role,
             StaffMemberORM.is_active,
+            StaffMemberORM.customer_view,
             StaffMemberORM.created_at,
         ).where(StaffMemberORM.id == staff_id)
 
@@ -31,6 +32,7 @@ class StaffQueries(IStaffQueries):
             id=StaffId(row.id),
             role=StaffRole(row.role),
             is_active=row.is_active,
+            customer_view=row.customer_view,
             created_at=row.created_at,
         )
 
@@ -47,6 +49,7 @@ class StaffQueries(IStaffQueries):
                 StaffMemberORM.id,
                 StaffMemberORM.role,
                 StaffMemberORM.is_active,
+                StaffMemberORM.customer_view,
                 StaffMemberORM.created_at,
             )
             .order_by(StaffMemberORM.created_at)
@@ -61,6 +64,7 @@ class StaffQueries(IStaffQueries):
                     id=StaffId(row.id),
                     role=StaffRole(row.role),
                     is_active=row.is_active,
+                    customer_view=row.customer_view,
                     created_at=row.created_at,
                 )
                 for row in rows

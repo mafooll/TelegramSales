@@ -29,6 +29,9 @@ from telegramsales.modules.orders.application.readers import (
     CartReader,
     SelectionReader,
 )
+from telegramsales.modules.staff.application.commands.preferences import (
+    SwitchCustomerViewHandler,
+)
 from telegramsales.modules.staff.application.ports import IStaffQueries
 
 REQUESTED = [
@@ -50,6 +53,7 @@ REQUESTED = [
     AdoptSelectionHandler,
     PlaceOrderHandler,
     CancelOrderHandler,
+    SwitchCustomerViewHandler,
 ]
 
 

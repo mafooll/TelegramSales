@@ -58,15 +58,23 @@ def translate(key: str, /, **args: TranslationArgs) -> str:
     return template.format(**args) if args else template
 
 
-def context_with(*permissions: StrEnum) -> RenderContext:
+def context_with(
+    *permissions: StrEnum,
+    is_shopping: bool = True,
+) -> RenderContext:
     return RenderContext(
-        actor=Actor(id=1, permissions=frozenset(p.value for p in permissions)),
+        actor=Actor(
+            id=1,
+            permissions=frozenset(p.value for p in permissions),
+            is_shopping=is_shopping,
+        ),
         translate=translate,
     )
 
 
 ANYONE = context_with()
-MANAGER = context_with(ProbePermission.MANAGE)
+MANAGER = context_with(ProbePermission.MANAGE, is_shopping=False)
+SHOPPING_MANAGER = context_with(ProbePermission.MANAGE)
 
 TITLE: ContentRef[ProbeView] = label("Заголовок")
 
@@ -93,19 +101,21 @@ def paragraphs_of(message: InputRichMessage) -> list[str]:
     ]
 
 
-def button(
+def button(  # noqa: PLR0913
     text: str,
     permission: StrEnum | None = None,
     when: Callable[[ProbeView], bool] | None = None,
     style: ButtonStyle | None = None,
     *,
     for_customers: bool = False,
+    for_staff: bool = False,
 ) -> Button[ProbeView]:
     return Button(
         text=label(text),
         callback=lambda _: ProbeCallback(value=text),
         permission=permission,
         for_customers=for_customers,
+        for_staff=for_staff,
         when=when,
         style=style,
     )
@@ -174,6 +184,24 @@ def test_customer_button_is_hidden_from_staff() -> None:
     screen = screen_of(button("Корзина", for_customers=True))
 
     assert texts_of(rich_screen(screen, VIEW, MANAGER)) == []
+
+
+def test_customer_button_returns_in_the_customer_view() -> None:
+    screen = screen_of(button("Корзина", for_customers=True))
+
+    assert texts_of(rich_screen(screen, VIEW, SHOPPING_MANAGER)) == ["Корзина"]
+
+
+def test_staff_button_is_hidden_from_customers() -> None:
+    screen = screen_of(button("Режим", for_staff=True))
+
+    assert texts_of(rich_screen(screen, VIEW, ANYONE)) == []
+
+
+def test_staff_button_stays_in_the_customer_view() -> None:
+    screen = screen_of(button("Режим", for_staff=True))
+
+    assert texts_of(rich_screen(screen, VIEW, SHOPPING_MANAGER)) == ["Режим"]
 
 
 def test_when_hides_the_button_even_with_permission() -> None:

@@ -15,6 +15,7 @@ class StaffMemberMapper(IEntityMapper[StaffMember, StaffMemberORM]):
             id=StaffId(model.id),
             role=StaffRole(model.role),
             is_active=model.is_active,
+            customer_view=model.customer_view,
             created_at=model.created_at,
         )
 
@@ -25,5 +26,6 @@ class StaffMemberMapper(IEntityMapper[StaffMember, StaffMemberORM]):
             id=entity.id,
             role=entity.role.value,
             is_active=entity.is_active,
+            customer_view=entity.customer_view,
             created_at=entity.created_at,
         )

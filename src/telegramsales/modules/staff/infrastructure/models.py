@@ -23,3 +23,4 @@ class StaffMemberORM(WithCreatedAtMixin, BaseORM):
     )
     role: Mapped[str] = mapped_column(String(ROLE_LENGTH))
     is_active: Mapped[bool] = mapped_column(default=True)
+    customer_view: Mapped[bool] = mapped_column(default=False)

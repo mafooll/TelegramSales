@@ -4,7 +4,7 @@ from aiogram.types import InputRichBlockButtons, InputRichMessage
 import pytest
 
 from telegramsales.apps.bot.access import ROLE_PERMISSIONS, StaticPermissionResolver
-from telegramsales.apps.bot.menu import MAIN_MENU
+from telegramsales.apps.bot.menu import MAIN_MENU, MenuView
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
 from telegramsales.modules.staff.domain.enums import StaffRole
 from telegramsales.modules.staff.domain.permissions import StaffPermission
@@ -31,13 +31,16 @@ def button_texts(message: InputRichMessage) -> list[str]:
     ]
 
 
-def menu_of(role: StaffRole | None) -> list[str]:
+def menu_of(role: StaffRole | None, *, is_shopping: bool = False) -> list[str]:
     permissions = NOTHING if role is None else RESOLVER.permissions_of(role)
-    context = RenderContext(
-        actor=Actor(id=1, permissions=permissions),
-        translate=TRANSLATE,
+    actor = Actor(
+        id=1,
+        permissions=permissions,
+        is_shopping=role is None or is_shopping,
     )
-    return button_texts(rich_screen(MAIN_MENU, None, context))
+    context = RenderContext(actor=actor, translate=TRANSLATE)
+    view = MenuView(is_shopping=actor.is_shopping)
+    return button_texts(rich_screen(MAIN_MENU, view, context))
 
 
 def test_every_role_is_declared() -> None:
@@ -80,15 +83,26 @@ CART = "🧺 Корзина"
 ORDERS = "🧾 Мои заказы"
 CATALOG = "🗂 Управление каталогом"
 STAFF = "👥 Персонал"
+SHOP_MODE_ON = "🛍 Режим покупателя"
+SHOP_MODE_OFF = "🙈 Выйти из режима покупателя"
 CUSTOMER_MENU = [SHOP, CART, ORDERS]
+STAFF_MENU = [CATALOG, STAFF]
 
 
 def test_owner_sees_only_the_staff_side() -> None:
-    assert menu_of(StaffRole.OWNER) == [CATALOG, STAFF]
+    assert menu_of(StaffRole.OWNER) == [*STAFF_MENU, SHOP_MODE_ON]
 
 
 def test_manager_sees_only_the_staff_side() -> None:
-    assert menu_of(StaffRole.MANAGER) == [CATALOG, STAFF]
+    assert menu_of(StaffRole.MANAGER) == [*STAFF_MENU, SHOP_MODE_ON]
+
+
+def test_staff_in_the_customer_view_sees_both_sides() -> None:
+    assert menu_of(StaffRole.MANAGER, is_shopping=True) == [
+        *CUSTOMER_MENU,
+        *STAFF_MENU,
+        SHOP_MODE_OFF,
+    ]
 
 
 def test_customer_sees_only_the_shop_side() -> None:

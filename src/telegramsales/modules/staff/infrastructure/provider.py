@@ -8,6 +8,9 @@ from dishka import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from telegramsales.modules.staff.application.commands.preferences import (
+    SwitchCustomerViewHandler,
+)
 from telegramsales.modules.staff.application.commands.staff_members import (
     ChangeStaffRoleHandler,
     GrantStaffAccessHandler,
@@ -38,4 +41,5 @@ class StaffProvider(Provider):
         GrantStaffAccessHandler,
         ChangeStaffRoleHandler,
         RevokeStaffAccessHandler,
+        SwitchCustomerViewHandler,
     )

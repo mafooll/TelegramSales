@@ -31,6 +31,35 @@ def test_create_sets_identity_role_and_timestamp() -> None:
     assert member.is_active
 
 
+def test_a_new_member_does_not_shop() -> None:
+    assert not make_member().customer_view
+
+
+def test_a_member_switches_the_customer_view_on_and_off() -> None:
+    member = make_member()
+
+    member.switch_customer_view(enabled=True)
+    assert member.customer_view
+
+    member.switch_customer_view(enabled=False)
+    assert not member.customer_view
+
+
+def test_an_inactive_member_cannot_switch_the_customer_view() -> None:
+    member = make_member(is_active=False)
+
+    with pytest.raises(InactiveStaffMemberError):
+        member.switch_customer_view(enabled=True)
+
+
+def test_switching_the_customer_view_registers_nothing() -> None:
+    member = make_member()
+
+    member.switch_customer_view(enabled=True)
+
+    assert member.collect_events() == []
+
+
 def test_create_registers_staff_member_created() -> None:
     member = StaffMember.create(
         staff_id=MEMBER,

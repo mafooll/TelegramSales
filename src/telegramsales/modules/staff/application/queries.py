@@ -10,4 +10,5 @@ class StaffMemberView:
     id: StaffId
     role: StaffRole
     is_active: bool
+    customer_view: bool
     created_at: datetime

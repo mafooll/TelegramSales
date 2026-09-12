@@ -35,6 +35,10 @@ def test_permissions_of_different_modules_do_not_collide() -> None:
     assert not holder.can(BetaPermission.READ)
 
 
+def test_an_actor_shops_by_default() -> None:
+    assert actor().is_shopping
+
+
 def test_an_actor_with_permissions_is_staff() -> None:
     assert actor(AlphaPermission.READ).is_staff
 
