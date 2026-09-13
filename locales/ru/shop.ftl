@@ -50,3 +50,7 @@ shop-variant-picker =
 
     Выберите { $label }:
 shop-variant-entry = { $title } · { $price }
+shop-new-product =
+    Новинка: { $title }
+
+    Артикул { $article }

@@ -36,7 +36,12 @@ def button_texts(message: InputRichMessage) -> list[str]:
     ]
 
 
-def menu_of(role: StaffRole | None, *, is_shopping: bool = False) -> list[str]:
+def menu_of(
+    role: StaffRole | None,
+    *,
+    is_shopping: bool = False,
+    news: bool | None = None,
+) -> list[str]:
     permissions = NOTHING if role is None else RESOLVER.permissions_of(role)
     actor = Actor(
         id=1,
@@ -44,7 +49,7 @@ def menu_of(role: StaffRole | None, *, is_shopping: bool = False) -> list[str]:
         is_shopping=role is None or is_shopping,
     )
     context = RenderContext(actor=actor, translate=TRANSLATE)
-    view = MenuView(is_shopping=actor.is_shopping)
+    view = MenuView(is_shopping=actor.is_shopping, news=news)
     return button_texts(rich_screen(MAIN_MENU, view, context))
 
 
@@ -95,6 +100,8 @@ CART = "🧺 Корзина"
 ORDERS = "🧾 Мои заказы"
 CATALOG = "🗂 Управление каталогом"
 STAFF = "👥 Персонал"
+NEWS_ON = "🔔 Новинки: вкл"
+NEWS_OFF = "🔕 Новинки: выкл"
 SHOP_MODE_ON = "🛍 Режим покупателя"
 SHOP_MODE_OFF = "🙈 Выйти из режима покупателя"
 CUSTOMER_MENU = [SHOP, CART, ORDERS]
@@ -125,3 +132,16 @@ def test_staff_in_the_customer_view_keeps_no_admin_buttons() -> None:
 
 def test_customer_sees_only_the_shop_side() -> None:
     assert menu_of(None) == CUSTOMER_MENU
+
+
+def test_a_customer_without_orders_has_no_news_switch() -> None:
+    assert NEWS_ON not in menu_of(None)
+    assert NEWS_OFF not in menu_of(None)
+
+
+def test_a_subscriber_sees_the_news_switch_on() -> None:
+    assert menu_of(None, news=True) == [*CUSTOMER_MENU, NEWS_ON]
+
+
+def test_an_unsubscribed_customer_sees_the_news_switch_off() -> None:
+    assert menu_of(None, news=False) == [*CUSTOMER_MENU, NEWS_OFF]

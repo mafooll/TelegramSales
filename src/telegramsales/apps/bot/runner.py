@@ -7,6 +7,10 @@ import uvloop
 from telegramsales.apps.bot.container import container_context
 from telegramsales.apps.bot.desk import subscribe_desk
 from telegramsales.apps.bot.dispatcher import build_dispatcher
+from telegramsales.apps.bot.notifications import (
+    outbox_worker,
+    subscribe_notifications,
+)
 from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
 from telegramsales.shared.logger_config import setup_logging
 from telegramsales.shared.settings import AppSettings, BotSettings
@@ -22,7 +26,9 @@ async def run() -> None:
             use_json=app_settings.log_json,
         )
 
-        subscribe_desk(await container.get(InProcessEventBus), container)
+        bus = await container.get(InProcessEventBus)
+        subscribe_desk(bus, container)
+        subscribe_notifications(bus, container)
 
         bot_settings = await container.get(BotSettings)
         bot = await container.get(Bot)
@@ -33,7 +39,8 @@ async def run() -> None:
             drop_pending_updates=bot_settings.drop_pending_updates,
         )
         logger.info("bot_starting")
-        await dispatcher.start_polling(bot)  # pyright: ignore[reportUnknownMemberType]
+        async with outbox_worker(container):
+            await dispatcher.start_polling(bot)  # pyright: ignore[reportUnknownMemberType]
 
 
 def main() -> None:

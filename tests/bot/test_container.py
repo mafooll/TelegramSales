@@ -21,7 +21,16 @@ from telegramsales.modules.desk.application.commands.relay import (
     RelayToCustomerHandler,
     RelayToTopicHandler,
 )
+from telegramsales.modules.desk.application.commands.support import (
+    CallForSupportHandler,
+)
+from telegramsales.modules.desk.application.conversations import Conversations
 from telegramsales.modules.desk.application.ports import ICustomerChat, IWorkChat
+from telegramsales.modules.notifications.application.commands.dispatch import (
+    DispatchOutboxHandler,
+)
+from telegramsales.modules.notifications.application.ports import INotificationSender
+from telegramsales.modules.notifications.contracts import INotifications
 from telegramsales.modules.orders.application.commands.cart import (
     AddToCartHandler,
     ClearCartHandler,
@@ -91,6 +100,11 @@ REQUESTED = [
     EditFromTopicHandler,
     ReactFromCustomerHandler,
     ReactFromTopicHandler,
+    CallForSupportHandler,
+    Conversations,
+    INotifications,
+    INotificationSender,
+    DispatchOutboxHandler,
 ]
 
 

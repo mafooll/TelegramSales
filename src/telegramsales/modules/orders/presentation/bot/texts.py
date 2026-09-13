@@ -54,6 +54,12 @@ STATUS_SHIPPED = "orders-status-shipped"
 STATUS_DONE = "orders-status-done"
 STATUS_CANCELLED = "orders-status-cancelled"
 
+NOTICE_IN_WORK = "orders-notice-in-work"
+NOTICE_PAID = "orders-notice-paid"
+NOTICE_SHIPPED = "orders-notice-shipped"
+NOTICE_DONE = "orders-notice-done"
+NOTICE_CANCELLED = "orders-notice-cancelled"
+
 SELECTION = "orders-selection"
 SELECTION_LINE = "orders-selection-line"
 SELECTION_LINE_GONE = "orders-selection-line-gone"

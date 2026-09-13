@@ -8,6 +8,7 @@ from telegramsales.apps.bot.provider import BotProvider
 from telegramsales.modules.catalog import CatalogProvider
 from telegramsales.modules.customers import CustomerProvider
 from telegramsales.modules.desk import DeskProvider
+from telegramsales.modules.notifications import NotificationsProvider
 from telegramsales.modules.orders import OrdersProvider
 from telegramsales.modules.staff import StaffProvider
 from telegramsales.shared.provider import SharedProvider
@@ -21,6 +22,7 @@ async def container_context() -> AsyncGenerator[AsyncContainer]:
         CatalogProvider(),
         CustomerProvider(),
         DeskProvider(),
+        NotificationsProvider(),
         OrdersProvider(),
         StaffProvider(),
         AiogramProvider(),

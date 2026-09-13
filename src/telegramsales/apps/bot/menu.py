@@ -20,6 +20,12 @@ from telegramsales.modules.customers.contracts import (
     CustomerId,
     ICustomerDirectory,
 )
+from telegramsales.modules.notifications import (
+    SubscriptionReader,
+    SwitchSubscription,
+    SwitchSubscriptionHandler,
+)
+from telegramsales.modules.notifications.contracts import RecipientId
 from telegramsales.modules.orders.presentation.bot.buttons import (
     open_cart,
     open_orders,
@@ -44,9 +50,14 @@ from telegramsales.shared.presentation.bot.rich import rich_screen
 @dataclass(frozen=True, slots=True)
 class MenuView:
     is_shopping: bool
+    news: bool | None
 
 
 class ViewModeCallback(CallbackData, prefix="mode"):
+    pass
+
+
+class NewsCallback(CallbackData, prefix="news"):
     pass
 
 
@@ -70,6 +81,15 @@ OPEN_CATALOG: Button[MenuView] = Button(
     when=lambda view: not view.is_shopping,
 )
 
+SWITCH_NEWS: Button[MenuView] = Button(
+    text=lambda view, translate: translate(
+        texts.NEWS_ON_BUTTON if view.news else texts.NEWS_OFF_BUTTON
+    ),
+    callback=lambda _: NewsCallback(),
+    for_customers=True,
+    when=lambda view: view.news is not None,
+)
+
 SWITCH_VIEW: Button[MenuView] = Button(
     text=lambda view, translate: translate(
         texts.HIDE_SHOP_BUTTON if view.is_shopping else texts.SHOW_SHOP_BUTTON
@@ -84,6 +104,7 @@ MAIN_MENU: Screen[MenuView] = Screen(
         OPEN_SHOP,
         open_cart(for_customers=True),
         open_orders(for_customers=True),
+        SWITCH_NEWS,
         OPEN_CATALOG,
         OPEN_STAFF,
         SWITCH_VIEW,
@@ -96,8 +117,14 @@ router.message.filter(HasActorFilter())
 router.callback_query.filter(HasActorFilter())
 
 
-def _main_menu(context: RenderContext) -> InputRichMessage:
-    view = MenuView(is_shopping=context.actor.is_shopping)
+async def _main_menu(
+    context: RenderContext,
+    news: SubscriptionReader,
+) -> InputRichMessage:
+    view = MenuView(
+        is_shopping=context.actor.is_shopping,
+        news=await news.state_of(RecipientId(context.actor.id)),
+    )
     return rich_screen(MAIN_MENU, view, context)
 
 
@@ -107,6 +134,7 @@ async def start(
     bot: Bot,
     context: RenderContext,
     customers: FromDishka[ICustomerDirectory],
+    news: FromDishka[SubscriptionReader],
 ) -> None:
     if message.from_user is not None:
         await customers.register(
@@ -116,14 +144,18 @@ async def start(
 
     await bot.send_rich_message(
         chat_id=message.chat.id,
-        rich_message=_main_menu(context),
+        rich_message=await _main_menu(context, news),
     )
 
 
 @router.callback_query(HomeCallback.filter())
-async def open_menu(callback: CallbackQuery, context: RenderContext) -> None:
+async def open_menu(
+    callback: CallbackQuery,
+    context: RenderContext,
+    news: FromDishka[SubscriptionReader],
+) -> None:
     await callback.answer()
-    await show(callback, _main_menu(context))
+    await show(callback, await _main_menu(context, news))
 
 
 @router.callback_query(ViewModeCallback.filter())
@@ -131,6 +163,7 @@ async def switch_view(
     callback: CallbackQuery,
     context: RenderContext,
     handler: FromDishka[SwitchCustomerViewHandler],
+    news: FromDishka[SubscriptionReader],
 ) -> None:
     await callback.answer()
     enabled = await handler.handle(
@@ -141,4 +174,23 @@ async def switch_view(
         context,
         actor=replace(context.actor, is_shopping=enabled),
     )
-    await show(callback, _main_menu(switched))
+    await show(callback, await _main_menu(switched, news))
+
+
+@router.callback_query(NewsCallback.filter())
+async def switch_news(
+    callback: CallbackQuery,
+    context: RenderContext,
+    handler: FromDishka[SwitchSubscriptionHandler],
+    news: FromDishka[SubscriptionReader],
+) -> None:
+    await callback.answer()
+    recipient_id = RecipientId(context.actor.id)
+    state = await news.state_of(recipient_id)
+    if state is None:
+        return
+
+    await handler.handle(
+        SwitchSubscription(recipient_id=recipient_id, enabled=not state)
+    )
+    await show(callback, await _main_menu(context, news))

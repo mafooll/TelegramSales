@@ -11,6 +11,14 @@ from telegramsales.modules.orders.domain.values import MAX_QUANTITY, MIN_QUANTIT
 from telegramsales.modules.orders.presentation.bot import texts
 from telegramsales.shared.application.i18n import ITranslator
 
+NOTICE_KEYS = {
+    OrderStatus.IN_WORK: texts.NOTICE_IN_WORK,
+    OrderStatus.PAID: texts.NOTICE_PAID,
+    OrderStatus.SHIPPED: texts.NOTICE_SHIPPED,
+    OrderStatus.DONE: texts.NOTICE_DONE,
+    OrderStatus.CANCELLED: texts.NOTICE_CANCELLED,
+}
+
 STATUS_KEYS = {
     OrderStatus.PLACED: texts.STATUS_PLACED,
     OrderStatus.IN_WORK: texts.STATUS_IN_WORK,
@@ -61,6 +69,10 @@ def selection_line_key(line: SelectionLineView) -> str:
 
 def status_key(status: OrderStatus) -> str:
     return STATUS_KEYS[status]
+
+
+def notice_key(status: OrderStatus) -> str | None:
+    return NOTICE_KEYS.get(status)
 
 
 def can_add_more(line: CartLineView) -> bool:

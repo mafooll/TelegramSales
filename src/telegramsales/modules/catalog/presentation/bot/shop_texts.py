@@ -19,6 +19,7 @@ PRODUCT_BRAND = "shop-product-brand"
 PRODUCT_VARIANTS = "shop-product-variants"
 PRODUCT_VARIANT_ITEM = "shop-product-variant-item"
 PRODUCT_OUT = "shop-product-out"
+NEW_PRODUCT = "shop-new-product"
 
 BACK_BUTTON = "shop-back-button"
 GONE = "shop-gone"

@@ -4,3 +4,5 @@ menu-open-staff-button = 👥 Персонал
 menu-open-catalog-button = 🗂 Управление каталогом
 menu-show-shop-button = 🛍 Режим покупателя
 menu-hide-shop-button = 🙈 Выйти из режима покупателя
+menu-news-on-button = 🔔 Новинки: вкл
+menu-news-off-button = 🔕 Новинки: выкл

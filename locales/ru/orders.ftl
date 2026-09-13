@@ -112,3 +112,9 @@ orders-adopt-button = 📥 Перенести себе
 orders-adopted = Перенесено позиций: { $added }
 orders-adopted-partly = Перенесено { $added }, пропущено { $skipped }
 orders-adopted-nothing = Переносить нечего: этих товаров уже нет
+
+orders-notice-in-work = Заказ { $number } взят в работу. Менеджер скоро напишет.
+orders-notice-paid = Оплата по заказу { $number } получена.
+orders-notice-shipped = Заказ { $number } передан в доставку.
+orders-notice-done = Заказ { $number } выполнен. Спасибо за покупку!
+orders-notice-cancelled = Заказ { $number } отменён.

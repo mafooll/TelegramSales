@@ -19,6 +19,7 @@ from telegramsales.modules.desk import (
     TelegramCustomerChat,
     TelegramWorkChat,
 )
+from telegramsales.modules.notifications import INotificationSender, TelegramSender
 from telegramsales.shared.application.access import IPermissionResolver
 from telegramsales.shared.application.i18n import ITranslatorFactory
 from telegramsales.shared.settings import AppSettings, BotSettings, RedisSettings
@@ -62,6 +63,15 @@ class BotProvider(Provider):
     @provide
     def customer_chat(self, bot: Bot, settings: AppSettings) -> ICustomerChat:
         return TelegramCustomerChat(bot, settings.work_chat_id)
+
+    @provide
+    def sender(
+        self,
+        bot: Bot,
+        settings: AppSettings,
+        translations: ITranslatorFactory,
+    ) -> INotificationSender:
+        return TelegramSender(bot, translations(settings.default_locale))
 
     @provide
     async def bot(self, settings: BotSettings) -> AsyncIterator[Bot]:
