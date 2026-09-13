@@ -4,6 +4,7 @@ from types import MappingProxyType
 from typing import Self
 
 from telegramsales.modules.notifications.contracts import (
+    CallToAction,
     NotificationArgs,
     NotificationId,
     RecipientId,
@@ -36,6 +37,7 @@ class Notification(DomainEntity[NotificationId]):
     recipient_id: RecipientId
     key: str
     args: NotificationArgs = NO_ARGS
+    action: CallToAction | None = None
     dedup_key: str | None = None
     status: NotificationStatus = NotificationStatus.PENDING
     attempts: int = 0
@@ -51,6 +53,7 @@ class Notification(DomainEntity[NotificationId]):
         recipient_id: RecipientId,
         key: str,
         args: NotificationArgs = NO_ARGS,
+        action: CallToAction | None = None,
         dedup_key: str | None = None,
         now: datetime,
     ) -> Self:
@@ -59,6 +62,7 @@ class Notification(DomainEntity[NotificationId]):
             recipient_id=recipient_id,
             key=key,
             args=args,
+            action=action,
             dedup_key=dedup_key,
             available_at=now,
             created_at=now,

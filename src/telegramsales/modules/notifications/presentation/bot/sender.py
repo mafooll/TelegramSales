@@ -1,9 +1,12 @@
 from typing import final, override
 
 from aiogram import Bot
-from aiogram.exceptions import (
-    TelegramForbiddenError,
-    TelegramRetryAfter,
+from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter
+from aiogram.types import (
+    InputRichBlockButtons,
+    InputRichBlockUnion,
+    InputRichMessage,
+    RichMessageButton,
 )
 
 from telegramsales.modules.notifications.application.ports import (
@@ -15,6 +18,7 @@ from telegramsales.modules.notifications.application.ports import (
 )
 from telegramsales.modules.notifications.domain.entities import Notification
 from telegramsales.shared.application.i18n import ITranslator
+from telegramsales.shared.presentation.bot.content import content_blocks
 
 
 @final
@@ -26,12 +30,40 @@ class TelegramSender(INotificationSender):
     @override
     async def send(self, notification: Notification) -> Delivery:
         try:
-            await self._bot.send_message(
+            await self._bot.send_rich_message(
                 chat_id=notification.recipient_id,
-                text=self._translate(notification.key, **notification.args),
+                rich_message=self._message(notification),
             )
         except TelegramRetryAfter as error:
             return Postponed(seconds=error.retry_after)
         except TelegramForbiddenError as error:
             return Refused(reason=str(error))
         return Delivered()
+
+    def _message(self, notification: Notification) -> InputRichMessage:
+        text = self._translate(notification.key, **notification.args)
+        return InputRichMessage(
+            blocks=[
+                *content_blocks(text),
+                *self._action_blocks(notification),
+            ]
+        )
+
+    def _action_blocks(
+        self,
+        notification: Notification,
+    ) -> list[InputRichBlockUnion]:
+        action = notification.action
+        if action is None:
+            return []
+
+        return [
+            InputRichBlockButtons(
+                buttons=[
+                    RichMessageButton(
+                        text=self._translate(action.key),
+                        callback_data=action.data,
+                    )
+                ]
+            )
+        ]

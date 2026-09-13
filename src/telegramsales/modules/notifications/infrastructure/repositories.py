@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import override
+from typing import Any, override
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -33,6 +34,25 @@ from telegramsales.shared.infrastructure.database.repository import Repository
 ID_COLUMN = "id"
 DEDUP_COLUMN = "dedup_key"
 LEASE = timedelta(seconds=60)
+SINGLE = 1
+
+
+def _row_of(notification: Notification) -> dict[str, Any]:
+    model = notification_to_model(notification)
+    return {
+        "id": model.id,
+        "recipient_id": model.recipient_id,
+        "key": model.key,
+        "args": model.args,
+        "action_key": model.action_key,
+        "action_data": model.action_data,
+        "dedup_key": model.dedup_key,
+        "status": model.status,
+        "attempts": model.attempts,
+        "available_at": model.available_at,
+        "created_at": model.created_at,
+        "reason": model.reason,
+    }
 
 
 class NotificationOutbox(INotificationOutbox):
@@ -45,38 +65,42 @@ class NotificationOutbox(INotificationOutbox):
 
     @override
     async def next_id(self) -> NotificationId:
+        issued = await self.next_ids(SINGLE)
+        return issued[0]
+
+    @override
+    async def next_ids(self, count: int) -> list[NotificationId]:
+        if count < SINGLE:
+            return []
+
         sequence = func.pg_get_serial_sequence(
             NotificationORM.__tablename__,
             ID_COLUMN,
         )
-        issued = (
-            await self._session.execute(select(func.nextval(sequence)))
-        ).scalar_one()
-        return NotificationId(issued)
+        query = select(func.nextval(sequence)).select_from(
+            func.generate_series(SINGLE, count)
+        )
+        issued = (await self._session.execute(query)).scalars().all()
+        return [NotificationId(value) for value in issued]
 
     @override
     async def add(self, notification: Notification) -> bool:
-        model = notification_to_model(notification)
+        return await self.add_all([notification]) == SINGLE
+
+    @override
+    async def add_all(self, notifications: Sequence[Notification]) -> int:
+        if not notifications:
+            return 0
+
         statement = (
             insert(NotificationORM)
-            .values(
-                id=model.id,
-                recipient_id=model.recipient_id,
-                key=model.key,
-                args=model.args,
-                dedup_key=model.dedup_key,
-                status=model.status,
-                attempts=model.attempts,
-                available_at=model.available_at,
-                created_at=model.created_at,
-                reason=model.reason,
-            )
+            .values([_row_of(notification) for notification in notifications])
             .on_conflict_do_nothing(index_elements=[DEDUP_COLUMN])
             .returning(NotificationORM.id)
         )
-        queued = (await self._session.execute(statement)).scalar_one_or_none()
+        queued = (await self._session.execute(statement)).scalars().all()
         await self._session.flush()
-        return queued is not None
+        return len(queued)
 
     @override
     async def claim(self, limit: int, now: datetime) -> list[Notification]:

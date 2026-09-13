@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from types import TracebackType
@@ -37,7 +38,13 @@ class INotificationOutbox(ABC):
     async def next_id(self) -> NotificationId: ...
 
     @abstractmethod
+    async def next_ids(self, count: int) -> list[NotificationId]: ...
+
+    @abstractmethod
     async def add(self, notification: Notification) -> bool: ...
+
+    @abstractmethod
+    async def add_all(self, notifications: Sequence[Notification]) -> int: ...
 
     @abstractmethod
     async def claim(self, limit: int, now: datetime) -> list[Notification]: ...

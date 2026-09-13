@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from types import TracebackType
 from typing import TYPE_CHECKING, Self, override
@@ -37,6 +38,10 @@ class FakeOutbox(INotificationOutbox):
         return issued
 
     @override
+    async def next_ids(self, count: int) -> list[NotificationId]:
+        return [await self.next_id() for _ in range(count)]
+
+    @override
     async def add(self, notification: Notification) -> bool:
         taken = {
             stored.dedup_key
@@ -48,6 +53,13 @@ class FakeOutbox(INotificationOutbox):
 
         self.notifications[notification.id] = notification
         return True
+
+    @override
+    async def add_all(self, notifications: Sequence[Notification]) -> int:
+        queued = 0
+        for notification in notifications:
+            queued += await self.add(notification)
+        return queued
 
     @override
     async def claim(self, limit: int, now: datetime) -> list[Notification]:

@@ -54,3 +54,4 @@ shop-new-product =
     Новинка: { $title }
 
     Артикул { $article }
+shop-open-product-button = 🛍 Посмотреть

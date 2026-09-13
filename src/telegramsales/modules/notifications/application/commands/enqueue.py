@@ -4,6 +4,7 @@ from telegramsales.modules.notifications.application.ports import (
     INotificationsUnitOfWork,
 )
 from telegramsales.modules.notifications.contracts import (
+    CallToAction,
     NotificationArgs,
     RecipientId,
 )
@@ -16,6 +17,7 @@ class EnqueueNotification:
     recipient_id: RecipientId
     key: str
     args: NotificationArgs = NO_ARGS
+    action: CallToAction | None = None
     dedup_key: str | None = None
 
 
@@ -31,6 +33,7 @@ class EnqueueNotificationHandler:
                 recipient_id=command.recipient_id,
                 key=command.key,
                 args=command.args,
+                action=command.action,
                 dedup_key=command.dedup_key,
                 now=self._clock.now(),
             )

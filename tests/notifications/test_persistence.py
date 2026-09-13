@@ -3,7 +3,11 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from telegramsales.modules.notifications.contracts import NotificationId
+from telegramsales.modules.notifications.contracts import (
+    CallToAction,
+    NotificationId,
+    RecipientId,
+)
 from telegramsales.modules.notifications.domain.entities import Notification
 from telegramsales.modules.notifications.domain.enums import NotificationStatus
 from telegramsales.modules.notifications.infrastructure.repositories import (
@@ -30,12 +34,14 @@ async def queue(
     *,
     dedup_key: str | None = None,
     available_at: datetime = NOW,
+    action: CallToAction | None = None,
 ) -> NotificationId:
     notification = Notification(
         id=await outbox.next_id(),
         recipient_id=BUYER,
         key=ORDER_MOVED,
         args={"number": "2026-09-13-0001"},
+        action=action,
         dedup_key=dedup_key,
         available_at=available_at,
         created_at=NOW,
@@ -164,3 +170,68 @@ async def test_an_unknown_recipient_has_no_subscription(
     session: AsyncSession,
 ) -> None:
     assert await SubscriptionRepository(session).get(BUYER) is None
+
+
+async def test_a_call_to_action_survives_a_round_trip(
+    session: AsyncSession,
+) -> None:
+    outbox = NotificationOutbox(session)
+    action = CallToAction(key="orders-open-orders-button", data="orders:list")
+    stored = await queue(outbox, action=action)
+
+    claimed = await outbox.claim(BATCH, NOW)
+
+    assert [notification.id for notification in claimed] == [stored]
+    assert claimed[0].action == action
+
+
+async def test_a_notification_without_an_action_keeps_none(
+    session: AsyncSession,
+) -> None:
+    outbox = NotificationOutbox(session)
+    await queue(outbox)
+
+    claimed = await outbox.claim(BATCH, NOW)
+
+    assert claimed[0].action is None
+
+
+async def test_a_batch_of_identifiers_is_issued_at_once(
+    session: AsyncSession,
+) -> None:
+    outbox = NotificationOutbox(session)
+
+    issued = await outbox.next_ids(3)
+
+    assert len(set(issued)) == 3
+    assert issued == sorted(issued)
+
+
+async def test_no_identifiers_are_issued_for_an_empty_batch(
+    session: AsyncSession,
+) -> None:
+    assert await NotificationOutbox(session).next_ids(0) == []
+
+
+async def test_a_batch_insert_skips_the_duplicates(session: AsyncSession) -> None:
+    outbox = NotificationOutbox(session)
+    await queue(outbox, dedup_key="new-product:coat:1000")
+    issued = await outbox.next_ids(2)
+    batch = [
+        Notification(
+            id=notification_id,
+            recipient_id=RecipientId(recipient),
+            key=ORDER_MOVED,
+            dedup_key=f"new-product:coat:{recipient}",
+            available_at=NOW,
+            created_at=NOW,
+        )
+        for notification_id, recipient in zip(
+            issued, (BUYER, FRIEND), strict=True
+        )
+    ]
+
+    queued = await outbox.add_all(batch)
+
+    assert queued == 1
+    assert len(await outbox.claim(BATCH, NOW)) == 2

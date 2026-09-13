@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from telegramsales.modules.notifications.contracts import (
+    CallToAction,
     NotificationArgs,
     NotificationId,
     RecipientId,
@@ -32,12 +33,19 @@ def subscription_to_model(entity: Subscription) -> SubscriptionORM:
     )
 
 
+def _action_of(model: NotificationORM) -> CallToAction | None:
+    if model.action_key is None or model.action_data is None:
+        return None
+    return CallToAction(key=model.action_key, data=model.action_data)
+
+
 def notification_to_entity(model: NotificationORM) -> Notification:
     return Notification(
         id=NotificationId(model.id),
         recipient_id=RecipientId(model.recipient_id),
         key=model.key,
         args=cast("NotificationArgs", model.args),
+        action=_action_of(model),
         dedup_key=model.dedup_key,
         status=NotificationStatus(model.status),
         attempts=model.attempts,
@@ -53,6 +61,8 @@ def notification_to_model(entity: Notification) -> NotificationORM:
         recipient_id=entity.recipient_id,
         key=entity.key,
         args=cast("dict[str, Any]", dict(entity.args)),
+        action_key=None if entity.action is None else entity.action.key,
+        action_data=None if entity.action is None else entity.action.data,
         dedup_key=entity.dedup_key,
         status=entity.status.value,
         attempts=entity.attempts,

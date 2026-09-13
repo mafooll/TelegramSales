@@ -11,6 +11,7 @@ from telegramsales.shared.infrastructure.database.mixins import WithCreatedAtMix
 from telegramsales.shared.infrastructure.database.types import enum_check
 
 KEY_LENGTH = 64
+ACTION_DATA_LENGTH = 64
 STATUS_LENGTH = 16
 DEDUP_KEY_LENGTH = 128
 NO_ATTEMPTS = "0"
@@ -37,6 +38,8 @@ class NotificationORM(WithCreatedAtMixin, BaseORM):
     recipient_id: Mapped[int] = mapped_column(BigInteger, index=True)
     key: Mapped[str] = mapped_column(String(KEY_LENGTH))
     args: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    action_key: Mapped[str | None] = mapped_column(String(KEY_LENGTH))
+    action_data: Mapped[str | None] = mapped_column(String(ACTION_DATA_LENGTH))
     dedup_key: Mapped[str | None] = mapped_column(
         String(DEDUP_KEY_LENGTH),
         unique=True,

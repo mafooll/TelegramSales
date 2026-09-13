@@ -8,8 +8,13 @@ from dishka import AsyncContainer, Scope
 import structlog
 from structlog.stdlib import BoundLogger
 
+from telegramsales.modules.catalog.contracts import ProductId
 from telegramsales.modules.catalog.domain.events import ProductPublished
 from telegramsales.modules.catalog.presentation.bot import shop_texts
+from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
+    ShopAction,
+    ShopCallback,
+)
 from telegramsales.modules.notifications import (
     Announce,
     AnnounceHandler,
@@ -19,6 +24,7 @@ from telegramsales.modules.notifications import (
     OpenSubscriptionHandler,
 )
 from telegramsales.modules.notifications.contracts import (
+    CallToAction,
     INotifications,
     NotificationArgs,
     RecipientId,
@@ -29,6 +35,11 @@ from telegramsales.modules.orders.domain.events import (
     OrderCancelled,
     OrderPlaced,
     OrderStatusChanged,
+)
+from telegramsales.modules.orders.presentation.bot import texts as orders_texts
+from telegramsales.modules.orders.presentation.bot.callbacks import (
+    OrderAction,
+    OrderCallback,
 )
 from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
 
@@ -51,6 +62,24 @@ class Notice:
     key: str
     args: NotificationArgs
     dedup_key: str
+    action: CallToAction
+
+
+def open_orders_action() -> CallToAction:
+    return CallToAction(
+        key=orders_texts.OPEN_ORDERS_BUTTON,
+        data=OrderCallback(action=OrderAction.LIST).pack(),
+    )
+
+
+def open_product_action(product_id: ProductId) -> CallToAction:
+    return CallToAction(
+        key=shop_texts.OPEN_PRODUCT_BUTTON,
+        data=ShopCallback(
+            action=ShopAction.PRODUCT,
+            product_id=product_id,
+        ).pack(),
+    )
 
 
 def status_notice(event: OrderStatusChanged) -> Notice | None:
@@ -66,6 +95,7 @@ def status_notice(event: OrderStatusChanged) -> Notice | None:
         key=key,
         args={NUMBER_ARGUMENT: event.number},
         dedup_key=f"order-status:{event.order_id}:{event.status.value}",
+        action=open_orders_action(),
     )
 
 
@@ -82,6 +112,7 @@ def cancellation_notice(event: OrderCancelled) -> Notice | None:
         key=key,
         args={NUMBER_ARGUMENT: event.number},
         dedup_key=f"order-cancelled:{event.order_id}",
+        action=open_orders_action(),
     )
 
 
@@ -92,6 +123,7 @@ def new_product_announcement(event: ProductPublished) -> Announce:
             TITLE_ARGUMENT: event.title,
             ARTICLE_ARGUMENT: event.article,
         },
+        action=open_product_action(event.product_id),
         topic=f"{NEW_PRODUCT_TOPIC}:{event.product_id}",
     )
 
@@ -111,6 +143,7 @@ def subscribe_notifications(
                 notice.key,
                 notice.args,
                 notice.dedup_key,
+                notice.action,
             )
 
     async def notify_about_status(event: OrderStatusChanged) -> None:
