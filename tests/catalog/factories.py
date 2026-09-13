@@ -97,6 +97,7 @@ def make_product(
         product.open_variants(Title(variant_label))
     if published:
         product.publish(NOW)
+        product.collect_events()
     return product
 
 

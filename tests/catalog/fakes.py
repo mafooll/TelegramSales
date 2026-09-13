@@ -32,6 +32,7 @@ from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.domain.values import Article, Title
 from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.clock import IClock
+from telegramsales.shared.application.events import IEventPublisher
 from telegramsales.shared.domain.event import DomainEvent, IEventSource
 
 FIRST_ID = 1000
@@ -319,6 +320,7 @@ class FakeCatalogUnitOfWork:
             media or FakeProductMediaRepository()
         )
         self._tracked: list[IEventSource] = []
+        self._events: list[DomainEvent] = []
         self.committed: bool = False
         self.rolled_back: bool = False
 
@@ -357,6 +359,11 @@ class FakeCatalogUnitOfWork:
         exc_tb: TracebackType | None,
     ) -> None:
         if exc_type is None:
+            self._events = [
+                event
+                for entity in self._tracked
+                for event in entity.collect_events()
+            ]
             self.committed = True
         else:
             self.rolled_back = True
@@ -365,7 +372,18 @@ class FakeCatalogUnitOfWork:
         self._tracked.append(entity)
 
     def collect_events(self) -> list[DomainEvent]:
-        return []
+        events = self._events
+        self._events = []
+        return events
+
+
+class FakeEventPublisher(IEventPublisher):
+    def __init__(self) -> None:
+        self.published: list[DomainEvent] = []
+
+    @override
+    async def publish_all(self, events: list[DomainEvent]) -> None:
+        self.published.extend(events)
 
 
 class FixedClock(IClock):

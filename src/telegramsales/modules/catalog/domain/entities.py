@@ -11,6 +11,7 @@ from telegramsales.modules.catalog.contracts import (
     VariantId,
 )
 from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
+from telegramsales.modules.catalog.domain.events import ProductPublished
 from telegramsales.modules.catalog.domain.pricing import (
     ensure_positive_price,
     ensure_sellable_price,
@@ -201,9 +202,19 @@ class Product(DomainEntity[ProductId]):
         self.variant_label = None
 
     def publish(self, now: datetime) -> None:
-        if self.published_at is None:
-            self.published_at = now
         self.is_visible = True
+        if self.is_published:
+            return
+
+        self.published_at = now
+        self.register_event(
+            ProductPublished(
+                product_id=self.id,
+                catalog_id=self.catalog_id,
+                title=self.title.value,
+                article=self.article.value,
+            )
+        )
 
     def hide(self) -> None:
         self.is_visible = False

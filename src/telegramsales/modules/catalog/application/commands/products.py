@@ -23,6 +23,7 @@ from telegramsales.modules.catalog.domain.services import (
 from telegramsales.modules.catalog.domain.values import Description, Title
 from telegramsales.shared.application.access import Actor
 from telegramsales.shared.application.clock import IClock
+from telegramsales.shared.application.events import IEventPublisher
 from telegramsales.shared.domain.money import Money
 
 
@@ -208,9 +209,15 @@ class RebrandProductHandler(ProductHandler):
 
 
 class PublishProductHandler(ProductHandler):
-    def __init__(self, uow: ICatalogUnitOfWork, clock: IClock) -> None:
+    def __init__(
+        self,
+        uow: ICatalogUnitOfWork,
+        clock: IClock,
+        events: IEventPublisher,
+    ) -> None:
         super().__init__(uow)
         self._clock: IClock = clock
+        self._events: IEventPublisher = events
 
     async def handle(self, command: PublishProduct, actor: Actor) -> None:
         ensure_can_manage(actor)
@@ -221,7 +228,10 @@ class PublishProductHandler(ProductHandler):
             ensure_can_be_published(product, photos)
 
             product.publish(self._clock.now())
+            uow.track(product)
             await uow.products.save(product)
+
+        await self._events.publish_all(self._uow.collect_events())
 
 
 class ChangeProductVisibilityHandler(ProductHandler):
