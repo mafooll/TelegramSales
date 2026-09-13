@@ -62,6 +62,9 @@ class OrderCardView:
     def is_taken(self) -> bool:
         return self.manager_id is not None
 
+    def is_run_by(self, staff_id: StaffId) -> bool:
+        return self.manager_id == staff_id
+
     @property
     def is_closed(self) -> bool:
         return self.status in CLOSED_STATUSES

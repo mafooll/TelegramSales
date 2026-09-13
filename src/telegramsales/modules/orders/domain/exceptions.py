@@ -1,5 +1,6 @@
 from telegramsales.modules.orders.contracts import CartItemId, OrderId
 from telegramsales.modules.orders.domain.enums import OrderStatus
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.domain.exceptions import DomainError
 
 
@@ -68,6 +69,14 @@ class OrderIsClosedError(DomainError):
         super().__init__(
             f"order {order_id} is {status} and accepts no further changes",
             details={"order_id": str(order_id), "status": status},
+        )
+
+
+class OrderAlreadyYoursError(DomainError):
+    def __init__(self, *, order_id: OrderId, manager_id: StaffId) -> None:
+        super().__init__(
+            f"order {order_id} already belongs to manager {manager_id}",
+            details={"order_id": str(order_id), "manager_id": manager_id},
         )
 
 

@@ -25,6 +25,7 @@ from telegramsales.modules.orders.domain.exceptions import (
     ForbiddenStatusChangeError,
     MixedCurrencyOrderError,
     OrderAlreadyTakenError,
+    OrderAlreadyYoursError,
     OrderIsClosedError,
 )
 from telegramsales.modules.orders.domain.values import (
@@ -185,9 +186,14 @@ class Order(DomainEntity[OrderId]):
     def is_closed(self) -> bool:
         return self.status in CLOSED_STATUSES
 
+    def is_run_by(self, manager_id: StaffId) -> bool:
+        return self.manager_id == manager_id
+
     def take_in_work(self, manager_id: StaffId) -> None:
         if self.is_closed:
             raise OrderIsClosedError(order_id=self.id, status=self.status)
+        if self.is_run_by(manager_id):
+            raise OrderAlreadyYoursError(order_id=self.id, manager_id=manager_id)
 
         self.manager_id = manager_id
         if self.is_open:

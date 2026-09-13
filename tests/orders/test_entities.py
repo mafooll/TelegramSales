@@ -16,6 +16,7 @@ from telegramsales.modules.orders.domain.exceptions import (
     ForbiddenStatusChangeError,
     MixedCurrencyOrderError,
     OrderAlreadyTakenError,
+    OrderAlreadyYoursError,
     OrderIsClosedError,
     QuantityTooLargeError,
 )
@@ -217,6 +218,13 @@ def test_another_manager_takes_over_without_moving_the_status() -> None:
     assert order.manager_id == OTHER_MANAGER
     assert order.status is OrderStatus.PAID
     assert [type(event) for event in order.collect_events()] == [OrderTaken]
+
+
+def test_a_manager_does_not_take_his_own_order_twice() -> None:
+    order = make_taken_order()
+
+    with pytest.raises(OrderAlreadyYoursError):
+        order.take_in_work(MANAGER)
 
 
 def test_a_closed_order_cannot_be_taken() -> None:
