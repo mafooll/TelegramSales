@@ -16,7 +16,9 @@ from telegramsales.modules.orders.contracts import OrderCardView
 from telegramsales.shared.presentation.bot.keyboard import Button, label
 
 TAKE: Button[OrderCardView] = Button(
-    text=label(texts.TAKE_BUTTON),
+    text=lambda card, translate: translate(
+        texts.REASSIGN_BUTTON if card.is_taken else texts.TAKE_BUTTON
+    ),
     callback=lambda card: DeskCallback(action=DeskAction.TAKE, order_id=card.id),
     when=can_take,
     style=ButtonStyle.PRIMARY,

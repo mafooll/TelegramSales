@@ -23,12 +23,18 @@ logger: BoundLogger = structlog.get_logger()
 TOPIC_GONE_MARKERS = ("thread not found", "topic_deleted", "topic deleted")
 NOT_MODIFIED = "message is not modified"
 NO_TEXT_MARKERS = ("there is no text in the message", "message can't be edited")
+MESSAGE_GONE_MARKERS = ("message to react not found", "message to edit not found")
 MAX_TOPIC_TITLE_LENGTH = 128
 
 
 def _is_topic_gone(error: TelegramBadRequest) -> bool:
     message = str(error).lower()
     return any(marker in message for marker in TOPIC_GONE_MARKERS)
+
+
+def _is_message_gone(error: TelegramBadRequest) -> bool:
+    message = str(error).lower()
+    return any(marker in message for marker in MESSAGE_GONE_MARKERS)
 
 
 def _reactions(emoji: str | None) -> list[ReactionTypeUnion] | None:
@@ -46,15 +52,14 @@ class TelegramWorkChat(IWorkChat):
         self._bot: Bot = bot
         self._chat_id: int = chat_id
         self._translate: ITranslator = translate
-        self._checked: bool = False
         self._ready: bool = False
+        self._complained: bool = False
 
     @override
     async def is_ready(self) -> bool:
-        if self._checked:
-            return self._ready
+        if self._ready:
+            return True
 
-        self._checked = True
         self._ready = await self._check()
         return self._ready
 
@@ -62,18 +67,21 @@ class TelegramWorkChat(IWorkChat):
         try:
             chat = await self._bot.get_chat(self._chat_id)
         except TelegramBadRequest:
-            logger.exception("work_chat_unreachable", chat_id=self._chat_id)
-            return False
+            return self._refuse("work_chat_unreachable")
 
         if not chat.is_forum:
-            logger.error("work_chat_without_topics", chat_id=self._chat_id)
-            return False
+            return self._refuse("work_chat_without_topics")
 
         member = await self._bot.get_chat_member(self._chat_id, self._bot.id)
         if not getattr(member, "can_manage_topics", False):
-            logger.error("work_chat_without_topic_rights", chat_id=self._chat_id)
-            return False
+            return self._refuse("work_chat_without_topic_rights")
         return True
+
+    def _refuse(self, reason: str) -> bool:
+        if not self._complained:
+            self._complained = True
+            logger.error(reason, chat_id=self._chat_id)
+        return False
 
     @override
     async def open_feed_topic(self) -> ThreadId:
@@ -134,6 +142,17 @@ class TelegramWorkChat(IWorkChat):
             raise self._translated(error, None) from error
 
     @override
+    async def announce_support(self, thread_id: ThreadId) -> None:
+        try:
+            await self._bot.send_message(
+                chat_id=self._chat_id,
+                text=self._translate(texts.SUPPORT_CALLED),
+                message_thread_id=thread_id,
+            )
+        except TelegramBadRequest as error:
+            raise self._translated(error, thread_id) from error
+
+    @override
     async def copy_into(
         self,
         thread_id: ThreadId,
@@ -168,6 +187,8 @@ class TelegramWorkChat(IWorkChat):
         text: str,
         error: TelegramBadRequest,
     ) -> None:
+        if _is_message_gone(error):
+            return
         if not any(marker in str(error).lower() for marker in NO_TEXT_MARKERS):
             raise error
         await self._bot.edit_message_caption(
@@ -178,11 +199,15 @@ class TelegramWorkChat(IWorkChat):
 
     @override
     async def react(self, message_id: MessageId, emoji: str | None) -> None:
-        await self._bot.set_message_reaction(
-            chat_id=self._chat_id,
-            message_id=message_id,
-            reaction=_reactions(emoji),
-        )
+        try:
+            await self._bot.set_message_reaction(
+                chat_id=self._chat_id,
+                message_id=message_id,
+                reaction=_reactions(emoji),
+            )
+        except TelegramBadRequest as error:
+            if not _is_message_gone(error):
+                raise
 
     def _card(self, card: OrderCardView) -> InputRichMessage:
         return rich_screen(
@@ -234,6 +259,8 @@ class TelegramCustomerChat(ICustomerChat):
                 text=text,
             )
         except TelegramBadRequest as error:
+            if _is_message_gone(error):
+                return
             if not any(marker in str(error).lower() for marker in NO_TEXT_MARKERS):
                 raise
             await self._bot.edit_message_caption(
@@ -249,8 +276,12 @@ class TelegramCustomerChat(ICustomerChat):
         message_id: MessageId,
         emoji: str | None,
     ) -> None:
-        await self._bot.set_message_reaction(
-            chat_id=customer_id,
-            message_id=message_id,
-            reaction=_reactions(emoji),
-        )
+        try:
+            await self._bot.set_message_reaction(
+                chat_id=customer_id,
+                message_id=message_id,
+                reaction=_reactions(emoji),
+            )
+        except TelegramBadRequest as error:
+            if not _is_message_gone(error):
+                raise

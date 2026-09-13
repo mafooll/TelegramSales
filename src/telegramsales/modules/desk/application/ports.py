@@ -108,6 +108,9 @@ class IWorkChat(ABC):
     ) -> None: ...
 
     @abstractmethod
+    async def announce_support(self, thread_id: ThreadId) -> None: ...
+
+    @abstractmethod
     async def copy_into(
         self,
         thread_id: ThreadId,

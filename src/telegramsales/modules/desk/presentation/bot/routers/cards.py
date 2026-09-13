@@ -15,6 +15,7 @@ from telegramsales.modules.orders.contracts import (
     OrderId,
     OrderStatus,
 )
+from telegramsales.modules.staff.contracts import StaffId
 from telegramsales.shared.presentation.bot.confirmation import (
     CONFIRMATION_SCREEN,
     ConfirmationView,
@@ -64,9 +65,18 @@ async def take_in_work(
     callback: CallbackQuery,
     callback_data: DeskCallback,
     context: RenderContext,
+    cards: FromDishka[IOrderCards],
     desk: FromDishka[IOrderDesk],
 ) -> None:
-    await desk.take_in_work(OrderId(callback_data.order_id), context.actor)
+    card = await _card(cards, callback_data)
+    if card is None:
+        await _answer_gone(callback, context)
+        return
+    if card.is_run_by(StaffId(context.actor.id)):
+        await callback.answer(context.translate(texts.ALREADY_YOURS))
+        return
+
+    await desk.take_in_work(card.id, context.actor)
     await callback.answer(context.translate(texts.TAKEN))
 
 

@@ -28,9 +28,9 @@ from telegramsales.modules.desk.application.commands.relay import (
 )
 from telegramsales.modules.desk.contracts import MessageId, ThreadId
 from telegramsales.modules.desk.presentation.bot.filters import (
-    HasOrdersFilter,
     InCustomerChatFilter,
     InWorkChatFilter,
+    OpenConversationFilter,
 )
 
 router = Router(name="desk.relay")
@@ -86,7 +86,7 @@ async def relay_to_customer(
     StateFilter(None),
     ~F.text.regexp(COMMAND_PREFIX),
     F.content_type.in_(RELAYABLE),
-    HasOrdersFilter(),
+    OpenConversationFilter(),
 )
 async def relay_to_topic(
     message: Message,

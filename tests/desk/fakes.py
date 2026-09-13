@@ -20,6 +20,7 @@ from telegramsales.modules.desk.domain.entities import CardLink, RelayLink, Topi
 from telegramsales.modules.desk.domain.enums import TopicKind
 from telegramsales.modules.orders.contracts import (
     IOrderCards,
+    IOrderPresence,
     OrderCardView,
     OrderId,
 )
@@ -180,6 +181,7 @@ class FakeWorkChat(IWorkChat):
         self.copied: list[tuple[ThreadId, CustomerId, MessageId]] = []
         self.edited: list[tuple[MessageId, str]] = []
         self.reactions: list[tuple[MessageId, str | None]] = []
+        self.announced: list[ThreadId] = []
         self.gone: set[ThreadId] = set()
         self.gone_messages: set[MessageId] = set()
         self._next_thread: int = FIRST_THREAD
@@ -222,6 +224,11 @@ class FakeWorkChat(IWorkChat):
         if message_id in self.gone_messages:
             raise TopicGoneError(thread_id=None)
         self.redrawn.append((message_id, card))
+
+    @override
+    async def announce_support(self, thread_id: ThreadId) -> None:
+        self._ensure_alive(thread_id)
+        self.announced.append(thread_id)
 
     @override
     async def copy_into(
@@ -301,3 +308,12 @@ class FakeOrderCards(IOrderCards):
     @override
     async def card(self, order_id: OrderId) -> OrderCardView | None:
         return self.cards.get(order_id)
+
+
+class FakeOrderPresence(IOrderPresence):
+    def __init__(self, *customers: CustomerId) -> None:
+        self.customers: set[CustomerId] = set(customers)
+
+    @override
+    async def has_orders(self, customer_id: CustomerId) -> bool:
+        return customer_id in self.customers

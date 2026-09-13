@@ -19,6 +19,10 @@ from telegramsales.modules.desk.application.commands.relay import (
     RelayToCustomerHandler,
     RelayToTopicHandler,
 )
+from telegramsales.modules.desk.application.commands.support import (
+    CallForSupportHandler,
+)
+from telegramsales.modules.desk.application.conversations import Conversations
 from telegramsales.modules.desk.application.ports import IDeskUnitOfWork
 from telegramsales.modules.desk.application.topics import Topics
 from telegramsales.modules.desk.infrastructure.uow import DeskUnitOfWork
@@ -33,7 +37,7 @@ class DeskProvider(Provider):
     def unit_of_work(self, manager: DatabaseManager) -> IDeskUnitOfWork:
         return DeskUnitOfWork(manager.session)
 
-    topics = provide_all(Topics)
+    services = provide_all(Topics, Conversations)
 
     handlers = provide_all(
         PublishOrderCardHandler,
@@ -44,4 +48,5 @@ class DeskProvider(Provider):
         EditFromTopicHandler,
         ReactFromCustomerHandler,
         ReactFromTopicHandler,
+        CallForSupportHandler,
     )

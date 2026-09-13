@@ -18,6 +18,7 @@ TRANSLATE = FluentTranslations(LOCALES_PATH, DEFAULT_LOCALE)(DEFAULT_LOCALE)
 WORK_CHAT = RenderContext(actor=WORK_CHAT_VIEWER, translate=TRANSLATE)
 
 TAKE = "🙋 Взять в работу"
+REASSIGN = "🔄 Перевести на себя"
 PAID = "💰 Оплачен"
 SHIPPED = "📦 Отправлен"
 DONE = "✅ Выполнен"
@@ -52,13 +53,13 @@ def test_a_fresh_order_can_only_be_taken_or_cancelled() -> None:
 def test_an_order_in_work_moves_along_the_funnel() -> None:
     card = make_card(status=OrderStatus.IN_WORK, manager_id=MANAGER)
 
-    assert buttons_of(card_of(card)) == [TAKE, PAID, SHIPPED, DONE, CANCEL]
+    assert buttons_of(card_of(card)) == [REASSIGN, PAID, SHIPPED, DONE, CANCEL]
 
 
 def test_a_shipped_order_can_only_be_finished() -> None:
     card = make_card(status=OrderStatus.SHIPPED, manager_id=MANAGER)
 
-    assert buttons_of(card_of(card)) == [TAKE, DONE, CANCEL]
+    assert buttons_of(card_of(card)) == [REASSIGN, DONE, CANCEL]
 
 
 def test_a_closed_order_keeps_no_buttons() -> None:
@@ -80,6 +81,10 @@ def test_the_card_carries_the_contacts_and_the_lines() -> None:
 
 def test_an_untaken_order_says_so() -> None:
     assert "никто не взял" in text_of(card_of(make_card()))
+
+
+def test_an_untaken_order_offers_to_take_it() -> None:
+    assert TAKE in buttons_of(card_of(make_card()))
 
 
 def test_a_taken_order_names_the_manager() -> None:

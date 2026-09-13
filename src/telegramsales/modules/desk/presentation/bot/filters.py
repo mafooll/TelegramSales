@@ -6,7 +6,7 @@ from aiogram.types import Chat, TelegramObject, User
 from dishka.integrations.aiogram import CONTAINER_NAME
 
 from telegramsales.modules.customers.contracts import CustomerId
-from telegramsales.modules.orders.contracts import IOrderPresence
+from telegramsales.modules.desk.application.conversations import Conversations
 from telegramsales.shared.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class InCustomerChatFilter(Filter):
         return chat is not None and chat.type == ChatType.PRIVATE
 
 
-class HasOrdersFilter(Filter):
+class OpenConversationFilter(Filter):
     @override
     async def __call__(self, _event: TelegramObject, **data: Any) -> bool:
         user: User | None = data.get(USER_KEY)
@@ -43,5 +43,5 @@ class HasOrdersFilter(Filter):
             return False
 
         container: AsyncContainer = data[CONTAINER_NAME]
-        presence = await container.get(IOrderPresence)
-        return await presence.has_orders(CustomerId(user.id))
+        conversations = await container.get(Conversations)
+        return await conversations.is_open(CustomerId(user.id))
