@@ -13,6 +13,7 @@ MAX_BUTTONS_PER_ROW = 8
 
 type TextArgs[ViewType] = Callable[[ViewType], Mapping[str, TranslationArgs]]
 type TextRef[ViewType] = Callable[[ViewType, ITranslator], str]
+type PhotoRef[ItemType] = Callable[[ItemType], str | None]
 type ContentRef[ViewType] = Callable[[ViewType, ITranslator], Content]
 
 
@@ -82,6 +83,9 @@ class ListScreen[ItemType, ViewType]:
     content: ContentRef[ViewType]
     item: Button[ItemType]
     footer: Sequence[Button[ViewType]]
+    item_photo: PhotoRef[ItemType] | None = None
+    item_caption: TextRef[ItemType] | None = None
+    footnote: TextRef[ViewType] | None = None
     row_width: int = 1
     footer_row_width: int = 1
     footer_layout: Sequence[int] = ()

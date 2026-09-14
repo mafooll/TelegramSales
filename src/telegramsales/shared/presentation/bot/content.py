@@ -4,6 +4,8 @@ from aiogram.types import (
     InputMediaPhoto,
     InputMediaVideo,
     InputRichBlockCollage,
+    InputRichBlockDivider,
+    InputRichBlockFooter,
     InputRichBlockParagraph,
     InputRichBlockPhoto,
     InputRichBlockSlideshow,
@@ -23,6 +25,14 @@ def _caption(text: str | None) -> RichBlockCaption | None:
 
 def paragraph(text: str) -> InputRichBlockUnion:
     return InputRichBlockParagraph(text=text)
+
+
+def divider() -> InputRichBlockUnion:
+    return InputRichBlockDivider()
+
+
+def footnote(text: str) -> InputRichBlockUnion:
+    return InputRichBlockFooter(text=text)
 
 
 def photo(file_id: str, caption: str | None = None) -> InputRichBlockUnion:

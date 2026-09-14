@@ -6,8 +6,12 @@ from aiogram.enums import ButtonStyle
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import (
     InputRichBlockButtons,
+    InputRichBlockDivider,
+    InputRichBlockFooter,
     InputRichBlockParagraph,
+    InputRichBlockPhoto,
     InputRichMessage,
+    RichMessageButton,
 )
 import pytest
 
@@ -295,6 +299,101 @@ def pagination(number: int, total: int, size: int = 3) -> Pagination[str]:
     )
 
 
+def navigation_buttons(message: InputRichMessage) -> list[RichMessageButton]:
+    for block in message.blocks or []:
+        if not isinstance(block, InputRichBlockButtons):
+            continue
+        if any("/" in str(button.text) for button in block.buttons):
+            return list(block.buttons)
+    return []
+
+
+CARD_LIST: ListScreen[str, ProbeView] = ListScreen(
+    content=TITLE,
+    item=Button(
+        text=label("Открыть"),
+        callback=lambda item: ProbeCallback(value=item),
+    ),
+    item_photo=lambda item: None if item.endswith("2") else f"photo-{item}",
+    item_caption=lambda item, _: f"подпись {item}",
+    footnote=lambda view, _: f"Витрина · {view.label}",
+    footer=[button("Назад")],
+)
+
+
+def photos_of(message: InputRichMessage) -> list[tuple[str, str | None]]:
+    return [
+        (
+            str(block.photo.media),
+            None if block.caption is None else str(block.caption.text),
+        )
+        for block in (message.blocks or [])
+        if isinstance(block, InputRichBlockPhoto)
+    ]
+
+
+def dividers_in(message: InputRichMessage) -> list[int]:
+    return [
+        position
+        for position, block in enumerate(message.blocks or [])
+        if isinstance(block, InputRichBlockDivider)
+    ]
+
+
+def first_photo_at(message: InputRichMessage) -> int:
+    return next(
+        position
+        for position, block in enumerate(message.blocks or [])
+        if isinstance(block, InputRichBlockPhoto)
+    )
+
+
+def test_a_card_item_shows_its_photo_with_the_caption() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 2), VIEW, ANYONE)
+
+    assert photos_of(message) == [
+        ("photo-item0", "подпись item0"),
+        ("photo-item1", "подпись item1"),
+    ]
+
+
+def test_a_card_item_keeps_its_own_button() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 2), VIEW, ANYONE)
+
+    assert rows_of(message) == [["Открыть"], ["Открыть"], ["Назад"]]
+
+
+def test_cards_are_separated_by_dividers_between_them() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 2), VIEW, ANYONE)
+
+    assert dividers_in(message) == [3]
+    assert dividers_in(message)[0] > first_photo_at(message)
+
+
+def test_a_single_card_has_no_divider() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 1), VIEW, ANYONE)
+
+    assert dividers_in(message) == []
+
+
+def test_an_item_without_a_photo_keeps_the_caption_as_text() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 3), VIEW, ANYONE)
+
+    assert photos_of(message) == [
+        ("photo-item0", "подпись item0"),
+        ("photo-item1", "подпись item1"),
+    ]
+    assert "подпись item2" in paragraphs_of(message)
+
+
+def test_the_footnote_closes_the_message() -> None:
+    message = rich_paged_screen(CARD_LIST, pagination(0, 2), VIEW, ANYONE)
+    footer = (message.blocks or [])[-1]
+
+    assert isinstance(footer, InputRichBlockFooter)
+    assert str(footer.text) == "Витрина · Товар"
+
+
 def test_list_content_comes_from_the_screen() -> None:
     message = rich_paged_screen(LIST_SCREEN, pagination(0, 2), VIEW, MANAGER)
 
@@ -307,16 +406,29 @@ def test_single_page_has_no_navigation() -> None:
     assert rows_of(message) == [["item0"], ["item1"], ["Добавить"], ["Назад"]]
 
 
-def test_first_page_has_no_back_arrow() -> None:
+def test_navigation_always_keeps_three_buttons() -> None:
+    for number in (0, 1, 2):
+        message = rich_paged_screen(LIST_SCREEN, pagination(number, 9), VIEW, ANYONE)
+
+        assert rows_of(message)[-2] == ["⬅️", f"{number + 1}/3", "➡️"]
+
+
+def test_the_first_page_disables_the_back_arrow() -> None:
     message = rich_paged_screen(LIST_SCREEN, pagination(0, 9), VIEW, ANYONE)
+    back, _, forward = navigation_buttons(message)
 
-    assert rows_of(message)[-2] == ["1/3", "➡️"]
+    assert back.disabled is not None
+    assert back.callback_data is None
+    assert forward.disabled is None
 
 
-def test_last_page_has_no_forward_arrow() -> None:
+def test_the_last_page_disables_the_forward_arrow() -> None:
     message = rich_paged_screen(LIST_SCREEN, pagination(2, 9), VIEW, ANYONE)
+    back, _, forward = navigation_buttons(message)
 
-    assert rows_of(message)[-2] == ["⬅️", "3/3"]
+    assert forward.disabled is not None
+    assert forward.callback_data is None
+    assert back.disabled is None
 
 
 def test_middle_page_has_both_arrows() -> None:
