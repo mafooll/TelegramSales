@@ -6,3 +6,5 @@ menu-show-shop-button = 🛍 Режим покупателя
 menu-hide-shop-button = 🙈 Выйти из режима покупателя
 menu-news-on-button = 🔔 Новинки: вкл
 menu-news-off-button = 🔕 Новинки: выкл
+menu-start-description = Главное меню магазина
+menu-support-description = Позвать менеджера в переписку
