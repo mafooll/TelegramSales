@@ -8,7 +8,7 @@ from telegramsales.modules.orders.application.readers import (
     SelectionReader,
 )
 from telegramsales.modules.orders.contracts import CartItemId, SelectionId
-from tests.orders.factories import BUYER, COAT, DRESS, SELECTION, SIZE_M, rub, usd
+from tests.orders.factories import BUYER, COAT, DRESS, SELECTION, SIZE_M, usd
 from tests.orders.fakes import FakeCartQueries, FakeCatalogOffers, offer
 
 
@@ -69,8 +69,8 @@ async def test_a_cart_line_carries_the_current_price() -> None:
 
     view = await reader.read(BUYER)
 
-    assert view.lines[0].price == rub("10000")
-    assert view.lines[0].total == rub("20000")
+    assert view.lines[0].price == usd("10000")
+    assert view.lines[0].total == usd("20000")
 
 
 async def test_a_cart_total_adds_the_lines_up() -> None:
@@ -84,7 +84,7 @@ async def test_a_cart_total_adds_the_lines_up() -> None:
 
     view = await reader.read(BUYER)
 
-    assert view.total == rub("17000")
+    assert view.total == usd("17000")
 
 
 async def test_a_sold_out_line_is_marked_and_left_out_of_the_total() -> None:
@@ -99,7 +99,7 @@ async def test_a_sold_out_line_is_marked_and_left_out_of_the_total() -> None:
     view = await reader.read(BUYER)
 
     assert view.has_unavailable
-    assert view.total == rub("10000")
+    assert view.total == usd("10000")
 
 
 async def test_a_vanished_product_drops_out_of_the_cart() -> None:
@@ -147,7 +147,7 @@ async def test_a_selection_line_shows_the_current_price() -> None:
     view = await reader.read(SELECTION)
 
     assert view is not None
-    assert view.lines[0].price == rub("11000")
+    assert view.lines[0].price == usd("11000")
     assert view.available_count == 1
 
 

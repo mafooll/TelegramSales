@@ -1,3 +1,6 @@
+from aiogram.types import InputRichBlockUnion
+
+from telegramsales.modules.catalog.contracts import MediaLayout
 from telegramsales.modules.orders.application.queries import (
     CartLineView,
     CartView,
@@ -25,6 +28,7 @@ from telegramsales.modules.orders.presentation.bot.buttons import (
     TAKE_MORE,
     back_to_cart,
     back_to_orders,
+    cart_line_caption,
     open_cart,
 )
 from telegramsales.modules.orders.presentation.bot.views import (
@@ -38,6 +42,12 @@ from telegramsales.modules.orders.presentation.bot.views import (
     variant_suffix,
 )
 from telegramsales.shared.application.i18n import ITranslator
+from telegramsales.shared.presentation.bot.content import (
+    Content,
+    gallery,
+    paragraph,
+    slideshow,
+)
 from telegramsales.shared.presentation.bot.keyboard import ListScreen, Screen
 from telegramsales.shared.presentation.bot.money import money_text
 from telegramsales.shared.presentation.bot.navigation import home_button
@@ -59,22 +69,40 @@ def _cart_text(cart: CartView, translate: ITranslator) -> str:
     return translate(texts.CART, total=money_text(cart.total))
 
 
+def _cart_line_thumbnail(line: CartLineView) -> str | None:
+    return line.photo_ids[0] if line.photo_ids else None
+
+
 CART: ListScreen[CartLineView, CartView] = ListScreen(
     content=_cart_text,
     item=CART_LINE_ENTRY,
+    item_photo=_cart_line_thumbnail,
+    item_caption=cart_line_caption,
     footer=[CHECKOUT, SHARE, ASK_CLEAR, home_button()],
     footer_layout=(1, 2),
 )
 
-CART_LINE: Screen[CartLineView] = Screen(
-    content=lambda line, translate: translate(
+
+def _cart_line_photos(line: CartLineView) -> list[InputRichBlockUnion]:
+    if line.media_layout is MediaLayout.SLIDESHOW:
+        return slideshow(line.photo_ids)
+    return gallery(line.photo_ids)
+
+
+def _cart_line_content(line: CartLineView, translate: ITranslator) -> Content:
+    text = translate(
         cart_line_card_key(line),
         title=line.title,
         variant=variant_suffix(line.variant_title, translate),
         price=money_text(line.price),
         quantity=line.quantity,
         total=money_text(line.total),
-    ),
+    )
+    return [paragraph(text), *_cart_line_photos(line)]
+
+
+CART_LINE: Screen[CartLineView] = Screen(
+    content=_cart_line_content,
     buttons=[TAKE_LESS, TAKE_MORE, DROP_LINE, back_to_cart()],
     layout=(2, 2),
 )

@@ -1,5 +1,7 @@
 from aiogram import Bot, F, Router
-from aiogram.types import CallbackQuery
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
 from dishka.integrations.aiogram import FromDishka
 
 from telegramsales.modules.customers.contracts import CustomerId
@@ -31,7 +33,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import send, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="orders.cart")
@@ -64,6 +66,28 @@ async def _show_cart(
     await show(
         callback,
         await render.cart_of(reader, context, _customer(context), page),
+    )
+
+
+CART_COMMAND = "cart"
+
+
+@router.message(Command(CART_COMMAND))
+async def open_cart_by_command(
+    message: Message,
+    context: RenderContext,
+    reader: FromDishka[CartReader],
+    state: FSMContext,
+) -> None:
+    if message.bot is None:
+        return
+
+    await state.set_state(None)
+
+    await send(
+        message.bot,
+        message.chat.id,
+        await render.cart_of(reader, context, _customer(context)),
     )
 
 

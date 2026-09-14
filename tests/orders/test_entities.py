@@ -77,7 +77,7 @@ def test_capping_stops_at_the_limit() -> None:
 def test_a_line_total_multiplies_the_price() -> None:
     line = make_order_line(price="12900", quantity=3)
 
-    assert line.total == rub("38700")
+    assert line.total == usd("38700")
 
 
 def test_an_order_sums_up_its_lines() -> None:
@@ -88,7 +88,7 @@ def test_an_order_sums_up_its_lines() -> None:
         )
     )
 
-    assert order.total == rub("33700")
+    assert order.total == usd("33700")
 
 
 def test_an_order_without_lines_is_rejected() -> None:
@@ -107,7 +107,7 @@ def test_an_order_without_lines_is_rejected() -> None:
 def test_lines_in_two_currencies_are_rejected() -> None:
     lines = (
         make_order_line(price="12900"),
-        replace(make_order_line("Платье"), price=usd("100")),
+        replace(make_order_line("Платье"), price=rub("100")),
     )
 
     with pytest.raises(MixedCurrencyOrderError):

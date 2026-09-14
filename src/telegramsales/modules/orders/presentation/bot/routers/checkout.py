@@ -30,6 +30,7 @@ from telegramsales.shared.domain.contacts import (
 )
 from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.filters import PlainTextFilter
 from telegramsales.shared.presentation.bot.money import money_text
 from telegramsales.shared.presentation.bot.render import show
 
@@ -148,7 +149,7 @@ async def change_contacts(
     await _ask_name(callback, context, state)
 
 
-@router.message(Checkout.name, F.text)
+@router.message(Checkout.name, PlainTextFilter())
 async def take_name(
     message: Message,
     context: RenderContext,
@@ -162,7 +163,7 @@ async def take_name(
     await _take(message, context, texts.NAME_REJECTED, apply)
 
 
-@router.message(Checkout.phone, F.text)
+@router.message(Checkout.phone, PlainTextFilter())
 async def take_phone(
     message: Message,
     context: RenderContext,
@@ -176,7 +177,7 @@ async def take_phone(
     await _take(message, context, texts.PHONE_REJECTED, apply)
 
 
-@router.message(Checkout.address, F.text)
+@router.message(Checkout.address, PlainTextFilter())
 async def take_address(
     message: Message,
     context: RenderContext,
@@ -205,7 +206,7 @@ async def ask_comment(
     await show(callback, render.prompt(context, texts.ASK_COMMENT, BACK_TO_CART))
 
 
-@router.message(Checkout.comment, F.text)
+@router.message(Checkout.comment, PlainTextFilter())
 async def take_comment(
     message: Message,
     context: RenderContext,

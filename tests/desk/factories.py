@@ -31,8 +31,8 @@ FEED_MESSAGE = MessageId(501)
 TOPIC_MESSAGE = MessageId(502)
 
 
-def rub(amount: str) -> Money:
-    return Money.from_external(amount, Currency.RUB)
+def usd(amount: str) -> Money:
+    return Money.from_external(amount, Currency.USD)
 
 
 def make_card(
@@ -59,11 +59,11 @@ def make_card(
                 article="000042",
                 variant_title="M",
                 quantity=2,
-                price=rub("12900"),
-                total=rub("25800"),
+                price=usd("12900"),
+                total=usd("25800"),
             ),
         ),
-        total=rub("25800"),
+        total=usd("25800"),
     )
 
 

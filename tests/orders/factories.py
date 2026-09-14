@@ -104,8 +104,8 @@ def make_order_line(  # noqa: PLR0913
         title=title,
         article="000042",
         variant_title=variant_title,
-        price=rub(price),
-        old_price=None if old_price is None else rub(old_price),
+        price=usd(price),
+        old_price=None if old_price is None else usd(old_price),
         quantity=Quantity(quantity),
     )
 

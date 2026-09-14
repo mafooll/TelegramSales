@@ -83,6 +83,7 @@ class ListScreen[ItemType, ViewType]:
     content: ContentRef[ViewType]
     item: Button[ItemType]
     footer: Sequence[Button[ViewType]]
+    item_extra: Button[ItemType] | None = None
     item_photo: PhotoRef[ItemType] | None = None
     item_caption: TextRef[ItemType] | None = None
     footnote: TextRef[ViewType] | None = None

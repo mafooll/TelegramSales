@@ -50,7 +50,7 @@ from tests.orders.factories import (
     make_contacts,
     make_order,
     make_taken_order,
-    rub,
+    usd,
 )
 from tests.orders.fakes import (
     FakeCartRepository,
@@ -106,7 +106,7 @@ async def test_an_order_takes_its_lines_from_the_cart() -> None:
     placed = next(iter(uow.order_repository.orders.values()))
 
     assert [line.title for line in placed.lines] == ["Пальто оверсайз"]
-    assert placed.total == rub("25800")
+    assert placed.total == usd("25800")
 
 
 async def test_an_order_snapshots_the_current_price() -> None:
@@ -118,8 +118,8 @@ async def test_an_order_snapshots_the_current_price() -> None:
     await handler.handle(order_for())
     placed = next(iter(uow.order_repository.orders.values()))
 
-    assert placed.lines[0].price == rub("9900")
-    assert placed.lines[0].old_price == rub("12900")
+    assert placed.lines[0].price == usd("9900")
+    assert placed.lines[0].old_price == usd("12900")
 
 
 async def test_a_variant_title_reaches_the_order() -> None:

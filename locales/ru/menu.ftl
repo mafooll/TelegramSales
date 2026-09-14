@@ -8,3 +8,6 @@ menu-news-on-button = 🔔 Новинки: вкл
 menu-news-off-button = 🔕 Новинки: выкл
 menu-start-description = Главное меню магазина
 menu-support-description = Позвать менеджера в переписку
+menu-shop-description = Витрина магазина
+menu-cart-description = Что лежит в корзине
+menu-orders-description = Мои заказы

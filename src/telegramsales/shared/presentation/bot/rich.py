@@ -163,9 +163,10 @@ def _card_blocks[ItemType, ViewType](
     elif caption is not None:
         blocks.append(paragraph(caption))
 
-    blocks.append(
-        InputRichBlockButtons(buttons=[_to_button(screen.item, item, context)])
-    )
+    buttons = [_to_button(screen.item, item, context)]
+    if screen.item_extra is not None and screen.item_extra.is_allowed(item, context):
+        buttons.append(_to_button(screen.item_extra, item, context))
+    blocks.append(InputRichBlockButtons(buttons=buttons))
     return blocks
 
 

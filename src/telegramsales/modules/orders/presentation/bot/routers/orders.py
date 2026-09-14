@@ -1,7 +1,9 @@
 from uuid import UUID
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
 from dishka.integrations.aiogram import FromDishka
 
 from telegramsales.modules.customers.contracts import CustomerId
@@ -22,7 +24,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import send, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="orders.orders")
@@ -40,6 +42,28 @@ async def _order(
     if order_id is None:
         return None
     return await queries.get_for(OrderId(order_id), _customer(context))
+
+
+ORDERS_COMMAND = "orders"
+
+
+@router.message(Command(ORDERS_COMMAND))
+async def show_orders_by_command(
+    message: Message,
+    context: RenderContext,
+    queries: FromDishka[IOrderQueries],
+    state: FSMContext,
+) -> None:
+    if message.bot is None:
+        return
+
+    await state.set_state(None)
+
+    await send(
+        message.bot,
+        message.chat.id,
+        await render.order_list(queries, context, _customer(context)),
+    )
 
 
 @router.callback_query(OrderCallback.filter(F.action == OrderAction.LIST))

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from telegramsales.modules.catalog.contracts import ProductId, VariantId
+from telegramsales.modules.catalog.contracts import MediaLayout, ProductId, VariantId
 from telegramsales.modules.customers.contracts import CustomerId
 from telegramsales.modules.orders.contracts import (
     CartItemId,
@@ -38,6 +38,8 @@ class CartLineView:
     quantity: int
     total: Money
     is_available: bool
+    photo_ids: tuple[str, ...]
+    media_layout: MediaLayout
 
 
 @dataclass(frozen=True, slots=True)

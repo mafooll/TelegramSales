@@ -76,7 +76,7 @@ def test_the_card_carries_the_contacts_and_the_lines() -> None:
     assert "000042" in text
     assert "+79991234567" in text
     assert "позвоните заранее" in text
-    assert "25 800 ₽" in text
+    assert "25 800 $" in text
 
 
 def test_an_untaken_order_says_so() -> None:

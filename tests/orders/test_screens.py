@@ -1,9 +1,13 @@
 from aiogram.types import (
     InputRichBlockButtons,
+    InputRichBlockCollage,
     InputRichBlockParagraph,
+    InputRichBlockPhoto,
+    InputRichBlockSlideshow,
     InputRichMessage,
 )
 
+from telegramsales.modules.catalog.contracts import MediaLayout
 from telegramsales.modules.orders.application.queries import (
     CartLineView,
     CartView,
@@ -48,7 +52,7 @@ from tests.orders.factories import (
     NOW,
     ORDER,
     SELECTION as SELECTION_ID,
-    rub,
+    usd,
 )
 
 DEFAULT_LOCALE = "ru"
@@ -58,6 +62,27 @@ TRANSLATE = FluentTranslations(LOCALES_PATH, DEFAULT_LOCALE)(DEFAULT_LOCALE)
 CUSTOMER = RenderContext(
     actor=Actor(id=7, permissions=frozenset()), translate=TRANSLATE
 )
+
+
+def captions_of(message: InputRichMessage) -> list[str]:
+    blocks = message.blocks or []
+    return [
+        str(block.caption.text)
+        for block in blocks
+        if isinstance(block, InputRichBlockPhoto) and block.caption is not None
+    ]
+
+
+def line_texts_of(message: InputRichMessage) -> list[str]:
+    blocks = message.blocks or []
+    return [
+        *captions_of(message),
+        *[
+            str(block.text)
+            for block in blocks
+            if isinstance(block, InputRichBlockParagraph)
+        ],
+    ]
 
 
 def texts_of(message: InputRichMessage) -> list[str]:
@@ -79,25 +104,38 @@ def paragraphs_of(message: InputRichMessage) -> list[str]:
     ]
 
 
+def photo_ids_of(message: InputRichMessage) -> list[str]:
+    blocks = message.blocks or []
+    return [
+        str(block.photo.media)
+        for block in blocks
+        if isinstance(block, InputRichBlockPhoto)
+    ]
+
+
 def cart_line(
     *,
     quantity: int = 1,
     is_available: bool = True,
     variant_title: str | None = None,
+    photos: tuple[str, ...] = (),
+    layout: MediaLayout = MediaLayout.COLLAGE,
 ) -> CartLineView:
     return CartLineView(
         item_id=CART_ITEM,
         title="Пальто оверсайз",
         variant_title=variant_title,
-        price=rub("12900"),
+        price=usd("12900"),
         quantity=quantity,
-        total=rub("12900") * quantity,
+        total=usd("12900") * quantity,
         is_available=is_available,
+        photo_ids=photos,
+        media_layout=layout,
     )
 
 
 def cart_view(*lines: CartLineView) -> CartView:
-    total = rub("0")
+    total = usd("0")
     for line in lines:
         if line.is_available:
             total = total + line.total
@@ -130,13 +168,13 @@ def order_view(
                 title="Пальто оверсайз",
                 article="000042",
                 variant_title="M",
-                price=rub("12900"),
+                price=usd("12900"),
                 old_price=None,
                 quantity=2,
-                total=rub("25800"),
+                total=usd("25800"),
             ),
         ),
-        total=rub("25800"),
+        total=usd("25800"),
     )
 
 
@@ -156,7 +194,7 @@ def selection_line(
     return SelectionLineView(
         title=title,
         variant_title=None,
-        price=rub("12900") if is_available else None,
+        price=usd("12900") if is_available else None,
         quantity=1,
         is_available=is_available,
     )
@@ -181,7 +219,7 @@ def test_a_cart_line_shows_quantity_and_sum() -> None:
 
     message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
 
-    assert "Пальто оверсайз · 2 шт · 25 800 ₽" in texts_of(message)
+    assert "Пальто оверсайз · 2 шт · 25 800 $" in line_texts_of(message)
 
 
 def test_a_variant_is_named_in_the_line() -> None:
@@ -189,7 +227,7 @@ def test_a_variant_is_named_in_the_line() -> None:
 
     message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
 
-    assert "Пальто оверсайз · M · 1 шт · 12 900 ₽" in texts_of(message)
+    assert "Пальто оверсайз · M · 1 шт · 12 900 $" in line_texts_of(message)
 
 
 def test_a_filled_cart_offers_checkout_and_sharing() -> None:
@@ -211,12 +249,41 @@ def test_a_cart_with_a_gone_line_cannot_be_ordered() -> None:
     assert "🧾 Оформить заказ" not in texts_of(message)
 
 
+def test_a_cart_line_shows_its_thumbnail() -> None:
+    line = cart_line(photos=("photo-front", "photo-back"))
+
+    message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
+    photos = [
+        str(block.photo.media)
+        for block in message.blocks or []
+        if isinstance(block, InputRichBlockPhoto)
+    ]
+
+    assert photos == ["photo-front"]
+
+
+def test_a_line_without_photos_keeps_its_text() -> None:
+    line = cart_line()
+
+    message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
+
+    assert "Пальто оверсайз · 1 шт · 12 900 $" in paragraphs_of(message)
+
+
+def test_every_cart_line_opens_its_card() -> None:
+    line = cart_line()
+
+    message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
+
+    assert "🛍 Открыть" in texts_of(message)
+
+
 def test_a_gone_line_is_marked() -> None:
     line = cart_line(is_available=False)
 
     message = rich_paged_screen(CART, paged([line]), cart_view(line), CUSTOMER)
 
-    assert "⚠️ Пальто оверсайз · нет в наличии" in texts_of(message)
+    assert "⚠️ Пальто оверсайз · нет в наличии" in line_texts_of(message)
 
 
 def test_the_cart_total_counts_only_what_is_on_offer() -> None:
@@ -224,7 +291,7 @@ def test_the_cart_total_counts_only_what_is_on_offer() -> None:
 
     message = rich_paged_screen(CART, paged(list(view.lines)), view, CUSTOMER)
 
-    assert "Итого 12 900 ₽" in paragraphs_of(message)[0]
+    assert "Итого 12 900 $" in paragraphs_of(message)[0]
 
 
 def test_a_single_line_cannot_give_one_back() -> None:
@@ -251,6 +318,38 @@ def test_a_line_can_always_be_dropped() -> None:
     assert "🗑️ Убрать" in texts_of(message)
 
 
+def test_a_line_without_photos_shows_no_photo() -> None:
+    message = rich_screen(CART_LINE, cart_line(), CUSTOMER)
+
+    assert photo_ids_of(message) == []
+
+
+def test_a_line_shows_the_products_photo() -> None:
+    message = rich_screen(CART_LINE, cart_line(photos=("front",)), CUSTOMER)
+
+    assert photo_ids_of(message) == ["front"]
+
+
+def test_a_lines_photos_follow_the_chosen_layout() -> None:
+    line = cart_line(photos=("one", "two"), layout=MediaLayout.SLIDESHOW)
+
+    message = rich_screen(CART_LINE, line, CUSTOMER)
+
+    assert any(
+        isinstance(block, InputRichBlockSlideshow) for block in message.blocks or []
+    )
+
+
+def test_a_lines_photos_collage_by_default() -> None:
+    line = cart_line(photos=("one", "two"))
+
+    message = rich_screen(CART_LINE, line, CUSTOMER)
+
+    assert any(
+        isinstance(block, InputRichBlockCollage) for block in message.blocks or []
+    )
+
+
 def checkout_view(comment: str = "") -> CheckoutView:
     return CheckoutView(
         name="Иван Петров",
@@ -258,7 +357,7 @@ def checkout_view(comment: str = "") -> CheckoutView:
         address="Москва, Тверская 1",
         comment=comment,
         lines=2,
-        total="25 800 ₽",
+        total="25 800 $",
     )
 
 
@@ -269,7 +368,7 @@ def test_the_confirmation_lists_the_contacts() -> None:
     assert "Иван Петров" in text
     assert "+79991234567" in text
     assert "Москва, Тверская 1" in text
-    assert "25 800 ₽" in text
+    assert "25 800 $" in text
 
 
 def test_the_confirmation_shows_a_comment_when_there_is_one() -> None:
@@ -314,7 +413,7 @@ def test_an_order_entry_shows_number_status_and_sum() -> None:
         id=ORDER,
         number="2026-09-12-0001",
         status=OrderStatus.PLACED,
-        total=rub("25800"),
+        total=usd("25800"),
         created_at=NOW,
         line_count=1,
     )
@@ -323,15 +422,15 @@ def test_an_order_entry_shows_number_status_and_sum() -> None:
         ORDER_LIST, paged([entry]), OrderListView(total=1), CUSTOMER
     )
 
-    assert "2026-09-12-0001 · оформлен · 25 800 ₽" in texts_of(message)
+    assert "2026-09-12-0001 · оформлен · 25 800 $" in texts_of(message)
 
 
 def test_an_order_card_lists_its_lines() -> None:
     message = rich_screen(ORDER_CARD, order_view(), CUSTOMER)
     text = paragraphs_of(message)[0]
 
-    assert "• Пальто оверсайз · M · 2 шт · 25 800 ₽" in text
-    assert "Итого: 25 800 ₽" in text
+    assert "• Пальто оверсайз · M · 2 шт · 25 800 $" in text
+    assert "Итого: 25 800 $" in text
 
 
 def test_a_fresh_order_can_be_cancelled() -> None:
@@ -368,7 +467,7 @@ def test_the_cancel_button_carries_the_order() -> None:
 def test_a_shared_cart_lists_its_lines() -> None:
     message = rich_screen(SELECTION, selection_view(selection_line()), CUSTOMER)
 
-    assert "• Пальто оверсайз · 1 шт · 12 900 ₽" in paragraphs_of(message)[0]
+    assert "• Пальто оверсайз · 1 шт · 12 900 $" in paragraphs_of(message)[0]
 
 
 def test_a_shared_cart_can_be_adopted() -> None:

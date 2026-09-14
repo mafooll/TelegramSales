@@ -118,3 +118,4 @@ orders-notice-paid = Оплата по заказу { $number } получена
 orders-notice-shipped = Заказ { $number } передан в доставку.
 orders-notice-done = Заказ { $number } выполнен. Спасибо за покупку!
 orders-notice-cancelled = Заказ { $number } отменён.
+orders-open-line-button = 🛍 Открыть

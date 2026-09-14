@@ -55,6 +55,8 @@ class CartReader:
                     quantity=row.quantity,
                     total=offer.price * row.quantity,
                     is_available=offer.is_available,
+                    photo_ids=offer.photo_ids,
+                    media_layout=offer.media_layout,
                 )
             )
 

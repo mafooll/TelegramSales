@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from telegramsales.modules.catalog.contracts import (
     ICatalogOffers,
+    MediaLayout,
     OfferKey,
     ProductId,
     ProductOffer,
@@ -226,6 +227,8 @@ def offer(  # noqa: PLR0913
     old_price: str | None = None,
     variant_title: str | None = None,
     is_available: bool = True,
+    photo_ids: tuple[str, ...] = (),
+    media_layout: MediaLayout = MediaLayout.COLLAGE,
 ) -> ProductOffer:
     return ProductOffer(
         product_id=product_id,
@@ -233,13 +236,15 @@ def offer(  # noqa: PLR0913
         title=title,
         article="000042",
         variant_title=variant_title,
-        price=Money.from_external(price, Currency.RUB),
+        price=Money.from_external(price, Currency.USD),
         old_price=(
             None
             if old_price is None
-            else Money.from_external(old_price, Currency.RUB)
+            else Money.from_external(old_price, Currency.USD)
         ),
         is_available=is_available,
+        photo_ids=photo_ids,
+        media_layout=media_layout,
     )
 
 

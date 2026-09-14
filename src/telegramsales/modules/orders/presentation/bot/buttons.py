@@ -26,6 +26,7 @@ from telegramsales.modules.orders.presentation.bot.views import (
     status_key,
     variant_suffix,
 )
+from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.keyboard import Button, label
 from telegramsales.shared.presentation.bot.money import money_text
 
@@ -59,18 +60,22 @@ CANCEL_INPUT: Button[PromptView] = Button(
 )
 
 CART_LINE_ENTRY: Button[CartLineView] = Button(
-    text=lambda line, translate: translate(
-        cart_line_key(line),
-        title=line.title,
-        variant=variant_suffix(line.variant_title, translate),
-        quantity=line.quantity,
-        total=money_text(line.total),
-    ),
+    text=label(texts.OPEN_LINE_BUTTON),
     callback=lambda line: CartCallback(
         action=CartAction.LINE,
         item_id=line.item_id,
     ),
 )
+
+
+def cart_line_caption(line: CartLineView, translate: ITranslator) -> str:
+    return translate(
+        cart_line_key(line),
+        title=line.title,
+        variant=variant_suffix(line.variant_title, translate),
+        quantity=line.quantity,
+        total=money_text(line.total),
+    )
 
 CHECKOUT: Button[CartView] = Button(
     text=label(texts.CHECKOUT_BUTTON),
