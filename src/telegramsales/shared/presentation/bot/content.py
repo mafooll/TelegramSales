@@ -11,12 +11,19 @@ from aiogram.types import (
     InputRichBlockSlideshow,
     InputRichBlockUnion,
     InputRichBlockVideo,
+    InputRichMessage,
     RichBlockCaption,
 )
 
 type Content = str | Sequence[InputRichBlockUnion]
 
 SINGLE_ITEM = 1
+MEDIA_BLOCKS = (
+    InputRichBlockPhoto,
+    InputRichBlockVideo,
+    InputRichBlockCollage,
+    InputRichBlockSlideshow,
+)
 
 
 def _caption(text: str | None) -> RichBlockCaption | None:
@@ -85,3 +92,14 @@ def content_blocks(content: Content) -> list[InputRichBlockUnion]:
     if isinstance(content, str):
         return [paragraph(content)]
     return list(content)
+
+
+def without_media(message: InputRichMessage) -> InputRichMessage:
+    blocks: list[InputRichBlockUnion] = []
+    for block in message.blocks or []:
+        if not isinstance(block, MEDIA_BLOCKS):
+            blocks.append(block)
+            continue
+        if block.caption is not None:
+            blocks.append(paragraph(str(block.caption.text)))
+    return InputRichMessage(blocks=blocks)
