@@ -2,6 +2,8 @@ from telegramsales.modules.catalog.contracts import CatalogId
 from telegramsales.modules.catalog.domain.entities import Brand, Category, Product
 from telegramsales.modules.catalog.domain.exceptions import (
     BrandInUseError,
+    CatalogHoldsCategoriesError,
+    CatalogHoldsProductsError,
     CatalogNotEmptyError,
     CategoryHoldsProductsError,
     CategoryNotEmptyError,
@@ -28,6 +30,28 @@ def ensure_can_hold_children(parent: Category, catalog_id: CatalogId) -> None:
 def ensure_catalog_is_empty(catalog_id: CatalogId, category_count: int) -> None:
     if category_count > EMPTY:
         raise CatalogNotEmptyError(
+            catalog_id=catalog_id,
+            category_count=category_count,
+        )
+
+
+def ensure_catalog_takes_categories(
+    catalog_id: CatalogId,
+    product_count: int,
+) -> None:
+    if product_count > EMPTY:
+        raise CatalogHoldsProductsError(
+            catalog_id=catalog_id,
+            product_count=product_count,
+        )
+
+
+def ensure_catalog_takes_products(
+    catalog_id: CatalogId,
+    category_count: int,
+) -> None:
+    if category_count > EMPTY:
+        raise CatalogHoldsCategoriesError(
             catalog_id=catalog_id,
             category_count=category_count,
         )

@@ -33,6 +33,7 @@ from telegramsales.modules.catalog.application.ports import (
 from telegramsales.modules.catalog.application.queries import ProductView
 from telegramsales.modules.catalog.contracts import (
     BrandId,
+    CatalogId,
     CategoryId,
     MediaId,
     ProductId,
@@ -103,7 +104,7 @@ async def show_products(
     queries: FromDishka[IProductQueries],
 ) -> None:
     await callback.answer()
-    if callback_data.category_id is None:
+    if callback_data.catalog_id is None:
         return
 
     await show(
@@ -111,7 +112,12 @@ async def show_products(
         await product_render.product_list(
             queries,
             context,
-            CategoryId(callback_data.category_id),
+            CatalogId(callback_data.catalog_id),
+            (
+                None
+                if callback_data.category_id is None
+                else CategoryId(callback_data.category_id)
+            ),
             callback_data.page,
         ),
     )
@@ -223,6 +229,7 @@ async def ask_delete(
         confirm=ProductCallback(
             action=ProductAction.DELETE,
             product_id=product.id,
+            catalog_id=product.catalog_id,
             category_id=product.category_id,
         ),
         cancel=ProductCallback(action=ProductAction.CARD, product_id=product.id),
@@ -238,7 +245,7 @@ async def delete(
     handler: FromDishka[DeleteProductHandler],
     queries: FromDishka[IProductQueries],
 ) -> None:
-    if callback_data.product_id is None or callback_data.category_id is None:
+    if callback_data.product_id is None or callback_data.catalog_id is None:
         await callback.answer()
         return
 
@@ -249,7 +256,14 @@ async def delete(
     await show(
         callback,
         await product_render.product_list(
-            queries, context, CategoryId(callback_data.category_id)
+            queries,
+            context,
+            CatalogId(callback_data.catalog_id),
+            (
+                None
+                if callback_data.category_id is None
+                else CategoryId(callback_data.category_id)
+            ),
         ),
     )
 

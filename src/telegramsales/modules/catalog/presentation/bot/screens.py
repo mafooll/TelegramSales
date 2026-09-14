@@ -35,6 +35,7 @@ from telegramsales.modules.catalog.presentation.bot.buttons import (
 )
 from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     OPEN_PRODUCTS,
+    OPEN_UNCATEGORIZED_PRODUCTS,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
@@ -71,13 +72,14 @@ CATALOG_CARD: ListScreen[CategoryView, CatalogView] = ListScreen(
     item=CATEGORY_ENTRY,
     footer=[
         CREATE_CATEGORY,
+        OPEN_UNCATEGORIZED_PRODUCTS,
         RENAME_CATALOG,
         HIDE_CATALOG,
         SHOW_CATALOG,
         DELETE_CATALOG,
         back_to_catalogs(),
     ],
-    footer_layout=(1, 2, 2),
+    footer_layout=(2, 2, 2),
 )
 
 CATEGORY_CARD: ListScreen[CategoryView, CategoryView] = ListScreen(

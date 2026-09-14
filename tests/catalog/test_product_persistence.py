@@ -11,7 +11,7 @@ from telegramsales.modules.catalog.infrastructure.repositories import (
     ProductRepository,
     ProductVariantRepository,
 )
-from tests.catalog.factories import NOW, make_media, make_variant, rub
+from tests.catalog.factories import NOW, make_media, make_variant, usd
 from tests.catalog.test_persistence import make_catalog, make_category
 
 pytestmark = pytest.mark.db
@@ -35,7 +35,7 @@ async def store_product(
         title=Title(title),
         description=Description("Тёплое пальто из шерсти."),
         article=await repository.next_article(),
-        price=rub(price),
+        price=usd(price),
         now=NOW,
     )
     await repository.add(product)
@@ -63,7 +63,7 @@ async def test_product_survives_a_round_trip(session: AsyncSession) -> None:
 
     assert loaded is not None
     assert loaded.title == Title("Пальто оверсайз")
-    assert loaded.price == rub("12900")
+    assert loaded.price == usd("12900")
     assert loaded.old_price is None
     assert not loaded.is_published
 
@@ -71,14 +71,14 @@ async def test_product_survives_a_round_trip(session: AsyncSession) -> None:
 async def test_a_sale_price_survives_a_round_trip(session: AsyncSession) -> None:
     repository = ProductRepository(session)
     product = await store_product(session)
-    product.reprice(rub("9900"), rub("12900"))
+    product.reprice(usd("9900"), usd("12900"))
     await repository.save(product)
 
     loaded = await repository.get(product.id)
 
     assert loaded is not None
     assert loaded.is_on_sale
-    assert loaded.old_price == rub("12900")
+    assert loaded.old_price == usd("12900")
 
 
 async def test_publication_survives_a_round_trip(session: AsyncSession) -> None:
@@ -108,6 +108,7 @@ async def test_products_are_counted_in_their_category(
     session: AsyncSession,
 ) -> None:
     product = await store_product(session)
+    assert product.category_id is not None
 
     counted = await ProductRepository(session).count_in_category(product.category_id)
 
@@ -216,7 +217,7 @@ async def test_variant_view_falls_back_to_the_product_price(
 
     views = await ProductQueries(session).list_variants(product.id)
 
-    assert [view.price for view in views] == [rub("12900")]
+    assert [view.price for view in views] == [usd("12900")]
 
 
 async def test_variant_view_uses_its_own_price(session: AsyncSession) -> None:
@@ -233,7 +234,7 @@ async def test_variant_view_uses_its_own_price(session: AsyncSession) -> None:
 
     views = await ProductQueries(session).list_variants(product.id)
 
-    assert [view.price for view in views] == [rub("14900")]
+    assert [view.price for view in views] == [usd("14900")]
 
 
 async def test_products_are_listed_within_their_category(
@@ -242,11 +243,70 @@ async def test_products_are_listed_within_their_category(
     product = await store_product(session)
 
     page = await ProductQueries(session).list_products(
-        product.category_id, 0, PAGE_SIZE
+        product.catalog_id, product.category_id, 0, PAGE_SIZE
     )
 
     assert [item.title for item in page.items] == ["Пальто оверсайз"]
     assert page.total == 1
+
+
+async def test_a_product_can_be_stored_without_a_category(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог без категорий")
+    repository = ProductRepository(session)
+    product = Product.create(
+        product_id=await repository.next_id(),
+        catalog_id=catalog.id,
+        category_id=None,
+        title=Title("Пальто без категории"),
+        description=Description("Тёплое пальто из шерсти."),
+        article=await repository.next_article(),
+        price=usd("12900"),
+        now=NOW,
+    )
+    await repository.add(product)
+
+    loaded = await repository.get(product.id)
+
+    assert loaded is not None
+    assert loaded.category_id is None
+
+
+async def test_uncategorized_products_are_listed_under_their_catalog(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог с товаром без категории")
+    category = await make_category(session, catalog.id, "Категория")
+    repository = ProductRepository(session)
+    categorized = Product.create(
+        product_id=await repository.next_id(),
+        catalog_id=catalog.id,
+        category_id=category.id,
+        title=Title("С категорией"),
+        description=Description("Тёплое пальто из шерсти."),
+        article=await repository.next_article(),
+        price=usd("12900"),
+        now=NOW,
+    )
+    uncategorized = Product.create(
+        product_id=await repository.next_id(),
+        catalog_id=catalog.id,
+        category_id=None,
+        title=Title("Без категории"),
+        description=Description("Тёплое пальто из шерсти."),
+        article=await repository.next_article(),
+        price=usd("12900"),
+        now=NOW,
+    )
+    await repository.add(categorized)
+    await repository.add(uncategorized)
+
+    page = await ProductQueries(session).list_products(
+        catalog.id, None, 0, PAGE_SIZE
+    )
+
+    assert [item.id for item in page.items] == [uncategorized.id]
 
 
 async def test_deleting_a_product_takes_its_media_along(

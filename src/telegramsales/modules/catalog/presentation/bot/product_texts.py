@@ -7,6 +7,7 @@ PRODUCT_CARD = "catalog-product-card"
 PRODUCT_CARD_SALE = "catalog-product-card-sale"
 
 OPEN_PRODUCTS_BUTTON = "catalog-open-products-button"
+OPEN_UNCATEGORIZED_BUTTON = "catalog-open-uncategorized-button"
 NEW_PRODUCT_BUTTON = "catalog-new-product-button"
 NAME_BUTTON = "catalog-product-name-button"
 DESCRIPTION_BUTTON = "catalog-product-description-button"

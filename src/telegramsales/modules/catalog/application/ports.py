@@ -143,6 +143,9 @@ class IProductRepository(ABC):
     async def count_in_category(self, category_id: CategoryId) -> int: ...
 
     @abstractmethod
+    async def count_uncategorized(self, catalog_id: CatalogId) -> int: ...
+
+    @abstractmethod
     async def count_of_brand(self, brand_id: BrandId) -> int: ...
 
 
@@ -258,7 +261,8 @@ class IProductQueries(ABC):
     @abstractmethod
     async def list_products(
         self,
-        category_id: CategoryId,
+        catalog_id: CatalogId,
+        category_id: CategoryId | None,
         number: int,
         size: int,
     ) -> Page[ProductEntryView]: ...
@@ -308,7 +312,8 @@ class IShopQueries(ABC):
     @abstractmethod
     async def list_products(
         self,
-        category_id: CategoryId,
+        catalog_id: CatalogId,
+        category_id: CategoryId | None,
         number: int,
         size: int,
     ) -> Page[ShopProductEntryView]: ...

@@ -53,12 +53,15 @@ MANAGER = context_with(CatalogPermission.MANAGE)
 OUTSIDER = context_with()
 
 
-def catalog_view(*, is_active: bool = True, categories: int = 0) -> CatalogView:
+def catalog_view(
+    *, is_active: bool = True, categories: int = 0, uncategorized: int = 0
+) -> CatalogView:
     return CatalogView(
         id=CLOTHES,
         title="Одежда",
         is_active=is_active,
         category_count=categories,
+        uncategorized_product_count=uncategorized,
     )
 
 
@@ -205,6 +208,22 @@ def test_empty_catalog_card_says_there_are_no_categories() -> None:
     )
 
     assert paragraphs_of(message) == ["Каталог: Одежда\nКатегорий нет"]
+
+
+def test_catalog_card_offers_a_way_to_uncategorized_products() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(), MANAGER
+    )
+
+    assert "📦 Без категории" in texts_of(message)
+
+
+def test_the_uncategorized_products_button_needs_no_permission() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(), OUTSIDER
+    )
+
+    assert "📦 Без категории" in texts_of(message)
 
 
 def test_root_category_may_hold_subcategories() -> None:

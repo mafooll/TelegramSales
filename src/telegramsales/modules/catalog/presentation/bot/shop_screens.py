@@ -9,6 +9,7 @@ from telegramsales.modules.catalog.application.queries import (
 from telegramsales.modules.catalog.domain.enums import MediaLayout
 from telegramsales.modules.catalog.presentation.bot import shop_texts
 from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
+    ADD_ENTRY_TO_CART,
     ADD_TO_CART,
     BACK_TO_CATALOG,
     BACK_TO_PARENT,
@@ -17,6 +18,7 @@ from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
     CATALOG_ENTRY,
     CATEGORY_ENTRY,
     OPEN_PRODUCTS,
+    OPEN_UNCATEGORIZED,
     PICK_VARIANT,
     PRODUCT_ENTRY,
     PRODUCTS_BACK_TO_CATALOG,
@@ -61,7 +63,7 @@ CATALOG: ListScreen[ShopCategoryView, ShopCatalogPageView] = ListScreen(
         title=view.catalog.title,
     ),
     item=CATEGORY_ENTRY,
-    footer=[back_to_catalogs()],
+    footer=[OPEN_UNCATEGORIZED, back_to_catalogs()],
 )
 
 CATEGORY: ListScreen[ShopCategoryView, ShopCategoryView] = ListScreen(
@@ -72,18 +74,26 @@ CATEGORY: ListScreen[ShopCategoryView, ShopCategoryView] = ListScreen(
     footer=[OPEN_PRODUCTS, BACK_TO_CATALOG, BACK_TO_PARENT],
 )
 
+
+def _product_list_title(view: ShopProductsView, translate: ITranslator) -> str:
+    if view.category is not None:
+        return view.category.title
+    return translate(shop_texts.UNCATEGORIZED_TITLE)
+
+
 PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
     content=lambda view, translate: translate(
         shop_texts.PRODUCT_LIST_EMPTY
         if view.total == 0
         else shop_texts.PRODUCT_LIST,
-        title=view.category.title,
+        title=_product_list_title(view, translate),
         total=view.total,
     ),
     item=PRODUCT_ENTRY,
+    item_extra=ADD_ENTRY_TO_CART,
     item_photo=lambda product: product.thumbnail,
     item_caption=product_caption,
-    footnote=lambda view, translate: breadcrumbs(view.category, translate),
+    footnote=breadcrumbs,
     footer=[
         PRODUCTS_BACK_TO_CATEGORY,
         PRODUCTS_BACK_TO_PARENT,

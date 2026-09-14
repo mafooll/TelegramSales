@@ -3,15 +3,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from telegramsales.modules.catalog.contracts import CatalogId, CategoryId
-from telegramsales.modules.catalog.domain.entities import Brand, Catalog, Category
-from telegramsales.modules.catalog.domain.values import Title
+from telegramsales.modules.catalog.domain.entities import (
+    Brand,
+    Catalog,
+    Category,
+    Product,
+)
+from telegramsales.modules.catalog.domain.values import Description, Title
 from telegramsales.modules.catalog.infrastructure.queries import CatalogQueries
 from telegramsales.modules.catalog.infrastructure.repositories import (
     BrandRepository,
     CatalogRepository,
     CategoryRepository,
+    ProductRepository,
 )
-from tests.catalog.factories import NOW
+from tests.catalog.factories import NOW, usd
 
 pytestmark = pytest.mark.db
 
@@ -206,6 +212,43 @@ async def test_catalog_view_counts_its_categories(session: AsyncSession) -> None
     assert view is not None
     assert view.title == "Одежда"
     assert view.category_count == 2
+
+
+async def test_catalog_view_counts_its_uncategorized_products(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session)
+    category = await make_category(session, catalog.id)
+    repository = ProductRepository(session)
+    await repository.add(
+        Product.create(
+            product_id=await repository.next_id(),
+            catalog_id=catalog.id,
+            category_id=None,
+            title=Title("Без категории"),
+            description=Description("Тёплое пальто из шерсти."),
+            article=await repository.next_article(),
+            price=usd("12900"),
+            now=NOW,
+        )
+    )
+    await repository.add(
+        Product.create(
+            product_id=await repository.next_id(),
+            catalog_id=catalog.id,
+            category_id=category.id,
+            title=Title("С категорией"),
+            description=Description("Тёплое пальто из шерсти."),
+            article=await repository.next_article(),
+            price=usd("12900"),
+            now=NOW,
+        )
+    )
+
+    view = await CatalogQueries(session).get_catalog(catalog.id)
+
+    assert view is not None
+    assert view.uncategorized_product_count == 1
 
 
 async def test_catalog_view_of_a_missing_catalog_is_none(

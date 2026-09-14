@@ -11,6 +11,8 @@ from telegramsales.modules.catalog.application.commands.products import (
     CreateProductHandler,
     DeleteProduct,
     DeleteProductHandler,
+    MoveProduct,
+    MoveProductHandler,
     PublishProduct,
     PublishProductHandler,
     RebrandProduct,
@@ -29,6 +31,7 @@ from telegramsales.modules.catalog.contracts import BrandId, CatalogId, ProductI
 from telegramsales.modules.catalog.domain.entities import Product
 from telegramsales.modules.catalog.domain.events import ProductPublished
 from telegramsales.modules.catalog.domain.exceptions import (
+    CatalogHoldsCategoriesError,
     ForeignCatalogError,
     PriceNotDiscountedError,
     ProductWithoutPhotoError,
@@ -48,7 +51,7 @@ from tests.catalog.factories import (
     make_category,
     make_media,
     make_product,
-    rub,
+    usd,
 )
 from tests.catalog.fakes import (
     FakeBrandRepository,
@@ -67,15 +70,26 @@ OUTSIDER = actor_with()
 MISSING = ProductId(COAT)
 
 
-def uow_with(*products: Product) -> FakeCatalogUnitOfWork:
+def uow_with(
+    *products: Product,
+    categories: bool = True,
+) -> FakeCatalogUnitOfWork:
     return FakeCatalogUnitOfWork(
         catalogs=FakeCatalogRepository(
             make_catalog(CLOTHES, "Одежда"), make_catalog(BEAUTY, "Бьюти")
         ),
-        categories=FakeCategoryRepository(make_category()),
+        categories=FakeCategoryRepository(
+            *([make_category()] if categories else [])
+        ),
         brands=FakeBrandRepository(make_brand()),
         products=FakeProductRepository(*products),
     )
+
+
+def uncategorized_product() -> Product:
+    product = make_product()
+    product.move_to(CLOTHES, None)
+    return product
 
 
 def new_product() -> CreateProduct:
@@ -84,7 +98,7 @@ def new_product() -> CreateProduct:
         category_id=OUTERWEAR,
         title=Title("Пальто"),
         description=Description("Тёплое."),
-        price=rub("12900"),
+        price=usd("12900"),
     )
 
 
@@ -125,11 +139,48 @@ async def test_category_from_another_catalog_is_rejected() -> None:
         category_id=OUTERWEAR,
         title=Title("Пальто"),
         description=Description("Тёплое."),
-        price=rub("12900"),
+        price=usd("12900"),
     )
 
     with pytest.raises(ForeignCatalogError):
         await CreateProductHandler(uow, FixedClock(NOW)).handle(command, MANAGER)
+
+
+def new_product_without_category() -> CreateProduct:
+    return CreateProduct(
+        catalog_id=CLOTHES,
+        category_id=None,
+        title=Title("Пальто"),
+        description=Description("Тёплое."),
+        price=usd("12900"),
+    )
+
+
+async def test_a_product_can_be_created_without_a_category() -> None:
+    uow = uow_with(categories=False)
+
+    product_id = await CreateProductHandler(uow, FixedClock(NOW)).handle(
+        new_product_without_category(), MANAGER
+    )
+
+    assert uow.products.items[product_id].category_id is None
+
+
+async def test_a_catalog_with_categories_takes_no_bare_products() -> None:
+    uow = uow_with()
+
+    with pytest.raises(CatalogHoldsCategoriesError):
+        await CreateProductHandler(uow, FixedClock(NOW)).handle(
+            new_product_without_category(), MANAGER
+        )
+
+
+async def test_a_bare_product_cannot_be_moved_into_a_split_catalog() -> None:
+    uow = uow_with(uncategorized_product())
+    command = MoveProduct(product_id=COAT, catalog_id=CLOTHES, category_id=None)
+
+    with pytest.raises(CatalogHoldsCategoriesError):
+        await MoveProductHandler(uow).handle(command, MANAGER)
 
 
 async def test_missing_catalog_is_rejected() -> None:
@@ -139,7 +190,7 @@ async def test_missing_catalog_is_rejected() -> None:
         category_id=OUTERWEAR,
         title=Title("Пальто"),
         description=Description("Тёплое."),
-        price=rub("12900"),
+        price=usd("12900"),
     )
 
     with pytest.raises(CatalogNotFoundError):
@@ -153,7 +204,7 @@ async def test_missing_brand_is_rejected() -> None:
         category_id=OUTERWEAR,
         title=Title("Пальто"),
         description=Description("Тёплое."),
-        price=rub("12900"),
+        price=usd("12900"),
         brand_id=BrandId(404),
     )
 
@@ -193,7 +244,7 @@ async def test_price_is_changed() -> None:
     uow = uow_with(make_product())
 
     await RepriceProductHandler(uow).handle(
-        RepriceProduct(product_id=COAT, price=rub("9900"), old_price=rub("12900")),
+        RepriceProduct(product_id=COAT, price=usd("9900"), old_price=usd("12900")),
         MANAGER,
     )
 
@@ -206,7 +257,7 @@ async def test_a_bad_discount_is_rejected() -> None:
     with pytest.raises(PriceNotDiscountedError):
         await RepriceProductHandler(uow).handle(
             RepriceProduct(
-                product_id=COAT, price=rub("12900"), old_price=rub("9900")
+                product_id=COAT, price=usd("12900"), old_price=usd("9900")
             ),
             MANAGER,
         )

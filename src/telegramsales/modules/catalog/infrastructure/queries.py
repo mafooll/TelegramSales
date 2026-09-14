@@ -27,7 +27,10 @@ from telegramsales.modules.catalog.contracts import (
     VariantId,
 )
 from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
-from telegramsales.modules.catalog.infrastructure.filters import parent_filter
+from telegramsales.modules.catalog.infrastructure.filters import (
+    category_filter,
+    parent_filter,
+)
 from telegramsales.modules.catalog.infrastructure.models import (
     BrandORM,
     CatalogORM,
@@ -49,6 +52,17 @@ CATEGORY_COUNT = (
     .label("category_count")
 )
 
+UNCATEGORIZED_PRODUCT_COUNT = (
+    select(func.count())
+    .select_from(ProductORM)
+    .where(
+        ProductORM.catalog_id == CatalogORM.id,
+        ProductORM.category_id.is_(None),
+    )
+    .scalar_subquery()
+    .label("uncategorized_product_count")
+)
+
 CHILD_COUNT = (
     select(func.count())
     .select_from(_child)
@@ -58,12 +72,13 @@ CHILD_COUNT = (
 )
 
 
-def _catalog_query() -> Select[tuple[int, str, bool, int]]:
+def _catalog_query() -> Select[tuple[int, str, bool, int, int]]:
     return select(
         CatalogORM.id,
         CatalogORM.title,
         CatalogORM.is_active,
         CATEGORY_COUNT,
+        UNCATEGORIZED_PRODUCT_COUNT,
     )
 
 
@@ -105,6 +120,7 @@ class CatalogQueries(ICatalogQueries):
             title=row.title,
             is_active=row.is_active,
             category_count=row.category_count,
+            uncategorized_product_count=row.uncategorized_product_count,
         )
 
     @override
@@ -122,6 +138,7 @@ class CatalogQueries(ICatalogQueries):
                     title=row.title,
                     is_active=row.is_active,
                     category_count=row.category_count,
+                    uncategorized_product_count=row.uncategorized_product_count,
                 )
                 for row in rows
             ],
@@ -292,7 +309,9 @@ class ProductQueries(IProductQueries):
         return ProductView(
             id=ProductId(row.id),
             catalog_id=CatalogId(row.catalog_id),
-            category_id=CategoryId(row.category_id),
+            category_id=(
+                None if row.category_id is None else CategoryId(row.category_id)
+            ),
             article=row.article,
             title=row.title,
             description=row.description,
@@ -318,7 +337,8 @@ class ProductQueries(IProductQueries):
     @override
     async def list_products(
         self,
-        category_id: CategoryId,
+        catalog_id: CatalogId,
+        category_id: CategoryId | None,
         number: int,
         size: int,
     ) -> Page[ProductEntryView]:
@@ -332,7 +352,10 @@ class ProductQueries(IProductQueries):
                 ProductORM.is_visible,
                 ProductORM.is_in_stock,
             )
-            .where(ProductORM.category_id == category_id)
+            .where(
+                ProductORM.catalog_id == catalog_id,
+                category_filter(category_id),
+            )
             .order_by(ProductORM.created_at, ProductORM.title)
         )
         total = await _total(self._session, query)

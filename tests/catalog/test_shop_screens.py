@@ -43,7 +43,7 @@ from telegramsales.shared.presentation.bot.money import STRIKE
 from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 from telegramsales.shared.settings import LOCALES_PATH
-from tests.catalog.factories import CLOTHES, COAT, COATS, OUTERWEAR, SIZE_M, rub
+from tests.catalog.factories import CLOTHES, COAT, COATS, OUTERWEAR, SIZE_M, usd
 
 DEFAULT_LOCALE = "ru"
 PAGE_SIZE = 8
@@ -86,7 +86,7 @@ def entry_view(
     return ShopProductEntryView(
         id=COAT,
         title="Пальто оверсайз",
-        price=rub("12900"),
+        price=usd("12900"),
         is_in_stock=in_stock,
         thumbnail=thumbnail,
     )
@@ -109,8 +109,8 @@ def product_view(  # noqa: PLR0913
         article="000042",
         title="Пальто оверсайз",
         description="Тёплое пальто из шерсти.",
-        price=rub("12900"),
-        old_price=None if old_price is None else rub(old_price),
+        price=usd("12900"),
+        old_price=None if old_price is None else usd(old_price),
         brand_title=brand,
         variant_label="Размер" if variants else None,
         is_in_stock=in_stock,
@@ -239,6 +239,7 @@ def test_a_subcategory_goes_back_to_its_parent() -> None:
 
 def product_list_of(*entries: ShopProductEntryView) -> InputRichMessage:
     view = ShopProductsView(
+        catalog=catalog_view(),
         category=category_view(products=len(entries)),
         total=len(entries),
     )
@@ -248,7 +249,7 @@ def product_list_of(*entries: ShopProductEntryView) -> InputRichMessage:
 def test_a_product_entry_carries_its_price() -> None:
     message = product_list_of(entry_view())
 
-    assert captions_of(message) == ["Пальто оверсайз · 12 900 ₽"]
+    assert captions_of(message) == ["Пальто оверсайз · 12 900 $"]
 
 
 def test_an_out_of_stock_entry_replaces_the_price() -> None:
@@ -267,7 +268,7 @@ def test_an_entry_without_a_photo_falls_back_to_text() -> None:
     message = product_list_of(entry_view(thumbnail=None))
 
     assert photo_ids_of(message) == []
-    assert "Пальто оверсайз · 12 900 ₽" in paragraphs_of(message)
+    assert "Пальто оверсайз · 12 900 $" in paragraphs_of(message)
 
 
 def test_the_list_ends_with_the_breadcrumbs() -> None:
@@ -284,18 +285,19 @@ def breadcrumbs_of(message: InputRichMessage) -> str:
 
 def test_the_breadcrumbs_name_the_parent_category() -> None:
     view = ShopProductsView(
+        catalog=catalog_view(),
         category=category_view(products=1, parent_id=1, parent_title="Пальто"),
         total=1,
     )
-    message = rich_paged_screen(
-        PRODUCT_LIST, paged([entry_view()]), view, CUSTOMER
-    )
+    message = rich_paged_screen(PRODUCT_LIST, paged([entry_view()]), view, CUSTOMER)
 
     assert breadcrumbs_of(message) == "Витрина · Одежда · Пальто · Верхняя одежда"
 
 
 def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:
-    view = ShopProductsView(category=category_view(products=1), total=1)
+    view = ShopProductsView(
+        catalog=catalog_view(), category=category_view(products=1), total=1
+    )
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
 
@@ -303,7 +305,11 @@ def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:
 
 
 def test_a_branching_category_sends_the_list_back_to_itself() -> None:
-    view = ShopProductsView(category=category_view(children=2, products=1), total=1)
+    view = ShopProductsView(
+        catalog=catalog_view(),
+        category=category_view(children=2, products=1),
+        total=1,
+    )
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
 
@@ -311,7 +317,11 @@ def test_a_branching_category_sends_the_list_back_to_itself() -> None:
 
 
 def test_a_leaf_subcategory_sends_the_list_back_to_its_parent() -> None:
-    view = ShopProductsView(category=category_view(products=1, parent_id=1), total=1)
+    view = ShopProductsView(
+        catalog=catalog_view(),
+        category=category_view(products=1, parent_id=1),
+        total=1,
+    )
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
     back = callbacks_of(message)
@@ -329,7 +339,7 @@ def test_the_card_shows_the_price_and_the_article() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
     assert paragraphs_of(message)[0] == (
-        "Пальто оверсайз\n12 900 ₽\n\nАртикул: 000042"
+        "Пальто оверсайз\n12 900 $\n\nАртикул: 000042"
     )
 
 
@@ -359,13 +369,13 @@ def test_a_product_without_a_brand_says_nothing_about_brands() -> None:
 
 def test_variants_are_listed_with_their_prices() -> None:
     variants = (
-        ShopVariantView(id=SIZE_M, title="M", price=rub("12900")),
-        ShopVariantView(id=SIZE_L, title="L", price=rub("13900")),
+        ShopVariantView(id=SIZE_M, title="M", price=usd("12900")),
+        ShopVariantView(id=SIZE_L, title="L", price=usd("13900")),
     )
 
     message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
 
-    assert "Размер:\n• M — 12 900 ₽\n• L — 13 900 ₽" in paragraphs_of(message)
+    assert "Размер:\n• M — 12 900 $\n• L — 13 900 $" in paragraphs_of(message)
 
 
 def test_an_out_of_stock_card_says_so() -> None:
@@ -432,7 +442,7 @@ def test_an_out_of_stock_product_cannot_go_to_the_cart() -> None:
 
 
 def test_a_product_with_variants_asks_to_pick_one_first() -> None:
-    variants = (ShopVariantView(id=SIZE_M, title="M", price=rub("12900")),)
+    variants = (ShopVariantView(id=SIZE_M, title="M", price=usd("12900")),)
 
     message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
     actions = [entry.action for entry in callbacks_of(message)]
@@ -446,7 +456,7 @@ def test_a_picked_variant_carries_both_identifiers() -> None:
         product_id=COAT,
         variant_id=SIZE_M,
         title="M",
-        price=rub("12900"),
+        price=usd("12900"),
     )
 
     message = rich_paged_screen(

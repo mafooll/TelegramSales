@@ -30,6 +30,7 @@ from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 
 PRODUCT_PAGE_SIZE = 6
+COUNT_PROBE_SIZE = 1
 
 
 async def catalog_list(
@@ -57,6 +58,9 @@ async def catalog_card(
     number: int,
 ) -> InputRichMessage:
     page = await queries.list_categories(catalog.id, None, number, DEFAULT_PAGE_SIZE)
+    uncategorized = await queries.list_products(
+        catalog.id, None, 0, COUNT_PROBE_SIZE
+    )
     pagination = Pagination(
         page=page,
         callback=lambda value: ShopCallback(
@@ -65,7 +69,11 @@ async def catalog_card(
             page=value,
         ),
     )
-    view = ShopCatalogPageView(catalog=catalog, total=page.total)
+    view = ShopCatalogPageView(
+        catalog=catalog,
+        total=page.total,
+        uncategorized_count=uncategorized.total,
+    )
     return rich_paged_screen(CATALOG, pagination, view, context)
 
 
@@ -93,19 +101,24 @@ async def category_card(
 async def product_list(
     queries: IShopQueries,
     context: RenderContext,
-    category: ShopCategoryView,
+    catalog: ShopCatalogView,
+    category: ShopCategoryView | None,
     number: int,
 ) -> InputRichMessage:
-    page = await queries.list_products(category.id, number, PRODUCT_PAGE_SIZE)
+    category_id = None if category is None else category.id
+    page = await queries.list_products(
+        catalog.id, category_id, number, PRODUCT_PAGE_SIZE
+    )
     pagination = Pagination(
         page=page,
         callback=lambda value: ShopCallback(
             action=ShopAction.PRODUCTS,
-            category_id=category.id,
+            catalog_id=catalog.id,
+            category_id=category_id,
             page=value,
         ),
     )
-    view = ShopProductsView(category=category, total=page.total)
+    view = ShopProductsView(catalog=catalog, category=category, total=page.total)
     return rich_paged_screen(PRODUCT_LIST, pagination, view, context)
 
 

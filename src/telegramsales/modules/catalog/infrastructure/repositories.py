@@ -252,6 +252,18 @@ class ProductRepository(IProductRepository):
         return (await self._session.execute(query)).scalar_one()
 
     @override
+    async def count_uncategorized(self, catalog_id: CatalogId) -> int:
+        query = (
+            select(func.count())
+            .select_from(ProductORM)
+            .where(
+                ProductORM.catalog_id == catalog_id,
+                ProductORM.category_id.is_(None),
+            )
+        )
+        return (await self._session.execute(query)).scalar_one()
+
+    @override
     async def count_of_brand(self, brand_id: BrandId) -> int:
         query = (
             select(func.count())

@@ -113,7 +113,7 @@ class ProductORM(WithCreatedAtMixin, BaseORM):
         ForeignKey("catalogs.id", ondelete="RESTRICT"),
         index=True,
     )
-    category_id: Mapped[int] = mapped_column(
+    category_id: Mapped[int | None] = mapped_column(
         SmallInteger,
         ForeignKey("categories.id", ondelete="RESTRICT"),
         index=True,

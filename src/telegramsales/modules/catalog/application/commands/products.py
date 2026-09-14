@@ -18,6 +18,7 @@ from telegramsales.modules.catalog.domain.entities import Product
 from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.domain.services import (
     ensure_can_be_published,
+    ensure_catalog_takes_products,
     ensure_category_fits,
 )
 from telegramsales.modules.catalog.domain.values import Description, Title
@@ -30,7 +31,7 @@ from telegramsales.shared.domain.money import Money
 @dataclass(frozen=True, slots=True)
 class CreateProduct:
     catalog_id: CatalogId
-    category_id: CategoryId
+    category_id: CategoryId | None
     title: Title
     description: Description
     price: Money
@@ -60,7 +61,7 @@ class RepriceProduct:
 class MoveProduct:
     product_id: ProductId
     catalog_id: CatalogId
-    category_id: CategoryId
+    category_id: CategoryId | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,10 +121,16 @@ class CreateProductHandler(ProductHandler):
             if not await uow.catalogs.get(command.catalog_id):
                 raise CatalogNotFoundError(catalog_id=command.catalog_id)
 
-            category = await uow.categories.get(command.category_id)
-            if category is None:
-                raise CategoryNotFoundError(category_id=command.category_id)
-            ensure_category_fits(category, command.catalog_id)
+            if command.category_id is None:
+                ensure_catalog_takes_products(
+                    command.catalog_id,
+                    await uow.categories.count_in_catalog(command.catalog_id),
+                )
+            else:
+                category = await uow.categories.get(command.category_id)
+                if category is None:
+                    raise CategoryNotFoundError(category_id=command.category_id)
+                ensure_category_fits(category, command.catalog_id)
 
             if command.brand_id is not None and not await uow.brands.get(
                 command.brand_id
@@ -183,10 +190,16 @@ class MoveProductHandler(ProductHandler):
         async with self._uow as uow:
             product = await self._load(uow, command.product_id)
 
-            category = await uow.categories.get(command.category_id)
-            if category is None:
-                raise CategoryNotFoundError(category_id=command.category_id)
-            ensure_category_fits(category, command.catalog_id)
+            if command.category_id is None:
+                ensure_catalog_takes_products(
+                    command.catalog_id,
+                    await uow.categories.count_in_catalog(command.catalog_id),
+                )
+            else:
+                category = await uow.categories.get(command.category_id)
+                if category is None:
+                    raise CategoryNotFoundError(category_id=command.category_id)
+                ensure_category_fits(category, command.catalog_id)
 
             product.move_to(command.catalog_id, command.category_id)
             await uow.products.save(product)

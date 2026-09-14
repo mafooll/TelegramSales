@@ -41,6 +41,7 @@ from telegramsales.modules.catalog.presentation.bot.callbacks import (
 from telegramsales.modules.catalog.presentation.bot.states import TitleForm
 from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.filters import PlainTextFilter
 from telegramsales.shared.presentation.bot.render import show
 
 router = Router(name="catalog.titles")
@@ -155,7 +156,7 @@ async def _apply(
         )
 
 
-@router.message(TitleForm.catalog, F.text)
+@router.message(TitleForm.catalog, PlainTextFilter())
 async def create_catalog(
     message: Message,
     state: FSMContext,
@@ -170,7 +171,7 @@ async def create_catalog(
     await _apply(message, state, context, apply)
 
 
-@router.message(TitleForm.catalog_rename, F.text)
+@router.message(TitleForm.catalog_rename, PlainTextFilter())
 async def rename_catalog(
     message: Message,
     state: FSMContext,
@@ -193,7 +194,7 @@ async def rename_catalog(
     await _apply(message, state, context, apply)
 
 
-@router.message(TitleForm.category, F.text)
+@router.message(TitleForm.category, PlainTextFilter())
 async def create_category(
     message: Message,
     state: FSMContext,
@@ -224,7 +225,7 @@ async def create_category(
     await _apply(message, state, context, apply)
 
 
-@router.message(TitleForm.category_rename, F.text)
+@router.message(TitleForm.category_rename, PlainTextFilter())
 async def rename_category(
     message: Message,
     state: FSMContext,
@@ -247,7 +248,7 @@ async def rename_category(
     await _apply(message, state, context, apply)
 
 
-@router.message(TitleForm.brand, F.text)
+@router.message(TitleForm.brand, PlainTextFilter())
 async def create_brand(
     message: Message,
     state: FSMContext,
@@ -262,7 +263,7 @@ async def create_brand(
     await _apply(message, state, context, apply)
 
 
-@router.message(TitleForm.brand_rename, F.text)
+@router.message(TitleForm.brand_rename, PlainTextFilter())
 async def rename_brand(
     message: Message,
     state: FSMContext,

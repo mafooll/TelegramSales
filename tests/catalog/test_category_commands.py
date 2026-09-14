@@ -18,6 +18,7 @@ from telegramsales.modules.catalog.application.exceptions import (
 from telegramsales.modules.catalog.contracts import CatalogId, CategoryId
 from telegramsales.modules.catalog.domain.entities import Category
 from telegramsales.modules.catalog.domain.exceptions import (
+    CatalogHoldsProductsError,
     CategoryNotEmptyError,
     ForeignCatalogError,
     NestingTooDeepError,
@@ -33,11 +34,13 @@ from tests.catalog.factories import (
     OUTERWEAR,
     make_catalog,
     make_category,
+    make_product,
 )
 from tests.catalog.fakes import (
     FakeCatalogRepository,
     FakeCatalogUnitOfWork,
     FakeCategoryRepository,
+    FakeProductRepository,
     FixedClock,
     actor_with,
 )
@@ -59,6 +62,24 @@ def uow_with(*categories: Category) -> FakeCatalogUnitOfWork:
 
 def create_handler(uow: FakeCatalogUnitOfWork) -> CreateCategoryHandler:
     return CreateCategoryHandler(uow, FixedClock(NOW))
+
+
+def uow_holding_a_bare_product() -> FakeCatalogUnitOfWork:
+    product = make_product()
+    product.move_to(CLOTHES, None)
+    return FakeCatalogUnitOfWork(
+        catalogs=FakeCatalogRepository(make_catalog(CLOTHES, "Одежда")),
+        categories=FakeCategoryRepository(),
+        products=FakeProductRepository(product),
+    )
+
+
+async def test_a_catalog_with_bare_products_takes_no_categories() -> None:
+    uow = uow_holding_a_bare_product()
+    command = CreateCategory(catalog_id=CLOTHES, title=Title("Верхняя одежда"))
+
+    with pytest.raises(CatalogHoldsProductsError):
+        await create_handler(uow).handle(command, MANAGER)
 
 
 async def test_root_category_is_created() -> None:

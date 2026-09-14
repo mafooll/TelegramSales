@@ -12,7 +12,9 @@ from telegramsales.modules.catalog.contracts import (
     ProductOffer,
     VariantId,
 )
+from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
 from telegramsales.modules.catalog.infrastructure.models import (
+    ProductMediaORM,
     ProductORM,
     ProductVariantORM,
 )
@@ -48,6 +50,7 @@ class CatalogOffers(ICatalogOffers):
         product_ids = {product_id for product_id, _ in keys}
         products = await self._products(product_ids)
         variants = await self._variants(product_ids)
+        photos = await self._photos(product_ids)
 
         offers: dict[OfferKey, ProductOffer] = {}
         for key in keys:
@@ -60,7 +63,7 @@ class CatalogOffers(ICatalogOffers):
                 continue
             if variant is not None and variant.product_id != product_id:
                 continue
-            offers[key] = _to_offer(product, variant)
+            offers[key] = _to_offer(product, variant, photos.get(product_id, ()))
         return offers
 
     async def _products(
@@ -74,6 +77,7 @@ class CatalogOffers(ICatalogOffers):
             ProductORM.price,
             ProductORM.old_price,
             ProductORM.currency,
+            ProductORM.media_layout,
             ProductORM.published_at,
             ProductORM.is_visible,
             ProductORM.is_in_stock,
@@ -95,8 +99,31 @@ class CatalogOffers(ICatalogOffers):
         rows = (await self._session.execute(query)).all()
         return {VariantId(row.id): row for row in rows}
 
+    async def _photos(
+        self,
+        product_ids: set[ProductId],
+    ) -> dict[ProductId, tuple[str, ...]]:
+        query = (
+            select(ProductMediaORM.product_id, ProductMediaORM.file_id)
+            .where(
+                ProductMediaORM.product_id.in_(product_ids),
+                ProductMediaORM.kind == MediaKind.PHOTO.value,
+            )
+            .order_by(ProductMediaORM.position, ProductMediaORM.id)
+        )
+        rows = (await self._session.execute(query)).all()
+        photos: dict[ProductId, list[str]] = {}
+        for row in rows:
+            product_id = ProductId(row.product_id)
+            photos.setdefault(product_id, []).append(row.file_id)
+        return {product_id: tuple(files) for product_id, files in photos.items()}
 
-def _to_offer(product: Any, variant: Any) -> ProductOffer:  # noqa: ANN401
+
+def _to_offer(
+    product: Any,  # noqa: ANN401
+    variant: Any,  # noqa: ANN401
+    photo_ids: tuple[str, ...],
+) -> ProductOffer:
     override = None if variant is None else variant.price_override
     price = product.price if override is None else override
     offered = (
@@ -118,4 +145,6 @@ def _to_offer(product: Any, variant: Any) -> ProductOffer:  # noqa: ANN401
             else _money(product.old_price, product.currency)
         ),
         is_available=offered,
+        photo_ids=photo_ids,
+        media_layout=MediaLayout(product.media_layout),
     )

@@ -18,6 +18,7 @@ class CatalogView:
     title: str
     is_active: bool
     category_count: int
+    uncategorized_product_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +42,7 @@ class BrandView:
 class ProductView:
     id: ProductId
     catalog_id: CatalogId
-    category_id: CategoryId
+    category_id: CategoryId | None
     article: str
     title: str
     description: str
@@ -117,13 +118,14 @@ class ShopProductEntryView:
     price: Money
     is_in_stock: bool
     thumbnail: str | None
+    has_variants: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class ShopProductView:
     id: ProductId
     catalog_id: CatalogId
-    category_id: CategoryId
+    category_id: CategoryId | None
     article: str
     title: str
     description: str

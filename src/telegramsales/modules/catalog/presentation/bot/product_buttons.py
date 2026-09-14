@@ -3,6 +3,7 @@ from collections.abc import Callable
 from aiogram.enums import ButtonStyle
 
 from telegramsales.modules.catalog.application.queries import (
+    CatalogView,
     CategoryView,
     MediaView,
     ProductEntryView,
@@ -37,7 +38,16 @@ OPEN_PRODUCTS: Button[CategoryView] = Button(
     text=label(product_texts.OPEN_PRODUCTS_BUTTON),
     callback=lambda category: ProductCallback(
         action=ProductAction.LIST,
+        catalog_id=category.catalog_id,
         category_id=category.id,
+    ),
+)
+
+OPEN_UNCATEGORIZED_PRODUCTS: Button[CatalogView] = Button(
+    text=label(product_texts.OPEN_UNCATEGORIZED_BUTTON),
+    callback=lambda catalog: ProductCallback(
+        action=ProductAction.LIST,
+        catalog_id=catalog.id,
     ),
 )
 
@@ -57,6 +67,7 @@ NEW_PRODUCT: Button[ProductListView] = Button(
     text=label(product_texts.NEW_PRODUCT_BUTTON),
     callback=lambda view: ProductCallback(
         action=ProductAction.NEW,
+        catalog_id=view.catalog_id,
         category_id=view.category_id,
     ),
     permission=CatalogPermission.MANAGE,
@@ -129,6 +140,7 @@ BACK_TO_CATEGORY: Button[ProductView] = Button(
     text=label(texts.BACK_BUTTON),
     callback=lambda product: ProductCallback(
         action=ProductAction.LIST,
+        catalog_id=product.catalog_id,
         category_id=product.category_id,
     ),
 )
@@ -216,13 +228,23 @@ DONE_WITH_MEDIA: Button[ProductView] = Button(
 )
 
 
-BACK_TO_CATEGORY_CARD: Button[ProductListView] = Button(
-    text=label(texts.BACK_BUTTON),
-    callback=lambda view: CatalogCallback(
+def _back_to_catalog_or_category(view: ProductListView) -> CatalogCallback:
+    if view.category_id is None:
+        return CatalogCallback(
+            action=CatalogAction.CARD,
+            target=CatalogTarget.CATALOG,
+            catalog_id=view.catalog_id,
+        )
+    return CatalogCallback(
         action=CatalogAction.CARD,
         target=CatalogTarget.CATEGORY,
         category_id=view.category_id,
-    ),
+    )
+
+
+BACK_TO_CATEGORY_CARD: Button[ProductListView] = Button(
+    text=label(texts.BACK_BUTTON),
+    callback=_back_to_catalog_or_category,
 )
 
 

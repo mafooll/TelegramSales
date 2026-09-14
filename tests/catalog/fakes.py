@@ -211,6 +211,14 @@ class FakeProductRepository(IProductRepository):
         )
 
     @override
+    async def count_uncategorized(self, catalog_id: CatalogId) -> int:
+        return sum(
+            1
+            for item in self.items.values()
+            if item.catalog_id == catalog_id and item.category_id is None
+        )
+
+    @override
     async def count_of_brand(self, brand_id: BrandId) -> int:
         return sum(1 for item in self.items.values() if item.brand_id == brand_id)
 

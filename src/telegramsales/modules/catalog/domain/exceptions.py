@@ -125,3 +125,19 @@ class BrandInUseError(DomainError):
             f"brand {brand_id} is used by {product_count} products",
             details={"brand_id": brand_id, "product_count": product_count},
         )
+
+
+class CatalogHoldsProductsError(DomainError):
+    def __init__(self, *, catalog_id: CatalogId, product_count: int) -> None:
+        super().__init__(
+            f"catalog {catalog_id} holds {product_count} products of its own",
+            details={"catalog_id": catalog_id, "product_count": product_count},
+        )
+
+
+class CatalogHoldsCategoriesError(DomainError):
+    def __init__(self, *, catalog_id: CatalogId, category_count: int) -> None:
+        super().__init__(
+            f"catalog {catalog_id} is split into {category_count} categories",
+            details={"catalog_id": catalog_id, "category_count": category_count},
+        )

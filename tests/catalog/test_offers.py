@@ -3,15 +3,16 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from telegramsales.modules.catalog.contracts import ProductId, VariantId
+from telegramsales.modules.catalog.contracts import MediaLayout, ProductId, VariantId
 from telegramsales.modules.catalog.domain.entities import Product, ProductVariant
 from telegramsales.modules.catalog.domain.values import Title
 from telegramsales.modules.catalog.infrastructure.offers import CatalogOffers
 from telegramsales.modules.catalog.infrastructure.repositories import (
+    ProductMediaRepository,
     ProductRepository,
     ProductVariantRepository,
 )
-from tests.catalog.factories import rub
+from tests.catalog.factories import make_media, usd
 from tests.catalog.test_product_persistence import store_product
 
 pytestmark = pytest.mark.db
@@ -35,7 +36,7 @@ async def add_variant(
         variant_id=await repository.next_id(),
         product_id=product.id,
         title=Title(title),
-        price_override=None if price_override is None else rub(price_override),
+        price_override=None if price_override is None else usd(price_override),
     )
     if not available:
         variant.run_out()
@@ -56,8 +57,25 @@ async def test_a_published_product_is_on_offer(session: AsyncSession) -> None:
 
     assert offer is not None
     assert offer.is_available
-    assert offer.price == rub("12900")
+    assert offer.price == usd("12900")
     assert offer.title == "Пальто предложенное"
+
+
+async def test_an_offer_carries_its_photos(session: AsyncSession) -> None:
+    product = await offered(session, "Пальто с фото")
+    media = ProductMediaRepository(session)
+    await media.add(
+        make_media(await media.next_id(), product_id=product.id, file_id="front")
+    )
+    await media.add(
+        make_media(await media.next_id(), product_id=product.id, file_id="back")
+    )
+
+    offer = await CatalogOffers(session).offer(product.id, None)
+
+    assert offer is not None
+    assert offer.photo_ids == ("front", "back")
+    assert offer.media_layout == MediaLayout.COLLAGE
 
 
 async def test_a_draft_product_is_not_on_offer(session: AsyncSession) -> None:
@@ -115,7 +133,7 @@ async def test_a_variant_price_wins(session: AsyncSession) -> None:
     offer = await CatalogOffers(session).offer(product.id, variant_id)
 
     assert offer is not None
-    assert offer.price == rub("13900")
+    assert offer.price == usd("13900")
 
 
 async def test_a_sold_out_variant_is_not_on_offer(session: AsyncSession) -> None:

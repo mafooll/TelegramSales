@@ -24,7 +24,7 @@ from telegramsales.modules.catalog.domain.exceptions import VariantsNotAllowedEr
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
 from telegramsales.modules.catalog.domain.values import Title
 from telegramsales.shared.application.access import PermissionDeniedError
-from tests.catalog.factories import COAT, SIZE_M, make_product, make_variant, rub
+from tests.catalog.factories import COAT, SIZE_M, make_product, make_variant, usd
 from tests.catalog.fakes import (
     FakeCatalogUnitOfWork,
     FakeProductRepository,
@@ -70,11 +70,11 @@ async def test_a_variant_may_carry_its_own_price() -> None:
     uow = uow_with(make_product(variant_label="Размер"))
 
     variant_id = await AddVariantHandler(uow).handle(
-        AddVariant(product_id=COAT, title=Title("XL"), price_override=rub("14900")),
+        AddVariant(product_id=COAT, title=Title("XL"), price_override=usd("14900")),
         MANAGER,
     )
 
-    assert uow.variants.items[variant_id].price_override == rub("14900")
+    assert uow.variants.items[variant_id].price_override == usd("14900")
 
 
 async def test_two_variants_may_not_share_a_title() -> None:

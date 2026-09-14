@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from typing import NewType
 from uuid import UUID
 
+from telegramsales.modules.catalog.domain.enums import (
+    MediaLayout as MediaLayout,  # noqa: PLC0414
+)
 from telegramsales.shared.domain.money import Money
 
 CatalogId = NewType("CatalogId", int)
@@ -26,6 +29,8 @@ class ProductOffer:
     price: Money
     old_price: Money | None
     is_available: bool
+    photo_ids: tuple[str, ...]
+    media_layout: MediaLayout
 
 
 class ICatalogOffers(ABC):

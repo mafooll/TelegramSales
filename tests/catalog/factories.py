@@ -71,26 +71,27 @@ SIZE_M = VariantId(500)
 FRONT_PHOTO = MediaId(600)
 
 
-def rub(amount: str) -> Money:
-    return Money.from_external(amount, Currency.RUB)
+def usd(amount: str) -> Money:
+    return Money.from_external(amount, Currency.USD)
 
 
-def make_product(
+def make_product(  # noqa: PLR0913
     product_id: ProductId = COAT,
     title: str = "Пальто оверсайз",
     *,
     price: str = "12900",
+    category_id: CategoryId | None = OUTERWEAR,
     variant_label: str | None = None,
     published: bool = False,
 ) -> Product:
     product = Product.create(
         product_id=product_id,
         catalog_id=CLOTHES,
-        category_id=OUTERWEAR,
+        category_id=category_id,
         title=Title(title),
         description=Description("Тёплое пальто из шерсти."),
         article=Article.of(42),
-        price=rub(price),
+        price=usd(price),
         now=NOW,
         brand_id=ACME,
     )
@@ -113,7 +114,7 @@ def make_variant(
         variant_id=variant_id,
         product_id=product_id,
         title=Title(title),
-        price_override=None if price_override is None else rub(price_override),
+        price_override=None if price_override is None else usd(price_override),
     )
 
 

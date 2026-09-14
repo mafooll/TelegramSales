@@ -13,7 +13,7 @@ from telegramsales.modules.catalog.domain.values import (
     Description,
     Title,
 )
-from tests.catalog.factories import NOW, make_product, rub
+from tests.catalog.factories import NOW, make_product, usd
 
 
 def test_article_is_padded_to_a_fixed_width() -> None:
@@ -47,6 +47,12 @@ def test_blank_description_is_rejected(raw: str) -> None:
 def test_description_above_the_limit_is_rejected() -> None:
     with pytest.raises(DescriptionTooLongError):
         Description("я" * (MAX_DESCRIPTION_LENGTH + 1))
+
+
+def test_a_product_can_have_no_category() -> None:
+    product = make_product(category_id=None)
+
+    assert product.category_id is None
 
 
 def test_new_product_is_not_published() -> None:
@@ -125,33 +131,33 @@ def test_product_without_an_old_price_is_not_on_sale() -> None:
 
 def test_old_price_above_the_price_makes_a_sale() -> None:
     product = make_product()
-    product.reprice(rub("9900"), rub("12900"))
+    product.reprice(usd("9900"), usd("12900"))
 
     assert product.is_on_sale
-    assert product.price == rub("9900")
+    assert product.price == usd("9900")
 
 
 def test_old_price_below_the_price_is_rejected() -> None:
     product = make_product()
 
     with pytest.raises(PriceNotDiscountedError):
-        product.reprice(rub("12900"), rub("9900"))
+        product.reprice(usd("12900"), usd("9900"))
 
 
 def test_old_price_equal_to_the_price_is_rejected() -> None:
     product = make_product()
 
     with pytest.raises(PriceNotDiscountedError):
-        product.reprice(rub("9900"), rub("9900"))
+        product.reprice(usd("9900"), usd("9900"))
 
 
 def test_a_rejected_price_leaves_the_product_untouched() -> None:
     product = make_product(price="12900")
 
     with pytest.raises(PriceNotDiscountedError):
-        product.reprice(rub("12900"), rub("9900"))
+        product.reprice(usd("12900"), usd("9900"))
 
-    assert product.price == rub("12900")
+    assert product.price == usd("12900")
     assert product.old_price is None
 
 
@@ -162,8 +168,8 @@ def test_free_products_are_rejected() -> None:
 
 def test_a_sale_can_be_called_off() -> None:
     product = make_product()
-    product.reprice(rub("9900"), rub("12900"))
-    product.reprice(rub("12900"))
+    product.reprice(usd("9900"), usd("12900"))
+    product.reprice(usd("12900"))
 
     assert not product.is_on_sale
 

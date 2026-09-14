@@ -12,6 +12,7 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopCallback,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
+    ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
     shop_product_item_key,
@@ -47,9 +48,21 @@ OPEN_PRODUCTS: Button[ShopCategoryView] = Button(
     ),
     callback=lambda category: ShopCallback(
         action=ShopAction.PRODUCTS,
+        catalog_id=category.catalog_id,
         category_id=category.id,
     ),
     when=lambda category: category.product_count > 0,
+)
+
+OPEN_UNCATEGORIZED: Button[ShopCatalogPageView] = Button(
+    text=lambda view, translate: translate(
+        shop_texts.OPEN_UNCATEGORIZED_BUTTON, count=view.uncategorized_count
+    ),
+    callback=lambda view: ShopCallback(
+        action=ShopAction.PRODUCTS,
+        catalog_id=view.catalog.id,
+    ),
+    when=lambda view: view.uncategorized_count > 0,
 )
 
 PRODUCT_ENTRY: Button[ShopProductEntryView] = Button(
@@ -58,6 +71,16 @@ PRODUCT_ENTRY: Button[ShopProductEntryView] = Button(
         action=ShopAction.PRODUCT,
         product_id=product.id,
     ),
+)
+
+ADD_ENTRY_TO_CART: Button[ShopProductEntryView] = Button(
+    text=label(shop_texts.ADD_TO_CART_BUTTON),
+    callback=lambda product: ShopCallback(
+        action=ShopAction.ADD,
+        product_id=product.id,
+    ),
+    when=lambda product: product.is_in_stock and not product.has_variants,
+    style=ButtonStyle.PRIMARY,
 )
 
 
@@ -100,15 +123,15 @@ BACK_TO_PARENT: Button[ShopCategoryView] = Button(
 
 
 def _is_leaf(view: ShopProductsView) -> bool:
-    return view.category.child_count == 0
+    return view.category is None or view.category.child_count == 0
 
 
 PRODUCTS_BACK_TO_CATEGORY: Button[ShopProductsView] = Button(
     text=label(shop_texts.BACK_BUTTON),
     callback=lambda view: ShopCallback(
         action=ShopAction.CATEGORY,
-        catalog_id=view.category.catalog_id,
-        category_id=view.category.id,
+        catalog_id=view.catalog.id,
+        category_id=None if view.category is None else view.category.id,
     ),
     when=lambda view: not _is_leaf(view),
 )
@@ -117,25 +140,32 @@ PRODUCTS_BACK_TO_PARENT: Button[ShopProductsView] = Button(
     text=label(shop_texts.BACK_BUTTON),
     callback=lambda view: ShopCallback(
         action=ShopAction.CATEGORY,
-        catalog_id=view.category.catalog_id,
-        category_id=view.category.parent_id,
+        catalog_id=view.catalog.id,
+        category_id=None if view.category is None else view.category.parent_id,
     ),
-    when=lambda view: _is_leaf(view) and view.category.parent_id is not None,
+    when=lambda view: (
+        view.category is not None
+        and _is_leaf(view)
+        and view.category.parent_id is not None
+    ),
 )
 
 PRODUCTS_BACK_TO_CATALOG: Button[ShopProductsView] = Button(
     text=label(shop_texts.BACK_BUTTON),
     callback=lambda view: ShopCallback(
         action=ShopAction.CATALOG,
-        catalog_id=view.category.catalog_id,
+        catalog_id=view.catalog.id,
     ),
-    when=lambda view: _is_leaf(view) and view.category.parent_id is None,
+    when=lambda view: (
+        view.category is None or (_is_leaf(view) and view.category.parent_id is None)
+    ),
 )
 
 BACK_TO_PRODUCTS: Button[ShopProductView] = Button(
     text=label(shop_texts.BACK_BUTTON),
     callback=lambda product: ShopCallback(
         action=ShopAction.PRODUCTS,
+        catalog_id=product.catalog_id,
         category_id=product.category_id,
     ),
 )

@@ -37,6 +37,7 @@ class ProductAction(StrEnum):
 class ProductCallback(CallbackData, prefix="prd"):
     action: ProductAction
     product_id: PackedUUID | None = None
+    catalog_id: int | None = None
     category_id: int | None = None
     item_id: int | None = None
     page: int = 0

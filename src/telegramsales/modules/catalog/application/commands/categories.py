@@ -11,6 +11,7 @@ from telegramsales.modules.catalog.contracts import CatalogId, CategoryId
 from telegramsales.modules.catalog.domain.entities import Category
 from telegramsales.modules.catalog.domain.services import (
     ensure_can_hold_children,
+    ensure_catalog_takes_categories,
     ensure_category_is_empty,
 )
 from telegramsales.modules.catalog.domain.values import Title
@@ -53,6 +54,11 @@ class CreateCategoryHandler:
         async with self._uow as uow:
             if not await uow.catalogs.get(command.catalog_id):
                 raise CatalogNotFoundError(catalog_id=command.catalog_id)
+
+            ensure_catalog_takes_categories(
+                command.catalog_id,
+                await uow.products.count_uncategorized(command.catalog_id),
+            )
 
             if command.parent_id is not None:
                 parent = await uow.categories.get(command.parent_id)

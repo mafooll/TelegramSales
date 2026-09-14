@@ -17,6 +17,7 @@ from telegramsales.modules.catalog.application.queries import (
 )
 from telegramsales.modules.catalog.contracts import (
     BrandId,
+    CatalogId,
     CategoryId,
     ProductId,
     VariantId,
@@ -44,7 +45,8 @@ class PromptView:
 
 @dataclass(frozen=True, slots=True)
 class ProductListView:
-    category_id: CategoryId
+    catalog_id: CatalogId
+    category_id: CategoryId | None
     total: int
 
 
@@ -52,6 +54,7 @@ class ProductListView:
 class ShopCatalogPageView:
     catalog: ShopCatalogView
     total: int
+    uncategorized_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +67,8 @@ class ShopVariantPickView:
 
 @dataclass(frozen=True, slots=True)
 class ShopProductsView:
-    category: ShopCategoryView
+    catalog: ShopCatalogView
+    category: ShopCategoryView | None
     total: int
 
 
@@ -125,13 +129,13 @@ def shop_product_item_key(product: ShopProductEntryView) -> str:
     return shop_texts.PRODUCT_ENTRY_OUT
 
 
-def breadcrumbs(category: ShopCategoryView, translate: ITranslator) -> str:
-    trail = [
-        translate(shop_texts.BREADCRUMB_ROOT),
-        category.catalog_title,
-        *([] if category.parent_title is None else [category.parent_title]),
-        category.title,
-    ]
+def breadcrumbs(view: ShopProductsView, translate: ITranslator) -> str:
+    category = view.category
+    trail = [translate(shop_texts.BREADCRUMB_ROOT), view.catalog.title]
+    if category is not None:
+        if category.parent_title is not None:
+            trail.append(category.parent_title)
+        trail.append(category.title)
     return translate(shop_texts.BREADCRUMB_SEPARATOR).join(trail)
 
 

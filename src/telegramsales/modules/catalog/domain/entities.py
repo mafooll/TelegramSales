@@ -115,7 +115,7 @@ class Brand(DomainEntity[BrandId]):
 @dataclass(eq=False, kw_only=True)
 class Product(DomainEntity[ProductId]):
     catalog_id: CatalogId
-    category_id: CategoryId
+    category_id: CategoryId | None
     title: Title
     description: Description
     article: Article
@@ -138,7 +138,7 @@ class Product(DomainEntity[ProductId]):
         *,
         product_id: ProductId,
         catalog_id: CatalogId,
-        category_id: CategoryId,
+        category_id: CategoryId | None,
         title: Title,
         description: Description,
         article: Article,
@@ -180,7 +180,7 @@ class Product(DomainEntity[ProductId]):
     def describe(self, description: Description) -> None:
         self.description = description
 
-    def move_to(self, catalog_id: CatalogId, category_id: CategoryId) -> None:
+    def move_to(self, catalog_id: CatalogId, category_id: CategoryId | None) -> None:
         self.catalog_id = catalog_id
         self.category_id = category_id
 

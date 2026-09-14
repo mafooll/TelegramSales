@@ -25,7 +25,7 @@ from tests.catalog.factories import (
     make_media,
     make_product,
     make_variant,
-    rub,
+    usd,
 )
 
 
@@ -77,21 +77,21 @@ def test_category_of_another_catalog_is_rejected() -> None:
 def test_variant_falls_back_to_the_product_price() -> None:
     product = make_product(price="12900", variant_label="Размер")
 
-    assert make_variant().price_within(product) == rub("12900")
+    assert make_variant().price_within(product) == usd("12900")
 
 
 def test_variant_price_wins_when_set() -> None:
     product = make_product(price="12900", variant_label="Размер")
     variant = make_variant(price_override="14900")
 
-    assert variant.price_within(product) == rub("14900")
+    assert variant.price_within(product) == usd("14900")
 
 
 def test_a_free_variant_price_is_rejected() -> None:
     variant = make_variant()
 
     with pytest.raises(NonPositivePriceError):
-        variant.reprice(rub("0"))
+        variant.reprice(usd("0"))
 
 
 def test_a_variant_price_can_be_dropped() -> None:

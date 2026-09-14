@@ -93,6 +93,7 @@ catalog-product-card-sale =
     Фото: { $photos } · Видео: { $videos } · Варианты: { $variants }
 
 catalog-open-products-button = 📦 Товары
+catalog-open-uncategorized-button = 📦 Без категории
 catalog-new-product-button = ➕ Новый товар
 catalog-product-name-button = ✏️ Название
 catalog-product-description-button = 📝 Описание

@@ -18,7 +18,7 @@ from telegramsales.modules.catalog.infrastructure.repositories import (
     ProductVariantRepository,
 )
 from telegramsales.modules.catalog.infrastructure.shop_queries import ShopQueries
-from tests.catalog.factories import NOW, make_media, make_variant, rub
+from tests.catalog.factories import NOW, make_media, make_variant, usd
 from tests.catalog.test_persistence import make_catalog, make_category
 
 pytestmark = pytest.mark.db
@@ -29,7 +29,7 @@ PAGE_SIZE = 8
 async def make_product(  # noqa: PLR0913
     session: AsyncSession,
     catalog_id: CatalogId,
-    category_id: CategoryId,
+    category_id: CategoryId | None,
     title: str = "Пальто оверсайз",
     *,
     published: bool = True,
@@ -43,7 +43,7 @@ async def make_product(  # noqa: PLR0913
         title=Title(title),
         description=Description("Тёплое пальто из шерсти."),
         article=await repository.next_article(),
-        price=rub("12900"),
+        price=usd("12900"),
         now=NOW,
         brand_id=brand_id,
     )
@@ -94,6 +94,20 @@ async def test_an_empty_category_stays_out_of_the_shop(
     page = await ShopQueries(session).list_categories(catalog.id, None, 0, PAGE_SIZE)
 
     assert page.items == []
+
+
+async def test_uncategorized_products_are_offered_under_their_catalog(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог с товаром без категории")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    await make_product(session, catalog.id, category.id, "С категорией")
+    uncategorized = await make_product(session, catalog.id, None, "Без категории")
+    await session.flush()
+
+    page = await ShopQueries(session).list_products(catalog.id, None, 0, PAGE_SIZE)
+
+    assert [item.id for item in page.items] == [uncategorized.id]
 
 
 async def test_a_category_with_a_product_is_offered(session: AsyncSession) -> None:
@@ -158,7 +172,9 @@ async def test_an_unpublished_product_is_not_offered(
     await make_product(session, catalog.id, category.id, published=False)
     await session.flush()
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert page.items == []
 
@@ -170,7 +186,9 @@ async def test_a_hidden_product_is_not_offered(session: AsyncSession) -> None:
     product.hide()
     await ProductRepository(session).save(product)
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert page.items == []
 
@@ -184,7 +202,9 @@ async def test_an_out_of_stock_product_is_still_offered(
     product.run_out()
     await ProductRepository(session).save(product)
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert [(item.id, item.is_in_stock) for item in page.items] == [
         (product.id, False)
@@ -199,7 +219,9 @@ async def test_the_newest_product_comes_first(session: AsyncSession) -> None:
     newer = await make_product(session, catalog.id, category.id, "Куртка")
     await session.flush()
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert [item.id for item in page.items] == [newer.id, older.id]
 
@@ -314,7 +336,7 @@ async def test_a_variant_keeps_its_own_price(session: AsyncSession) -> None:
     view = await ShopQueries(session).get_product(product.id)
 
     assert view is not None
-    assert [variant.price for variant in view.variants] == [rub("13900")]
+    assert [variant.price for variant in view.variants] == [usd("13900")]
 
 
 async def test_a_product_entry_carries_its_first_photo(
@@ -336,7 +358,9 @@ async def test_a_product_entry_carries_its_first_photo(
         )
     await session.flush()
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert [entry.thumbnail for entry in page.items] == ["photo-front"]
 
@@ -349,7 +373,9 @@ async def test_a_product_without_photos_has_no_thumbnail(
     await make_product(session, catalog.id, category.id)
     await session.flush()
 
-    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+    page = await ShopQueries(session).list_products(
+        catalog.id, category.id, 0, PAGE_SIZE
+    )
 
     assert page.items[0].thumbnail is None
 

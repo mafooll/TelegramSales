@@ -118,7 +118,9 @@ class ProductMapper(IEntityMapper[Product, ProductORM]):
         return Product(
             id=ProductId(model.id),
             catalog_id=CatalogId(model.catalog_id),
-            category_id=CategoryId(model.category_id),
+            category_id=(
+                None if model.category_id is None else CategoryId(model.category_id)
+            ),
             brand_id=None if model.brand_id is None else BrandId(model.brand_id),
             article=Article(model.article),
             title=Title(model.title),

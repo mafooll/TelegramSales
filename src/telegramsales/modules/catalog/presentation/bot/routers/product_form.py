@@ -32,7 +32,11 @@ from telegramsales.modules.catalog.application.ports import (
     ICatalogQueries,
     IProductQueries,
 )
-from telegramsales.modules.catalog.contracts import CatalogId, CategoryId, ProductId
+from telegramsales.modules.catalog.contracts import (
+    CatalogId,
+    CategoryId,
+    ProductId,
+)
 from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.domain.pricing import SHOP_CURRENCY
 from telegramsales.modules.catalog.domain.values import Description, Title
@@ -49,6 +53,7 @@ from telegramsales.modules.catalog.presentation.bot.product_states import Produc
 from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.domain.money import Money
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.filters import PlainTextFilter
 from telegramsales.shared.presentation.bot.money import parse_amount
 from telegramsales.shared.presentation.bot.render import show
 
@@ -96,7 +101,8 @@ async def _back_to_list(state: FSMContext) -> ProductCallback:
     stored = await state.get_data()
     return ProductCallback(
         action=ProductAction.LIST,
-        category_id=stored[CATEGORY_KEY],
+        catalog_id=stored[CATALOG_KEY],
+        category_id=stored.get(CATEGORY_KEY),
     )
 
 
@@ -143,26 +149,39 @@ async def start_product(
     queries: FromDishka[ICatalogQueries],
 ) -> None:
     await callback.answer()
-    if callback_data.category_id is None:
-        return
 
-    category = await queries.get_category(CategoryId(callback_data.category_id))
-    if category is None:
+    catalog_id: CatalogId
+    category_id: CategoryId | None
+    if callback_data.category_id is not None:
+        category = await queries.get_category(CategoryId(callback_data.category_id))
+        if category is None:
+            return
+        catalog_id = category.catalog_id
+        category_id = category.id
+    elif callback_data.catalog_id is not None:
+        catalog = await queries.get_catalog(CatalogId(callback_data.catalog_id))
+        if catalog is None:
+            return
+        catalog_id = catalog.id
+        category_id = None
+    else:
         return
 
     await state.set_state(ProductForm.title)
-    await state.update_data(
-        {CATALOG_KEY: category.catalog_id, CATEGORY_KEY: category.id}
-    )
+    await state.update_data({CATALOG_KEY: catalog_id, CATEGORY_KEY: category_id})
     await _ask(
         callback,
         context,
         texts.ASK_TITLE,
-        ProductCallback(action=ProductAction.LIST, category_id=category.id),
+        ProductCallback(
+            action=ProductAction.LIST,
+            catalog_id=catalog_id,
+            category_id=category_id,
+        ),
     )
 
 
-@router.message(ProductForm.title, F.text)
+@router.message(ProductForm.title, PlainTextFilter())
 async def take_title(
     message: Message,
     state: FSMContext,
@@ -178,7 +197,7 @@ async def take_title(
     await _apply_text(message, context, apply)
 
 
-@router.message(ProductForm.description, F.text)
+@router.message(ProductForm.description, PlainTextFilter())
 async def take_description(
     message: Message,
     state: FSMContext,
@@ -194,7 +213,7 @@ async def take_description(
     await _apply_text(message, context, apply)
 
 
-@router.message(ProductForm.price, F.text)
+@router.message(ProductForm.price, PlainTextFilter())
 async def take_price(
     message: Message,
     state: FSMContext,
@@ -205,10 +224,15 @@ async def take_price(
     stored = await state.get_data()
 
     async def apply(raw: str) -> InputRichMessage | None:
+        stored_category_id = stored.get(CATEGORY_KEY)
         product_id = await handler.handle(
             CreateProduct(
                 catalog_id=CatalogId(stored[CATALOG_KEY]),
-                category_id=CategoryId(stored[CATEGORY_KEY]),
+                category_id=(
+                    None
+                    if stored_category_id is None
+                    else CategoryId(stored_category_id)
+                ),
                 title=Title(stored[TITLE_KEY]),
                 description=Description(stored[DESCRIPTION_KEY]),
                 price=Money(parse_amount(raw), SHOP_CURRENCY),
@@ -331,7 +355,7 @@ async def ask_edit(
     )
 
 
-@router.message(ProductForm.rename, F.text)
+@router.message(ProductForm.rename, PlainTextFilter())
 async def take_new_title(
     message: Message,
     state: FSMContext,
@@ -356,7 +380,7 @@ async def take_new_title(
     await _apply_text(message, context, apply)
 
 
-@router.message(ProductForm.redescribe, F.text)
+@router.message(ProductForm.redescribe, PlainTextFilter())
 async def take_new_description(
     message: Message,
     state: FSMContext,
@@ -382,7 +406,7 @@ async def take_new_description(
     await _apply_text(message, context, apply)
 
 
-@router.message(ProductForm.reprice, F.text)
+@router.message(ProductForm.reprice, PlainTextFilter())
 async def take_new_price(
     message: Message,
     state: FSMContext,
@@ -413,7 +437,7 @@ async def take_new_price(
         await message.answer(text=context.translate(texts.PRICE_REJECTED))
 
 
-@router.message(ProductForm.axis, F.text)
+@router.message(ProductForm.axis, PlainTextFilter())
 async def take_axis(
     message: Message,
     state: FSMContext,
@@ -437,7 +461,7 @@ async def take_axis(
     await _apply_text(message, context, apply)
 
 
-@router.message(ProductForm.variant, F.text)
+@router.message(ProductForm.variant, PlainTextFilter())
 async def take_variant(
     message: Message,
     state: FSMContext,

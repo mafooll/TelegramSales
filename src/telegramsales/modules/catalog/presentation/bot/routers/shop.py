@@ -1,9 +1,14 @@
 from aiogram import F, Router
-from aiogram.types import CallbackQuery, InputRichMessage
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, InputRichMessage, Message
 from dishka.integrations.aiogram import FromDishka
 
 from telegramsales.modules.catalog.application.ports import IShopQueries
-from telegramsales.modules.catalog.application.queries import ShopCategoryView
+from telegramsales.modules.catalog.application.queries import (
+    ShopCatalogView,
+    ShopCategoryView,
+)
 from telegramsales.modules.catalog.contracts import (
     CatalogId,
     CategoryId,
@@ -15,13 +20,35 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopCallback,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import send, show
 
 router = Router(name="catalog.shop")
 
 
 async def _gone(callback: CallbackQuery, context: RenderContext) -> None:
     await callback.answer(context.translate(shop_texts.GONE), show_alert=True)
+
+
+SHOP_COMMAND = "shop"
+
+
+@router.message(Command(SHOP_COMMAND))
+async def show_catalogs_by_command(
+    message: Message,
+    context: RenderContext,
+    queries: FromDishka[IShopQueries],
+    state: FSMContext,
+) -> None:
+    if message.bot is None:
+        return
+
+    await state.set_state(None)
+
+    await send(
+        message.bot,
+        message.chat.id,
+        await shop_render.catalog_list(queries, context, 0),
+    )
 
 
 @router.callback_query(ShopCallback.filter(F.action == ShopAction.CATALOGS))
@@ -89,16 +116,26 @@ async def show_products(
     context: RenderContext,
     queries: FromDishka[IShopQueries],
 ) -> None:
-    category = await _category(queries, callback_data.category_id)
-    if category is None:
-        await _gone(callback, context)
-        return
+    category: ShopCategoryView | None = None
+    if callback_data.category_id is not None:
+        category = await _category(queries, callback_data.category_id)
+        if category is None:
+            await _gone(callback, context)
+            return
+        catalog = ShopCatalogView(
+            id=category.catalog_id, title=category.catalog_title
+        )
+    else:
+        catalog = await _catalog(queries, callback_data.catalog_id)
+        if catalog is None:
+            await _gone(callback, context)
+            return
 
     await callback.answer()
     await show(
         callback,
         await shop_render.product_list(
-            queries, context, category, callback_data.page
+            queries, context, catalog, category, callback_data.page
         ),
     )
 
@@ -132,6 +169,15 @@ async def _category(
     return await queries.get_category(CategoryId(category_id))
 
 
+async def _catalog(
+    queries: IShopQueries,
+    catalog_id: int | None,
+) -> ShopCatalogView | None:
+    if catalog_id is None:
+        return None
+    return await queries.get_catalog(CatalogId(catalog_id))
+
+
 async def _below_category(
     queries: IShopQueries,
     context: RenderContext,
@@ -139,7 +185,12 @@ async def _below_category(
     number: int,
 ) -> InputRichMessage:
     if category.child_count == 0:
-        return await shop_render.product_list(queries, context, category, number)
+        catalog = ShopCatalogView(
+            id=category.catalog_id, title=category.catalog_title
+        )
+        return await shop_render.product_list(
+            queries, context, catalog, category, number
+        )
     return await shop_render.category_card(queries, context, category, number)
 
 

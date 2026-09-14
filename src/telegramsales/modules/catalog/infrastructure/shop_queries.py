@@ -20,7 +20,10 @@ from telegramsales.modules.catalog.contracts import (
     VariantId,
 )
 from telegramsales.modules.catalog.domain.enums import MediaKind, MediaLayout
-from telegramsales.modules.catalog.infrastructure.filters import parent_filter
+from telegramsales.modules.catalog.infrastructure.filters import (
+    category_filter,
+    parent_filter,
+)
 from telegramsales.modules.catalog.infrastructure.models import (
     BrandORM,
     CatalogORM,
@@ -60,6 +63,13 @@ THUMBNAIL = (
     .limit(1)
     .scalar_subquery()
     .label("thumbnail")
+)
+
+HAS_VARIANTS = (
+    select(ProductVariantORM.id)
+    .where(ProductVariantORM.product_id == ProductORM.id)
+    .exists()
+    .label("has_variants")
 )
 
 PRODUCT_COUNT = (
@@ -118,7 +128,7 @@ def _stocked_query() -> Select[CategoryRow]:
     return _category_query().where(or_(CHILD_COUNT > 0, PRODUCT_COUNT > 0))
 
 
-def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool, str]]:
+def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool, str, bool]]:
     return select(
         ProductORM.id,
         ProductORM.title,
@@ -126,6 +136,7 @@ def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool, str]]:
         ProductORM.currency,
         ProductORM.is_in_stock,
         THUMBNAIL,
+        HAS_VARIANTS,
     ).where(
         ProductORM.published_at.is_not(None),
         ProductORM.is_visible.is_(True),
@@ -233,13 +244,17 @@ class ShopQueries(IShopQueries):
     @override
     async def list_products(
         self,
-        category_id: CategoryId,
+        catalog_id: CatalogId,
+        category_id: CategoryId | None,
         number: int,
         size: int,
     ) -> Page[ShopProductEntryView]:
         query = (
             _product_entries()
-            .where(ProductORM.category_id == category_id)
+            .where(
+                ProductORM.catalog_id == catalog_id,
+                category_filter(category_id),
+            )
             .order_by(ProductORM.created_at.desc(), ProductORM.title)
         )
         total = await _total(self._session, query)
@@ -255,6 +270,7 @@ class ShopQueries(IShopQueries):
                     price=_money(row.price, row.currency),
                     is_in_stock=row.is_in_stock,
                     thumbnail=row.thumbnail,
+                    has_variants=row.has_variants,
                 )
                 for row in rows
             ],
@@ -299,7 +315,9 @@ class ShopQueries(IShopQueries):
         return ShopProductView(
             id=ProductId(row.id),
             catalog_id=CatalogId(row.catalog_id),
-            category_id=CategoryId(row.category_id),
+            category_id=(
+                None if row.category_id is None else CategoryId(row.category_id)
+            ),
             article=row.article,
             title=row.title,
             description=row.description,

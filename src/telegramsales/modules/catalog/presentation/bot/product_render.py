@@ -8,7 +8,7 @@ from telegramsales.modules.catalog.application.queries import (
     ProductView,
     VariantView,
 )
-from telegramsales.modules.catalog.contracts import CategoryId
+from telegramsales.modules.catalog.contracts import CatalogId, CategoryId
 from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
     ProductAction,
     ProductCallback,
@@ -46,19 +46,25 @@ def _whole[ItemType](items: list[ItemType]) -> Pagination[ItemType]:
 async def product_list(
     queries: IProductQueries,
     context: RenderContext,
-    category_id: CategoryId,
+    catalog_id: CatalogId,
+    category_id: CategoryId | None,
     number: int = 0,
 ) -> InputRichMessage:
-    page = await queries.list_products(category_id, number, DEFAULT_PAGE_SIZE)
+    page = await queries.list_products(
+        catalog_id, category_id, number, DEFAULT_PAGE_SIZE
+    )
     pagination = Pagination(
         page=page,
         callback=lambda value: ProductCallback(
             action=ProductAction.LIST,
+            catalog_id=catalog_id,
             category_id=category_id,
             page=value,
         ),
     )
-    view = ProductListView(category_id=category_id, total=page.total)
+    view = ProductListView(
+        catalog_id=catalog_id, category_id=category_id, total=page.total
+    )
     return rich_paged_screen(PRODUCT_LIST, pagination, view, context)
 
 
