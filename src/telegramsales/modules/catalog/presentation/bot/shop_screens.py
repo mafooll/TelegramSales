@@ -25,12 +25,14 @@ from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
     VARIANT_PICK,
     back_to_catalogs,
     open_cart,
+    product_caption,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
     ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
+    breadcrumbs,
     shop_product_card_key,
 )
 from telegramsales.shared.application.i18n import ITranslator
@@ -79,6 +81,9 @@ PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
         total=view.total,
     ),
     item=PRODUCT_ENTRY,
+    item_photo=lambda product: product.thumbnail,
+    item_caption=product_caption,
+    footnote=lambda view, translate: breadcrumbs(view.category, translate),
     footer=[
         PRODUCTS_BACK_TO_CATEGORY,
         PRODUCTS_BACK_TO_PARENT,

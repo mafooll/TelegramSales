@@ -315,3 +315,70 @@ async def test_a_variant_keeps_its_own_price(session: AsyncSession) -> None:
 
     assert view is not None
     assert [variant.price for variant in view.variants] == [rub("13900")]
+
+
+async def test_a_product_entry_carries_its_first_photo(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог с миниатюрами")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    product = await make_product(session, catalog.id, category.id)
+    await session.flush()
+    media = ProductMediaRepository(session)
+    for position, file_id in enumerate(("photo-front", "photo-back")):
+        await media.add(
+            make_media(
+                await media.next_id(),
+                product_id=product.id,
+                file_id=file_id,
+                position=position,
+            )
+        )
+    await session.flush()
+
+    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+
+    assert [entry.thumbnail for entry in page.items] == ["photo-front"]
+
+
+async def test_a_product_without_photos_has_no_thumbnail(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог без фото")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    await make_product(session, catalog.id, category.id)
+    await session.flush()
+
+    page = await ShopQueries(session).list_products(category.id, 0, PAGE_SIZE)
+
+    assert page.items[0].thumbnail is None
+
+
+async def test_a_category_knows_its_catalog_and_parent(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Одежда")
+    parent = await make_category(session, catalog.id, "Верхняя одежда")
+    child = await make_category(session, catalog.id, "Пальто", parent.id)
+    await make_product(session, catalog.id, child.id)
+    await session.flush()
+
+    view = await ShopQueries(session).get_category(child.id)
+
+    assert view is not None
+    assert view.catalog_title == "Одежда"
+    assert view.parent_title == "Верхняя одежда"
+
+
+async def test_a_top_level_category_has_no_parent_title(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог верхнего уровня")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    await make_product(session, catalog.id, category.id)
+    await session.flush()
+
+    view = await ShopQueries(session).get_category(category.id)
+
+    assert view is not None
+    assert view.parent_title is None

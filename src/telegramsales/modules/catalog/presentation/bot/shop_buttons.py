@@ -16,6 +16,7 @@ from telegramsales.modules.catalog.presentation.bot.views import (
     ShopVariantPickView,
     shop_product_item_key,
 )
+from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.keyboard import Button, label
 from telegramsales.shared.presentation.bot.money import money_text
 
@@ -52,16 +53,23 @@ OPEN_PRODUCTS: Button[ShopCategoryView] = Button(
 )
 
 PRODUCT_ENTRY: Button[ShopProductEntryView] = Button(
-    text=lambda product, translate: translate(
-        shop_product_item_key(product),
-        title=product.title,
-        price=money_text(product.price),
-    ),
+    text=label(shop_texts.OPEN_PRODUCT_BUTTON),
     callback=lambda product: ShopCallback(
         action=ShopAction.PRODUCT,
         product_id=product.id,
     ),
 )
+
+
+def product_caption(
+    product: ShopProductEntryView,
+    translate: ITranslator,
+) -> str:
+    return translate(
+        shop_product_item_key(product),
+        title=product.title,
+        price=money_text(product.price),
+    )
 
 
 def back_to_catalogs[ViewType]() -> Button[ViewType]:

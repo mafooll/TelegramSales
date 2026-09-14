@@ -10,6 +10,7 @@ from telegramsales.modules.catalog.contracts import (
     VariantId,
 )
 from telegramsales.modules.catalog.domain.entities import (
+    DEFAULT_SORT_ORDER,
     Brand,
     Catalog,
     Category,
@@ -122,10 +123,12 @@ def make_media(
     *,
     product_id: ProductId = COAT,
     file_id: str = "file-front",
+    position: int = DEFAULT_SORT_ORDER,
 ) -> ProductMedia:
     return ProductMedia.create(
         media_id=media_id,
         product_id=product_id,
         kind=kind,
         file_id=file_id,
+        position=position,
     )

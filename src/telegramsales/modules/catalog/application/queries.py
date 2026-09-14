@@ -97,6 +97,8 @@ class ShopCategoryView:
     catalog_id: CatalogId
     parent_id: CategoryId | None
     title: str
+    catalog_title: str
+    parent_title: str | None
     child_count: int
     product_count: int
 
@@ -114,6 +116,7 @@ class ShopProductEntryView:
     title: str
     price: Money
     is_in_stock: bool
+    thumbnail: str | None
 
 
 @dataclass(frozen=True, slots=True)

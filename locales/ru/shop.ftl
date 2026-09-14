@@ -55,3 +55,5 @@ shop-new-product =
 
     Артикул { $article }
 shop-open-product-button = 🛍 Посмотреть
+shop-breadcrumb-root = Витрина
+shop-breadcrumb-separator = { " · " }

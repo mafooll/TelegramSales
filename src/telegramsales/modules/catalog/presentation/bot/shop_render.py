@@ -29,6 +29,8 @@ from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 
+PRODUCT_PAGE_SIZE = 6
+
 
 async def catalog_list(
     queries: IShopQueries,
@@ -94,7 +96,7 @@ async def product_list(
     category: ShopCategoryView,
     number: int,
 ) -> InputRichMessage:
-    page = await queries.list_products(category.id, number, DEFAULT_PAGE_SIZE)
+    page = await queries.list_products(category.id, number, PRODUCT_PAGE_SIZE)
     pagination = Pagination(
         page=page,
         callback=lambda value: ShopCallback(

@@ -34,6 +34,33 @@ from telegramsales.shared.domain.money import Currency, Money
 
 _child = aliased(CategoryORM)
 _child_product = aliased(ProductORM)
+_parent = aliased(CategoryORM)
+
+CATALOG_TITLE = (
+    select(CatalogORM.title)
+    .where(CatalogORM.id == CategoryORM.catalog_id)
+    .scalar_subquery()
+    .label("catalog_title")
+)
+
+PARENT_TITLE = (
+    select(_parent.title)
+    .where(_parent.id == CategoryORM.parent_id)
+    .scalar_subquery()
+    .label("parent_title")
+)
+
+THUMBNAIL = (
+    select(ProductMediaORM.file_id)
+    .where(
+        ProductMediaORM.product_id == ProductORM.id,
+        ProductMediaORM.kind == MediaKind.PHOTO.value,
+    )
+    .order_by(ProductMediaORM.position, ProductMediaORM.id)
+    .limit(1)
+    .scalar_subquery()
+    .label("thumbnail")
+)
 
 PRODUCT_COUNT = (
     select(func.count())
@@ -71,28 +98,34 @@ CHILD_COUNT = (
 )
 
 
-def _category_query() -> Select[tuple[int, int, int | None, str, int, int]]:
+type CategoryRow = tuple[int, int, int | None, str, str, str, int, int]
+
+
+def _category_query() -> Select[CategoryRow]:
     return select(
         CategoryORM.id,
         CategoryORM.catalog_id,
         CategoryORM.parent_id,
         CategoryORM.title,
+        CATALOG_TITLE,
+        PARENT_TITLE,
         CHILD_COUNT,
         PRODUCT_COUNT,
     ).where(CategoryORM.is_active.is_(True))
 
 
-def _stocked_query() -> Select[tuple[int, int, int | None, str, int, int]]:
+def _stocked_query() -> Select[CategoryRow]:
     return _category_query().where(or_(CHILD_COUNT > 0, PRODUCT_COUNT > 0))
 
 
-def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool]]:
+def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool, str]]:
     return select(
         ProductORM.id,
         ProductORM.title,
         ProductORM.price,
         ProductORM.currency,
         ProductORM.is_in_stock,
+        THUMBNAIL,
     ).where(
         ProductORM.published_at.is_not(None),
         ProductORM.is_visible.is_(True),
@@ -117,6 +150,8 @@ def _category_view(row: Any) -> ShopCategoryView:  # noqa: ANN401
         catalog_id=CatalogId(row.catalog_id),
         parent_id=None if row.parent_id is None else CategoryId(row.parent_id),
         title=row.title,
+        catalog_title=row.catalog_title,
+        parent_title=row.parent_title,
         child_count=row.child_count,
         product_count=row.product_count,
     )
@@ -219,6 +254,7 @@ class ShopQueries(IShopQueries):
                     title=row.title,
                     price=_money(row.price, row.currency),
                     is_in_stock=row.is_in_stock,
+                    thumbnail=row.thumbnail,
                 )
                 for row in rows
             ],

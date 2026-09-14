@@ -1,7 +1,9 @@
 from aiogram.types import (
     InputRichBlockButtons,
     InputRichBlockCollage,
+    InputRichBlockFooter,
     InputRichBlockParagraph,
+    InputRichBlockPhoto,
     InputRichBlockSlideshow,
     InputRichMessage,
 )
@@ -62,23 +64,31 @@ def category_view(
     children: int = 0,
     products: int = 0,
     parent_id: int | None = None,
+    parent_title: str | None = None,
 ) -> ShopCategoryView:
     return ShopCategoryView(
         id=OUTERWEAR,
         catalog_id=CLOTHES,
         parent_id=None if parent_id is None else COATS,
         title="Верхняя одежда",
+        catalog_title="Одежда",
+        parent_title=parent_title,
         child_count=children,
         product_count=products,
     )
 
 
-def entry_view(*, in_stock: bool = True) -> ShopProductEntryView:
+def entry_view(
+    *,
+    in_stock: bool = True,
+    thumbnail: str | None = "photo-1",
+) -> ShopProductEntryView:
     return ShopProductEntryView(
         id=COAT,
         title="Пальто оверсайз",
         price=rub("12900"),
         is_in_stock=in_stock,
+        thumbnail=thumbnail,
     )
 
 
@@ -125,6 +135,24 @@ def texts_of(message: InputRichMessage) -> list[str]:
         for block in blocks
         if isinstance(block, InputRichBlockButtons)
         for button in block.buttons
+    ]
+
+
+def captions_of(message: InputRichMessage) -> list[str]:
+    blocks = message.blocks or []
+    return [
+        str(block.caption.text)
+        for block in blocks
+        if isinstance(block, InputRichBlockPhoto) and block.caption is not None
+    ]
+
+
+def photo_ids_of(message: InputRichMessage) -> list[str]:
+    blocks = message.blocks or []
+    return [
+        str(block.photo.media)
+        for block in blocks
+        if isinstance(block, InputRichBlockPhoto)
     ]
 
 
@@ -209,22 +237,61 @@ def test_a_subcategory_goes_back_to_its_parent() -> None:
     assert back.category_id == COATS
 
 
+def product_list_of(*entries: ShopProductEntryView) -> InputRichMessage:
+    view = ShopProductsView(
+        category=category_view(products=len(entries)),
+        total=len(entries),
+    )
+    return rich_paged_screen(PRODUCT_LIST, paged(list(entries)), view, CUSTOMER)
+
+
 def test_a_product_entry_carries_its_price() -> None:
-    view = ShopProductsView(category=category_view(products=1), total=1)
+    message = product_list_of(entry_view())
 
-    message = rich_paged_screen(PRODUCT_LIST, paged([entry_view()]), view, CUSTOMER)
-
-    assert "Пальто оверсайз · 12 900 ₽" in texts_of(message)
+    assert captions_of(message) == ["Пальто оверсайз · 12 900 ₽"]
 
 
 def test_an_out_of_stock_entry_replaces_the_price() -> None:
-    view = ShopProductsView(category=category_view(products=1), total=1)
+    message = product_list_of(entry_view(in_stock=False))
 
+    assert captions_of(message) == ["Пальто оверсайз · нет в наличии"]
+
+
+def test_a_product_entry_shows_its_thumbnail() -> None:
+    message = product_list_of(entry_view())
+
+    assert photo_ids_of(message) == ["photo-1"]
+
+
+def test_an_entry_without_a_photo_falls_back_to_text() -> None:
+    message = product_list_of(entry_view(thumbnail=None))
+
+    assert photo_ids_of(message) == []
+    assert "Пальто оверсайз · 12 900 ₽" in paragraphs_of(message)
+
+
+def test_the_list_ends_with_the_breadcrumbs() -> None:
+    message = product_list_of(entry_view())
+
+    assert breadcrumbs_of(message) == "Витрина · Одежда · Верхняя одежда"
+
+
+def breadcrumbs_of(message: InputRichMessage) -> str:
+    footer = (message.blocks or [])[-1]
+    assert isinstance(footer, InputRichBlockFooter)
+    return str(footer.text)
+
+
+def test_the_breadcrumbs_name_the_parent_category() -> None:
+    view = ShopProductsView(
+        category=category_view(products=1, parent_id=1, parent_title="Пальто"),
+        total=1,
+    )
     message = rich_paged_screen(
-        PRODUCT_LIST, paged([entry_view(in_stock=False)]), view, CUSTOMER
+        PRODUCT_LIST, paged([entry_view()]), view, CUSTOMER
     )
 
-    assert "Пальто оверсайз · нет в наличии" in texts_of(message)
+    assert breadcrumbs_of(message) == "Витрина · Одежда · Пальто · Верхняя одежда"
 
 
 def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:

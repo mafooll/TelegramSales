@@ -27,6 +27,7 @@ from telegramsales.modules.catalog.presentation.bot import (
     shop_texts,
     texts,
 )
+from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.domain.money import Money
 
 
@@ -122,6 +123,16 @@ def shop_product_item_key(product: ShopProductEntryView) -> str:
     if product.is_in_stock:
         return shop_texts.PRODUCT_ENTRY
     return shop_texts.PRODUCT_ENTRY_OUT
+
+
+def breadcrumbs(category: ShopCategoryView, translate: ITranslator) -> str:
+    trail = [
+        translate(shop_texts.BREADCRUMB_ROOT),
+        category.catalog_title,
+        *([] if category.parent_title is None else [category.parent_title]),
+        category.title,
+    ]
+    return translate(shop_texts.BREADCRUMB_SEPARATOR).join(trail)
 
 
 def shop_product_card_key(product: ShopProductView) -> str:
