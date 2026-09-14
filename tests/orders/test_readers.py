@@ -8,7 +8,7 @@ from telegramsales.modules.orders.application.readers import (
     SelectionReader,
 )
 from telegramsales.modules.orders.contracts import CartItemId, SelectionId
-from tests.orders.factories import BUYER, COAT, DRESS, SELECTION, SIZE_M, rub
+from tests.orders.factories import BUYER, COAT, DRESS, SELECTION, SIZE_M, rub, usd
 from tests.orders.fakes import FakeCartQueries, FakeCatalogOffers, offer
 
 
@@ -118,7 +118,7 @@ async def test_an_empty_cart_totals_nothing() -> None:
 
     view = await reader.read(BUYER)
 
-    assert view.total == rub("0")
+    assert view.total == usd("0")
 
 
 async def test_a_variant_line_shows_its_title() -> None:

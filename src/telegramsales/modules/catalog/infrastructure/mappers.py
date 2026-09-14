@@ -29,7 +29,7 @@ from telegramsales.modules.catalog.infrastructure.models import (
 from telegramsales.shared.domain.money import Currency, Money
 from telegramsales.shared.infrastructure.database.mapper import IEntityMapper
 
-DEFAULT_CURRENCY = Currency.RUB
+DEFAULT_CURRENCY = Currency.USD
 
 
 class CatalogMapper(IEntityMapper[Catalog, CatalogORM]):

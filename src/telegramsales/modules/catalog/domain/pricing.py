@@ -7,7 +7,7 @@ from telegramsales.modules.catalog.domain.exceptions import (
 from telegramsales.shared.domain.money import Currency, Money
 
 FREE = Decimal(0)
-SHOP_CURRENCY = Currency.RUB
+SHOP_CURRENCY = Currency.USD
 
 
 def ensure_positive_price(price: Money) -> None:

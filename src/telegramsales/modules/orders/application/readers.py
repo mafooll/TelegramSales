@@ -18,7 +18,7 @@ from telegramsales.modules.orders.application.queries import (
 from telegramsales.modules.orders.contracts import SelectionId
 from telegramsales.shared.domain.money import Currency, Money
 
-EMPTY_TOTAL_CURRENCY = Currency.RUB
+EMPTY_TOTAL_CURRENCY = Currency.USD
 
 
 def _sum_up(lines: tuple[CartLineView, ...]) -> Money:
