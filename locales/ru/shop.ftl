@@ -50,10 +50,7 @@ shop-variant-picker =
 
     Выберите { $label }:
 shop-variant-entry = { $title } · { $price }
-shop-new-product =
-    Новинка: { $title }
-
-    Артикул { $article }
+shop-new-product = Новинка: { $title }
 shop-open-product-button = 🛍 Посмотреть
 shop-breadcrumb-root = Витрина
 shop-breadcrumb-separator = { " · " }

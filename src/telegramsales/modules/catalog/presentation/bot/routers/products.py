@@ -62,6 +62,7 @@ from telegramsales.modules.catalog.presentation.bot.product_screens import (
 from telegramsales.modules.catalog.presentation.bot.product_states import (
     ProductForm,
 )
+from telegramsales.modules.catalog.presentation.bot.routers.drafts import DRAFT_KEY
 from telegramsales.modules.catalog.presentation.bot.views import (
     VariantCardView,
 )
@@ -146,8 +147,10 @@ async def show_product(
     callback: CallbackQuery,
     callback_data: ProductCallback,
     context: RenderContext,
+    state: FSMContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
+    await state.clear()
     product = await _view(queries, callback_data.product_id)
     if product is not None:
         await _show_card(callback, context, product)
@@ -428,7 +431,8 @@ async def set_brand(  # noqa: PLR0913, PLR0917
     if updated is None:
         return
 
-    if await state.get_state() == ProductForm.brand.state:
+    stored = await state.get_data()
+    if stored.get(DRAFT_KEY):
         await state.set_state(ProductForm.photos)
         await show(callback, product_render.media_board(context, updated, []))
         return

@@ -201,7 +201,7 @@ class Product(DomainEntity[ProductId]):
     def close_variants(self) -> None:
         self.variant_label = None
 
-    def publish(self, now: datetime) -> None:
+    def publish(self, now: datetime, photo_id: str | None = None) -> None:
         self.is_visible = True
         if self.is_published:
             return
@@ -213,6 +213,7 @@ class Product(DomainEntity[ProductId]):
                 catalog_id=self.catalog_id,
                 title=self.title.value,
                 article=self.article.value,
+                photo_id=photo_id,
             )
         )
 

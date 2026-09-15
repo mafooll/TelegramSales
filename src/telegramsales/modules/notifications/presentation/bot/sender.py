@@ -18,7 +18,7 @@ from telegramsales.modules.notifications.application.ports import (
 )
 from telegramsales.modules.notifications.domain.entities import Notification
 from telegramsales.shared.application.i18n import ITranslator
-from telegramsales.shared.presentation.bot.content import content_blocks
+from telegramsales.shared.presentation.bot.content import content_blocks, photo
 
 
 @final
@@ -42,6 +42,14 @@ class TelegramSender(INotificationSender):
 
     def _message(self, notification: Notification) -> InputRichMessage:
         text = self._translate(notification.key, **notification.args)
+        if notification.photo_id is not None:
+            return InputRichMessage(
+                blocks=[
+                    photo(notification.photo_id, text),
+                    *self._action_blocks(notification),
+                ]
+            )
+
         return InputRichMessage(
             blocks=[
                 *content_blocks(text),

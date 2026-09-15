@@ -29,6 +29,7 @@ class ProductAction(StrEnum):
     VARIANTS = "vars"
     AXIS = "axis"
     ADD_VARIANT = "addvar"
+    NEW_BRAND = "newbrand"
     MOVE = "move"
     MOVE_TO_CATALOG = "movecat"
     MOVE_TO = "moveto"

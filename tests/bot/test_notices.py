@@ -94,12 +94,16 @@ def test_the_customer_is_not_told_about_their_own_cancellation() -> None:
     assert cancellation_notice(cancelled(by_manager=False)) is None
 
 
-def published() -> ProductPublished:
+PHOTO = "photo-front"
+
+
+def published(*, photo_id: str | None = PHOTO) -> ProductPublished:
     return ProductPublished(
         product_id=COAT,
         catalog_id=CLOTHES,
         title="Пальто оверсайз",
         article="000042",
+        photo_id=photo_id,
     )
 
 
@@ -107,11 +111,16 @@ def test_a_published_product_is_announced_once_per_product() -> None:
     announcement = new_product_announcement(published())
 
     assert announcement.key == shop_texts.NEW_PRODUCT
-    assert announcement.args == {
-        "title": "Пальто оверсайз",
-        "article": "000042",
-    }
+    assert announcement.args == {"title": "Пальто оверсайз"}
     assert announcement.topic == f"new-product:{COAT}"
+
+
+def test_an_announcement_carries_the_product_photo() -> None:
+    assert new_product_announcement(published()).photo_id == PHOTO
+
+
+def test_a_product_without_photos_is_announced_as_text() -> None:
+    assert new_product_announcement(published(photo_id=None)).photo_id is None
 
 
 def test_a_status_notice_leads_to_the_order_list() -> None:

@@ -18,6 +18,7 @@ DEDUP_SEPARATOR = ":"
 class Announce:
     key: str
     args: NotificationArgs = NO_ARGS
+    photo_id: str | None = None
     action: CallToAction | None = None
     topic: str | None = None
 
@@ -42,6 +43,7 @@ class AnnounceHandler:
                     recipient_id=recipient_id,
                     key=command.key,
                     args=command.args,
+                    photo_id=command.photo_id,
                     action=command.action,
                     dedup_key=self._dedup_key(command.topic, recipient_id),
                     now=now,

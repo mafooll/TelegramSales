@@ -368,3 +368,16 @@ class ProductMediaRepository(IProductMediaRepository):
             )
         )
         return (await self._session.execute(query)).scalar_one()
+
+    @override
+    async def first_photo(self, product_id: ProductId) -> str | None:
+        query = (
+            select(ProductMediaORM.file_id)
+            .where(
+                ProductMediaORM.product_id == product_id,
+                ProductMediaORM.kind == MediaKind.PHOTO.value,
+            )
+            .order_by(ProductMediaORM.position, ProductMediaORM.id)
+            .limit(1)
+        )
+        return (await self._session.execute(query)).scalar_one_or_none()

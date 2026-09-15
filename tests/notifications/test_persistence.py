@@ -235,3 +235,20 @@ async def test_a_batch_insert_skips_the_duplicates(session: AsyncSession) -> Non
 
     assert queued == 1
     assert len(await outbox.claim(BATCH, NOW)) == 2
+
+
+async def test_a_photo_survives_a_round_trip(session: AsyncSession) -> None:
+    outbox = NotificationOutbox(session)
+    notification = Notification(
+        id=await outbox.next_id(),
+        recipient_id=BUYER,
+        key=ORDER_MOVED,
+        photo_id="photo-front",
+        available_at=NOW,
+        created_at=NOW,
+    )
+    await outbox.add(notification)
+
+    claimed = await outbox.claim(BATCH, NOW)
+
+    assert claimed[0].photo_id == "photo-front"

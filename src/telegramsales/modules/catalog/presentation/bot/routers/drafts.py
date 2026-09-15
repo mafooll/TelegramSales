@@ -1,0 +1,8 @@
+CATALOG_KEY = "catalog_id"
+CATEGORY_KEY = "category_id"
+PRODUCT_KEY = "product_id"
+TITLE_KEY = "title"
+DESCRIPTION_KEY = "description"
+KIND_KEY = "kind"
+VARIANT_KEY = "variant_id"
+DRAFT_KEY = "draft"

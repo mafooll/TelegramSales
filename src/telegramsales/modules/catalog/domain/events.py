@@ -10,3 +10,4 @@ class ProductPublished(DomainEvent):
     catalog_id: CatalogId
     title: str
     article: str
+    photo_id: str | None

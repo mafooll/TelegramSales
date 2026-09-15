@@ -8,6 +8,10 @@ from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery, InputRichMessage, Message
 from dishka.integrations.aiogram import FromDishka
 
+from telegramsales.modules.catalog.application.commands.brands import (
+    CreateBrand,
+    CreateBrandHandler,
+)
 from telegramsales.modules.catalog.application.commands.media import (
     AttachMedia,
     AttachMediaHandler,
@@ -17,6 +21,8 @@ from telegramsales.modules.catalog.application.commands.products import (
     CreateProductHandler,
     DescribeProduct,
     DescribeProductHandler,
+    RebrandProduct,
+    RebrandProductHandler,
     RenameProduct,
     RenameProductHandler,
     RepriceProduct,
@@ -59,6 +65,16 @@ from telegramsales.modules.catalog.presentation.bot.product_screens import (
     BRAND_PAGE_SIZE,
 )
 from telegramsales.modules.catalog.presentation.bot.product_states import ProductForm
+from telegramsales.modules.catalog.presentation.bot.routers.drafts import (
+    CATALOG_KEY,
+    CATEGORY_KEY,
+    DESCRIPTION_KEY,
+    DRAFT_KEY,
+    KIND_KEY,
+    PRODUCT_KEY,
+    TITLE_KEY,
+    VARIANT_KEY,
+)
 from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.domain.money import Money
 from telegramsales.shared.presentation.bot.context import RenderContext
@@ -68,13 +84,6 @@ from telegramsales.shared.presentation.bot.render import show
 
 router = Router(name="catalog.product_form")
 
-CATALOG_KEY = "catalog_id"
-CATEGORY_KEY = "category_id"
-PRODUCT_KEY = "product_id"
-TITLE_KEY = "title"
-DESCRIPTION_KEY = "description"
-KIND_KEY = "kind"
-VARIANT_KEY = "variant_id"
 
 VARIANT_PROMPTS: dict[ProductAction, tuple[State, str]] = {
     ProductAction.RENAME_VARIANT: (
@@ -264,7 +273,11 @@ async def take_price(  # noqa: PLR0913, PLR0917
         )
         await state.set_state(ProductForm.brand)
         await state.update_data(
-            {PRODUCT_KEY: str(product_id), KIND_KEY: MediaKind.PHOTO.value}
+            {
+                PRODUCT_KEY: str(product_id),
+                KIND_KEY: MediaKind.PHOTO.value,
+                DRAFT_KEY: True,
+            }
         )
         product = await queries.get_product(product_id)
         if product is None:
@@ -605,3 +618,59 @@ async def take_variant_price(
         await _apply_text(message, context, apply)
     except (InvalidOperation, ArithmeticError):
         await message.answer(text=context.translate(texts.PRICE_REJECTED))
+
+
+@router.callback_query(ProductCallback.filter(F.action == ProductAction.NEW_BRAND))
+async def ask_brand_title(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    context: RenderContext,
+    state: FSMContext,
+) -> None:
+    if callback_data.product_id is None:
+        await callback.answer()
+        return
+
+    await state.set_state(ProductForm.brand_title)
+    await state.update_data({PRODUCT_KEY: str(callback_data.product_id)})
+    await _ask(
+        callback,
+        context,
+        product_texts.ASK_BRAND_TITLE,
+        ProductCallback(
+            action=ProductAction.BRAND,
+            product_id=callback_data.product_id,
+        ),
+    )
+
+
+@router.message(ProductForm.brand_title, PlainTextFilter())
+async def take_brand_title(  # noqa: PLR0913, PLR0917
+    message: Message,
+    state: FSMContext,
+    context: RenderContext,
+    creator: FromDishka[CreateBrandHandler],
+    rebrander: FromDishka[RebrandProductHandler],
+    queries: FromDishka[IProductQueries],
+) -> None:
+    product_id = await _stored_product(state)
+    stored = await state.get_data()
+
+    async def apply(raw: str) -> InputRichMessage | None:
+        brand_id = await creator.handle(CreateBrand(title=Title(raw)), context.actor)
+        await rebrander.handle(
+            RebrandProduct(product_id=product_id, brand_id=brand_id), context.actor
+        )
+
+        product = await queries.get_product(product_id)
+        if product is None:
+            return None
+
+        if not stored.get(DRAFT_KEY):
+            await state.clear()
+            return product_render.product_card(context, product)
+
+        await state.set_state(ProductForm.photos)
+        return product_render.media_board(context, product, [])
+
+    await _apply_text(message, context, apply)

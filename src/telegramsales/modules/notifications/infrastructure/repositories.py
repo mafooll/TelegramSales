@@ -44,6 +44,7 @@ def _row_of(notification: Notification) -> dict[str, Any]:
         "recipient_id": model.recipient_id,
         "key": model.key,
         "args": model.args,
+        "photo_id": model.photo_id,
         "action_key": model.action_key,
         "action_data": model.action_data,
         "dedup_key": model.dedup_key,

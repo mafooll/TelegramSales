@@ -38,6 +38,7 @@ class NotificationORM(WithCreatedAtMixin, BaseORM):
     recipient_id: Mapped[int] = mapped_column(BigInteger, index=True)
     key: Mapped[str] = mapped_column(String(KEY_LENGTH))
     args: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    photo_id: Mapped[str | None] = mapped_column(Text)
     action_key: Mapped[str | None] = mapped_column(String(KEY_LENGTH))
     action_data: Mapped[str | None] = mapped_column(String(ACTION_DATA_LENGTH))
     dedup_key: Mapped[str | None] = mapped_column(

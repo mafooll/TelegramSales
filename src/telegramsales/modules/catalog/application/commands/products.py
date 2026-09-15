@@ -240,7 +240,10 @@ class PublishProductHandler(ProductHandler):
             photos = await uow.media.count_of_kind(product.id, MediaKind.PHOTO)
             ensure_can_be_published(product, photos)
 
-            product.publish(self._clock.now())
+            product.publish(
+                self._clock.now(),
+                await uow.media.first_photo(product.id),
+            )
             uow.track(product)
             await uow.products.save(product)
 

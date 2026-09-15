@@ -303,6 +303,18 @@ class FakeProductMediaRepository(IProductMediaRepository):
             if item.product_id == product_id and item.kind is kind
         )
 
+    @override
+    async def first_photo(self, product_id: ProductId) -> str | None:
+        photos = sorted(
+            (
+                item
+                for item in self.items.values()
+                if item.product_id == product_id and item.kind is MediaKind.PHOTO
+            ),
+            key=lambda item: (item.position, item.id),
+        )
+        return photos[0].file_id if photos else None
+
 
 class FakeCatalogUnitOfWork:
     def __init__(  # noqa: PLR0913

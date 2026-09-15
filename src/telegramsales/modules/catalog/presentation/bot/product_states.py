@@ -15,5 +15,6 @@ class ProductForm(StatesGroup):
     reprice = State()
     axis = State()
     variant = State()
+    brand_title = State()
     variant_rename = State()
     variant_price = State()

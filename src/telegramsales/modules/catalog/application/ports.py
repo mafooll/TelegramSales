@@ -194,6 +194,9 @@ class IProductMediaRepository(ABC):
     @abstractmethod
     async def count_of_kind(self, product_id: ProductId, kind: MediaKind) -> int: ...
 
+    @abstractmethod
+    async def first_photo(self, product_id: ProductId) -> str | None: ...
+
 
 class ICatalogUnitOfWork(Protocol):
     @property

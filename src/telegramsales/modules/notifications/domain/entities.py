@@ -37,6 +37,7 @@ class Notification(DomainEntity[NotificationId]):
     recipient_id: RecipientId
     key: str
     args: NotificationArgs = NO_ARGS
+    photo_id: str | None = None
     action: CallToAction | None = None
     dedup_key: str | None = None
     status: NotificationStatus = NotificationStatus.PENDING
@@ -53,6 +54,7 @@ class Notification(DomainEntity[NotificationId]):
         recipient_id: RecipientId,
         key: str,
         args: NotificationArgs = NO_ARGS,
+        photo_id: str | None = None,
         action: CallToAction | None = None,
         dedup_key: str | None = None,
         now: datetime,
@@ -62,6 +64,7 @@ class Notification(DomainEntity[NotificationId]):
             recipient_id=recipient_id,
             key=key,
             args=args,
+            photo_id=photo_id,
             action=action,
             dedup_key=dedup_key,
             available_at=now,

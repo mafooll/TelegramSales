@@ -292,11 +292,12 @@ BRAND_PICK: Button[BrandPickView] = Button(
 
 NEW_BRAND: Button[ProductView] = Button(
     text=label(product_texts.NEW_BRAND_BUTTON),
-    callback=lambda _: CatalogCallback(
-        action=CatalogAction.ASK_CREATE,
-        target=CatalogTarget.BRAND,
+    callback=lambda product: ProductCallback(
+        action=ProductAction.NEW_BRAND,
+        product_id=product.id,
     ),
     permission=CatalogPermission.MANAGE,
+    style=ButtonStyle.PRIMARY,
 )
 
 

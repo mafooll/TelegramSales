@@ -202,3 +202,4 @@ catalog-error-catalog-holds-categories = Каталог разделён на к
 catalog-error-category-not-empty = В категории есть подкатегории — сначала удалите их.
 catalog-error-category-holds-products = В категории есть товары — сначала удалите или перенесите их.
 catalog-error-brand-in-use = Бренд стоит у товаров — сначала смените его у них.
+catalog-product-ask-brand-title = Пришлите название нового бренда — он сразу встанет товару.

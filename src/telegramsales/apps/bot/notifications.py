@@ -52,7 +52,6 @@ type Tick = Callable[[], Awaitable[int]]
 
 NUMBER_ARGUMENT = "number"
 TITLE_ARGUMENT = "title"
-ARTICLE_ARGUMENT = "article"
 NEW_PRODUCT_TOPIC = "new-product"
 
 
@@ -119,10 +118,8 @@ def cancellation_notice(event: OrderCancelled) -> Notice | None:
 def new_product_announcement(event: ProductPublished) -> Announce:
     return Announce(
         key=shop_texts.NEW_PRODUCT,
-        args={
-            TITLE_ARGUMENT: event.title,
-            ARTICLE_ARGUMENT: event.article,
-        },
+        args={TITLE_ARGUMENT: event.title},
+        photo_id=event.photo_id,
         action=open_product_action(event.product_id),
         topic=f"{NEW_PRODUCT_TOPIC}:{event.product_id}",
     )
