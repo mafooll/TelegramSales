@@ -5,7 +5,8 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
-ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+ROOT_PATH = Path(__file__).resolve().parents[3]
+ENV_PATH = ROOT_PATH / ".env"
 LOCALES_PATH = Path(__file__).resolve().parents[3] / "locales"
 
 
@@ -85,4 +86,13 @@ class AppSettings(BaseSettings):
     work_chat_id: int
     log_level: str = "INFO"
     log_json: bool = False
+    log_payloads: bool = True
+    log_sql: bool = True
+    log_dir: str = "logs"
+    log_file_megabytes: int = 10
+    log_file_backups: int = 5
+
+    @property
+    def log_directory(self) -> Path | None:
+        return None if not self.log_dir else ROOT_PATH / self.log_dir
     default_locale: str = "ru"

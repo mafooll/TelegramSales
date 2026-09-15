@@ -42,9 +42,11 @@ class SharedProvider(Provider):
     async def database_manager(
         self,
         settings: PostgresSettings,
+        app_settings: AppSettings,
     ) -> AsyncIterator[DatabaseManager]:
         manager = DatabaseManager(
             db_url=settings.url,
+            log_queries=app_settings.log_sql,
             pool_size=5,
             max_overflow=10,
             pool_recycle=3600,

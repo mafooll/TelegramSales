@@ -15,6 +15,7 @@ from telegramsales.apps.bot.notifications import (
 from telegramsales.shared.application.i18n import ITranslatorFactory
 from telegramsales.shared.infrastructure.events.bus import InProcessEventBus
 from telegramsales.shared.logger_config import setup_logging
+from telegramsales.shared.presentation.bot.api_log import ApiCallLogger
 from telegramsales.shared.settings import AppSettings, BotSettings
 
 logger: BoundLogger = structlog.get_logger()
@@ -26,6 +27,9 @@ async def run() -> None:
         setup_logging(
             log_level=app_settings.log_level,
             use_json=app_settings.log_json,
+            log_directory=app_settings.log_directory,
+            max_megabytes=app_settings.log_file_megabytes,
+            backups=app_settings.log_file_backups,
         )
 
         bus = await container.get(InProcessEventBus)
@@ -35,7 +39,12 @@ async def run() -> None:
         bot_settings = await container.get(BotSettings)
         bot = await container.get(Bot)
         storage = await container.get(BaseStorage)
-        dispatcher = build_dispatcher(container, storage)
+        bot.session.middleware(ApiCallLogger())
+        dispatcher = build_dispatcher(
+            container,
+            storage,
+            log_payloads=app_settings.log_payloads,
+        )
 
         await bot.delete_webhook(
             drop_pending_updates=bot_settings.drop_pending_updates,

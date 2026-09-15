@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from telegramsales.shared.infrastructure.database.telemetry import (
+    log_queries as log_engine_queries,
+)
+
 
 class DatabaseManager:
     def __init__(
@@ -16,6 +20,7 @@ class DatabaseManager:
         db_url: str,
         *,
         echo: bool = False,
+        log_queries: bool = False,
         **engine_kwargs: Any,
     ) -> None:
         self._engine: AsyncEngine = create_async_engine(
@@ -24,6 +29,9 @@ class DatabaseManager:
             pool_pre_ping=True,
             **engine_kwargs,
         )
+        if log_queries:
+            log_engine_queries(self._engine)
+
         self._session_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(
             bind=self._engine,
             class_=AsyncSession,
