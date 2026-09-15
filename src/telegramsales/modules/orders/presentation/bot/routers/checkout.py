@@ -112,7 +112,6 @@ async def start_checkout(
     reader: FromDishka[CartReader],
     directory: FromDishka[ICustomerDirectory],
 ) -> None:
-    await callback.answer()
     cart = await reader.read(_customer(context))
     if cart.is_empty or cart.has_unavailable:
         await show(callback, render.cart(context, cart))
@@ -145,7 +144,6 @@ async def change_contacts(
     context: RenderContext,
     state: FSMContext,
 ) -> None:
-    await callback.answer()
     await _ask_name(callback, context, state)
 
 
@@ -201,7 +199,6 @@ async def ask_comment(
     context: RenderContext,
     state: FSMContext,
 ) -> None:
-    await callback.answer()
     await state.set_state(Checkout.comment)
     await show(callback, render.prompt(context, texts.ASK_COMMENT, BACK_TO_CART))
 
@@ -232,7 +229,6 @@ async def place_order(
     reader: FromDishka[CartReader],
     handler: FromDishka[PlaceOrderHandler],
 ) -> None:
-    await callback.answer()
     view = await _view(state, reader, context)
     if view is None:
         await show(

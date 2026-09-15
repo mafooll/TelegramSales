@@ -154,7 +154,6 @@ async def open_menu(
     context: RenderContext,
     news: FromDishka[SubscriptionReader],
 ) -> None:
-    await callback.answer()
     await show(callback, await _main_menu(context, news))
 
 
@@ -165,7 +164,6 @@ async def switch_view(
     handler: FromDishka[SwitchCustomerViewHandler],
     news: FromDishka[SubscriptionReader],
 ) -> None:
-    await callback.answer()
     enabled = await handler.handle(
         SwitchCustomerView(enabled=not context.actor.is_shopping),
         context.actor,
@@ -184,7 +182,6 @@ async def switch_news(
     handler: FromDishka[SwitchSubscriptionHandler],
     news: FromDishka[SubscriptionReader],
 ) -> None:
-    await callback.answer()
     recipient_id = RecipientId(context.actor.id)
     state = await news.state_of(recipient_id)
     if state is None:

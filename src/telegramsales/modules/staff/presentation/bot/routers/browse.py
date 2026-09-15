@@ -24,7 +24,6 @@ async def show_list(
     context: RenderContext,
     queries: FromDishka[IStaffQueries],
 ) -> None:
-    await callback.answer()
     await render_list(callback, queries, context, callback_data.page)
 
 
@@ -35,7 +34,6 @@ async def show_card(
     context: RenderContext,
     queries: FromDishka[IStaffQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.staff_id is None:
         return
     member = await queries.get(StaffId(callback_data.staff_id))

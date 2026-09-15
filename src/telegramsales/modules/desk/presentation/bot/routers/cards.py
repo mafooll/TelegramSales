@@ -21,7 +21,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="desk.cards")
@@ -41,7 +41,7 @@ async def _card(
 
 
 async def _answer_gone(callback: CallbackQuery, context: RenderContext) -> None:
-    await callback.answer(context.translate(texts.ORDER_GONE), show_alert=True)
+    await answer_once(callback, context.translate(texts.ORDER_GONE), alert=True)
 
 
 @router.callback_query(DeskCallback.filter(F.action == DeskAction.CARD))
@@ -56,7 +56,6 @@ async def show_card(
         await _answer_gone(callback, context)
         return
 
-    await callback.answer()
     await show(callback, rich_screen(ORDER_CARD, card, context))
 
 
@@ -73,11 +72,11 @@ async def take_in_work(
         await _answer_gone(callback, context)
         return
     if card.is_run_by(StaffId(context.actor.id)):
-        await callback.answer(context.translate(texts.ALREADY_YOURS))
+        await answer_once(callback, context.translate(texts.ALREADY_YOURS))
         return
 
     await desk.take_in_work(card.id, context.actor)
-    await callback.answer(context.translate(texts.TAKEN))
+    await answer_once(callback, context.translate(texts.TAKEN))
 
 
 @router.callback_query(DeskCallback.filter(F.action.in_(MOVES)))
@@ -92,7 +91,7 @@ async def change_status(
         MOVES[callback_data.action],
         context.actor,
     )
-    await callback.answer(context.translate(texts.STATUS_CHANGED))
+    await answer_once(callback, context.translate(texts.STATUS_CHANGED))
 
 
 @router.callback_query(DeskCallback.filter(F.action == DeskAction.ASK_CANCEL))
@@ -107,7 +106,6 @@ async def ask_to_cancel(
         await _answer_gone(callback, context)
         return
 
-    await callback.answer()
     view = ConfirmationView(
         question_key=texts.CANCEL_QUESTION,
         question_args={"number": card.number},
@@ -125,4 +123,4 @@ async def cancel_order(
     desk: FromDishka[IOrderDesk],
 ) -> None:
     await desk.cancel(OrderId(callback_data.order_id), context.actor)
-    await callback.answer(context.translate(texts.STATUS_CHANGED))
+    await answer_once(callback, context.translate(texts.STATUS_CHANGED))

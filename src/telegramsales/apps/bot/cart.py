@@ -17,7 +17,7 @@ from telegramsales.modules.orders.presentation.bot import render, texts
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.errors import report_domain_errors
 from telegramsales.shared.presentation.bot.filters import HasActorFilter
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 
 router = Router(name="bot.cart")
 router.callback_query.filter(HasActorFilter())
@@ -45,7 +45,7 @@ async def add_to_cart(
             ),
         )
     )
-    await callback.answer(context.translate(texts.ADDED_TO_CART))
+    await answer_once(callback, context.translate(texts.ADDED_TO_CART))
 
 
 @router.callback_query(ShopCallback.filter(F.action == ShopAction.CART))
@@ -54,7 +54,6 @@ async def open_cart(
     context: RenderContext,
     reader: FromDishka[CartReader],
 ) -> None:
-    await callback.answer()
     await show(
         callback,
         await render.cart_of(reader, context, CustomerId(context.actor.id)),

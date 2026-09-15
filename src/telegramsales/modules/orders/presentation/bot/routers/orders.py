@@ -24,7 +24,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import send, show
+from telegramsales.shared.presentation.bot.render import answer_once, send, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="orders.orders")
@@ -73,7 +73,6 @@ async def show_orders(
     context: RenderContext,
     queries: FromDishka[IOrderQueries],
 ) -> None:
-    await callback.answer()
     await show(
         callback,
         await render.order_list(
@@ -91,10 +90,13 @@ async def show_order(
 ) -> None:
     order = await _order(queries, context, callback_data.order_id)
     if order is None:
-        await callback.answer(context.translate(texts.ORDER_GONE), show_alert=True)
+        await answer_once(
+            callback,
+            context.translate(texts.ORDER_GONE),
+            alert=True,
+        )
         return
 
-    await callback.answer()
     await show(callback, render.order_card(context, order))
 
 
@@ -107,10 +109,13 @@ async def ask_to_cancel(
 ) -> None:
     order = await _order(queries, context, callback_data.order_id)
     if order is None:
-        await callback.answer(context.translate(texts.ORDER_GONE), show_alert=True)
+        await answer_once(
+            callback,
+            context.translate(texts.ORDER_GONE),
+            alert=True,
+        )
         return
 
-    await callback.answer()
     view = ConfirmationView(
         question_key=texts.CANCEL_QUESTION,
         question_args={"number": order.number},
@@ -128,7 +133,6 @@ async def cancel_order(
     queries: FromDishka[IOrderQueries],
     handler: FromDishka[CancelOrderHandler],
 ) -> None:
-    await callback.answer()
     if callback_data.order_id is None:
         return
 

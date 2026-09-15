@@ -17,6 +17,7 @@ from telegramsales.modules.staff.presentation.bot.callbacks import (
 )
 from telegramsales.modules.staff.presentation.bot.render import render_card
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.render import answer_once
 
 router = Router(name="staff.roles")
 
@@ -38,7 +39,7 @@ async def set_role(
         ChangeStaffRole(staff_id=staff_id, new_role=callback_data.role),
         context.actor,
     )
-    await callback.answer(text=context.translate(texts.ROLE_CHANGED))
+    await answer_once(callback, context.translate(texts.ROLE_CHANGED))
 
     member = await queries.get(staff_id)
     if member is not None:
@@ -61,7 +62,7 @@ async def restore_access(
     await handler.handle(
         GrantStaffAccess(staff_id=staff_id, role=callback_data.role), context.actor
     )
-    await callback.answer(text=context.translate(texts.ACCESS_GRANTED))
+    await answer_once(callback, context.translate(texts.ACCESS_GRANTED))
 
     member = await queries.get(staff_id)
     if member is not None:

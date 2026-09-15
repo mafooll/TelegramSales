@@ -1,3 +1,6 @@
+from asyncio import gather
+from contextvars import ContextVar, Token
+
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, InputRichMessage, Message
@@ -9,6 +12,7 @@ from telegramsales.shared.presentation.bot.content import without_media
 logger: BoundLogger = structlog.get_logger()
 
 NOT_MODIFIED = "message is not modified"
+_answered: ContextVar[bool] = ContextVar("callback_answered", default=False)
 REJECTED_MEDIA = (
     "RICH_MESSAGE_PHOTO_INVALID",
     "RICH_MESSAGE_VIDEO_INVALID",
@@ -38,7 +42,33 @@ async def send(
         )
 
 
-async def show(callback: CallbackQuery, message: InputRichMessage) -> None:
+async def answer_once(
+    callback: CallbackQuery,
+    text: str | None = None,
+    *,
+    alert: bool = False,
+) -> None:
+    if _answered.get():
+        return
+
+    _answered.set(True)
+    try:
+        await callback.answer(text=text, show_alert=alert)
+    except TelegramBadRequest as error:
+        logger.debug("callback_answer_skipped", error=str(error))
+
+
+def start_answering() -> Token[bool]:
+    return _answered.set(False)
+
+
+def stop_answering(token: Token[bool]) -> bool:
+    answered = _answered.get()
+    _answered.reset(token)
+    return answered
+
+
+async def _draw(callback: CallbackQuery, message: InputRichMessage) -> None:
     if not isinstance(callback.message, Message):
         return
 
@@ -49,3 +79,7 @@ async def show(callback: CallbackQuery, message: InputRichMessage) -> None:
             return
         if callback.message.bot is not None:
             await send(callback.message.bot, callback.message.chat.id, message)
+
+
+async def show(callback: CallbackQuery, message: InputRichMessage) -> None:
+    await gather(answer_once(callback), _draw(callback, message))

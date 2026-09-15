@@ -27,7 +27,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
 from telegramsales.shared.presentation.bot.filters import TranslatedTextFilter
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="staff.access")
@@ -80,7 +80,6 @@ async def ask_revoke(
     context: RenderContext,
     queries: FromDishka[IStaffQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.staff_id is None or not isinstance(callback.message, Message):
         return
 
@@ -111,7 +110,7 @@ async def revoke(
 
     staff_id = StaffId(callback_data.staff_id)
     await handler.handle(RevokeStaffAccess(staff_id=staff_id), context.actor)
-    await callback.answer(text=context.translate(texts.ACCESS_REVOKED))
+    await answer_once(callback, context.translate(texts.ACCESS_REVOKED))
 
     member = await queries.get(staff_id)
     if member is not None:

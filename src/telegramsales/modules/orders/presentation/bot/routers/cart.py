@@ -98,7 +98,6 @@ async def open_cart(
     context: RenderContext,
     reader: FromDishka[CartReader],
 ) -> None:
-    await callback.answer()
     await _show_cart(callback, context, reader, callback_data.page)
 
 
@@ -109,7 +108,6 @@ async def open_line(
     context: RenderContext,
     reader: FromDishka[CartReader],
 ) -> None:
-    await callback.answer()
     line = await _line(reader, context, callback_data.item_id)
     if line is None:
         await _show_cart(callback, context, reader)
@@ -126,7 +124,6 @@ async def take_more(
     reader: FromDishka[CartReader],
     handler: FromDishka[IncreaseCartItemHandler],
 ) -> None:
-    await callback.answer()
     if callback_data.item_id is None:
         return
 
@@ -147,7 +144,6 @@ async def take_less(
     reader: FromDishka[CartReader],
     handler: FromDishka[DecreaseCartItemHandler],
 ) -> None:
-    await callback.answer()
     if callback_data.item_id is None:
         return
 
@@ -168,7 +164,6 @@ async def drop_line(
     reader: FromDishka[CartReader],
     handler: FromDishka[RemoveCartItemHandler],
 ) -> None:
-    await callback.answer()
     if callback_data.item_id is None:
         return
 
@@ -183,7 +178,6 @@ async def drop_line(
 
 @router.callback_query(CartCallback.filter(F.action == CartAction.ASK_CLEAR))
 async def ask_to_clear(callback: CallbackQuery, context: RenderContext) -> None:
-    await callback.answer()
     view = ConfirmationView(
         question_key=texts.CLEAR_QUESTION,
         confirm=CartCallback(action=CartAction.CLEAR),
@@ -199,7 +193,6 @@ async def clear_cart(
     reader: FromDishka[CartReader],
     handler: FromDishka[ClearCartHandler],
 ) -> None:
-    await callback.answer()
     await handler.handle(ClearCart(customer_id=_customer(context)))
     await _show_cart(callback, context, reader)
 

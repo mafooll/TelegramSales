@@ -2,11 +2,16 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, override
 
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, User
+from aiogram.types import CallbackQuery, TelegramObject, User
 from dishka.integrations.aiogram import CONTAINER_NAME
 
 from telegramsales.shared.application.i18n import ITranslatorFactory
 from telegramsales.shared.presentation.bot.context import RenderContext
+from telegramsales.shared.presentation.bot.render import (
+    answer_once,
+    start_answering,
+    stop_answering,
+)
 
 if TYPE_CHECKING:
     from aiogram.fsm.context import FSMContext
@@ -60,3 +65,22 @@ class StateResetMiddleware(BaseMiddleware):
         if state is not None:
             await state.set_state(None)
         return await handler(event, data)
+
+
+class CallbackAnswerMiddleware(BaseMiddleware):
+    @override
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        if not isinstance(event, CallbackQuery):
+            return await handler(event, data)
+
+        token = start_answering()
+        try:
+            return await handler(event, data)
+        finally:
+            await answer_once(event)
+            stop_answering(token)

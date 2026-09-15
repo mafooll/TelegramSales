@@ -23,7 +23,7 @@ from telegramsales.modules.orders.presentation.bot.callbacks import (
 )
 from telegramsales.shared.presentation.bot.callbacks import unpack_uuid
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 
 router = Router(name="orders.selections")
 
@@ -79,12 +79,13 @@ async def show_selection(
 ) -> None:
     view = await reader.read(SelectionId(callback_data.selection_id))
     if view is None:
-        await callback.answer(
-            context.translate(texts.SELECTION_GONE), show_alert=True
+        await answer_once(
+            callback,
+            context.translate(texts.SELECTION_GONE),
+            alert=True,
         )
         return
 
-    await callback.answer()
     await show(callback, render.selection(context, view))
 
 
@@ -102,7 +103,10 @@ async def adopt_selection(
             selection_id=SelectionId(callback_data.selection_id),
         )
     )
-    await callback.answer(_adoption_text(context, adoption.added, adoption.skipped))
+    await answer_once(
+        callback,
+        _adoption_text(context, adoption.added, adoption.skipped),
+    )
     await show(
         callback,
         await render.cart_of(cart, context, _customer(context)),

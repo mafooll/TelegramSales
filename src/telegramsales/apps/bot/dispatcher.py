@@ -11,21 +11,37 @@ from telegramsales.modules.orders import orders_router
 from telegramsales.modules.staff import ActorMiddleware, staff_router
 from telegramsales.shared.presentation.bot.album import AlbumMiddleware
 from telegramsales.shared.presentation.bot.middlewares import (
+    CallbackAnswerMiddleware,
     RenderContextMiddleware,
     StateResetMiddleware,
     TranslatorMiddleware,
 )
+from telegramsales.shared.presentation.bot.observability import (
+    HandlerLogMiddleware,
+    UpdateLogMiddleware,
+)
 
 
-def build_dispatcher(container: AsyncContainer, storage: BaseStorage) -> Dispatcher:
+def build_dispatcher(
+    container: AsyncContainer,
+    storage: BaseStorage,
+    *,
+    log_payloads: bool = True,
+) -> Dispatcher:
     dispatcher = Dispatcher(storage=storage)
     setup_dishka(container=container, router=dispatcher, auto_inject=True)
 
+    dispatcher.update.outer_middleware(
+        UpdateLogMiddleware(with_payload=log_payloads)
+    )
+
     for observer in (dispatcher.message, dispatcher.callback_query):
+        observer.outer_middleware(HandlerLogMiddleware())
         observer.outer_middleware(TranslatorMiddleware())
         observer.outer_middleware(ActorMiddleware())
         observer.outer_middleware(RenderContextMiddleware())
 
+    dispatcher.callback_query.outer_middleware(CallbackAnswerMiddleware())
     dispatcher.callback_query.outer_middleware(StateResetMiddleware())
     dispatcher.message.outer_middleware(AlbumMiddleware())
 
