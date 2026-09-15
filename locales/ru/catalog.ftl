@@ -153,3 +153,4 @@ catalog-brand-picker =
 catalog-brand-unknown = не указан
 catalog-brand-entry = { $title }
 catalog-no-brand-button = ✖️ Без бренда
+catalog-open-catalog-products-empty-button = 📦 Товары каталога

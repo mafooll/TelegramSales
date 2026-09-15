@@ -25,6 +25,7 @@ from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
 from telegramsales.modules.catalog.presentation.bot.views import (
     BrandPickView,
     ProductListView,
+    catalog_products_key,
     media_item_key,
     product_item_key,
     variant_item_key,
@@ -45,14 +46,14 @@ OPEN_PRODUCTS: Button[CategoryView] = Button(
 
 OPEN_CATALOG_PRODUCTS: Button[CatalogView] = Button(
     text=lambda catalog, translate: translate(
-        product_texts.OPEN_CATALOG_PRODUCTS_BUTTON,
+        catalog_products_key(catalog),
         count=catalog.uncategorized_product_count,
     ),
     callback=lambda catalog: ProductCallback(
         action=ProductAction.LIST,
         catalog_id=catalog.id,
     ),
-    when=lambda catalog: catalog.uncategorized_product_count > 0,
+    when=lambda catalog: catalog.category_count == 0,
 )
 
 PRODUCT_ENTRY: Button[ProductEntryView] = Button(

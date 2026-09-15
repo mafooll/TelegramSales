@@ -128,6 +128,12 @@ def shop_product_item_key(product: ShopProductEntryView) -> str:
     return shop_texts.PRODUCT_ENTRY_OUT
 
 
+def catalog_products_key(catalog: CatalogView) -> str:
+    if catalog.uncategorized_product_count == 0:
+        return product_texts.OPEN_CATALOG_PRODUCTS_EMPTY_BUTTON
+    return product_texts.OPEN_CATALOG_PRODUCTS_BUTTON
+
+
 def breadcrumbs(view: ShopProductsView, translate: ITranslator) -> str:
     category = view.category
     trail = [translate(shop_texts.BREADCRUMB_ROOT), view.catalog.title]

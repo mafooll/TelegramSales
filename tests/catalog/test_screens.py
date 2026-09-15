@@ -226,9 +226,17 @@ def test_the_catalog_products_button_needs_no_permission() -> None:
     assert "📦 Товары каталога (3)" in texts_of(message)
 
 
-def test_an_empty_catalog_offers_no_product_button() -> None:
+def test_an_empty_catalog_offers_its_product_list() -> None:
     message = rich_paged_screen(
         CATALOG_CARD, empty_pagination(), catalog_view(), MANAGER
+    )
+
+    assert "📦 Товары каталога" in texts_of(message)
+
+
+def test_a_catalog_split_into_categories_hides_the_product_list() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(categories=2), MANAGER
     )
 
     assert not any(label.startswith("📦") for label in texts_of(message))
