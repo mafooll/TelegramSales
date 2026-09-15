@@ -16,6 +16,7 @@ import pytest
 import structlog
 
 from telegramsales.shared.application.access import Actor
+from telegramsales.shared.domain.exceptions import DomainError
 from telegramsales.shared.presentation.bot.api_log import (
     POLLING_METHOD,
     method_payload,
@@ -182,3 +183,27 @@ async def test_a_failed_update_is_logged_and_reraised() -> None:
 
 def test_polling_is_not_an_api_call_worth_logging() -> None:
     assert POLLING_METHOD == "GetUpdates"
+
+
+REFUSAL = "нужна фотография"
+
+
+async def refusing(_event: Any, _data: dict[str, Any]) -> Any:  # noqa: ANN401
+    raise DomainError(REFUSAL, details={"product_id": "42"})
+
+
+async def test_a_refused_update_is_a_warning_without_a_traceback() -> None:
+    update = Update(update_id=7, message=message())
+
+    with (
+        structlog.testing.capture_logs() as entries,
+        pytest.raises(DomainError),
+    ):
+        await UpdateLogMiddleware()(refusing, update, {})
+
+    refusal = entries[-1]
+
+    assert refusal["event"] == "update_rejected"
+    assert refusal["log_level"] == "warning"
+    assert refusal["reason"] == "DomainError"
+    assert refusal["details"] == {"product_id": "42"}

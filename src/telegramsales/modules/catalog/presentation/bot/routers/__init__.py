@@ -1,5 +1,6 @@
 from aiogram import Router
 
+from telegramsales.modules.catalog.presentation.bot.errors import CATALOG_ERRORS
 from telegramsales.modules.catalog.presentation.bot.routers import (
     browse,
     edit,
@@ -22,6 +23,6 @@ catalog_router.include_router(products.router)
 catalog_router.include_router(product_form.router)
 catalog_router.include_router(titles.router)
 
-report_domain_errors(catalog_router)
+report_domain_errors(catalog_router, CATALOG_ERRORS)
 
 __all__ = ["catalog_router"]

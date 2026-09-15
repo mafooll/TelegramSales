@@ -8,6 +8,8 @@ from aiogram.types import CallbackQuery, Message, TelegramObject, Update, User
 import structlog
 from structlog.stdlib import BoundLogger
 
+from telegramsales.shared.domain.exceptions import BaseError
+
 if TYPE_CHECKING:
     from telegramsales.shared.application.access import Actor
 
@@ -113,6 +115,14 @@ class UpdateLogMiddleware(BaseMiddleware):
         started = time.perf_counter()
         try:
             result = await handler(event, data)
+        except BaseError as refusal:
+            logger.warning(
+                "update_rejected",
+                duration_ms=elapsed_ms(started),
+                reason=type(refusal).__name__,
+                details=refusal.details,
+            )
+            raise
         except Exception:
             logger.exception("update_failed", duration_ms=elapsed_ms(started))
             raise

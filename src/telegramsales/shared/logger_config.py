@@ -1,3 +1,4 @@
+from importlib.util import find_spec
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -28,16 +29,19 @@ def _shared_processors() -> list["Processor"]:
     ]
 
 
+def _traceback_formatter() -> structlog.typing.ExceptionRenderer:
+    if find_spec("rich") is None:
+        return structlog.dev.plain_traceback
+    return structlog.dev.RichTracebackFormatter(max_frames=10, show_locals=False)
+
+
 def _console_handler(*, use_json: bool) -> logging.Handler:
     renderer: Processor = (
         structlog.processors.JSONRenderer()
         if use_json
         else structlog.dev.ConsoleRenderer(
             colors=True,
-            exception_formatter=structlog.dev.RichTracebackFormatter(
-                max_frames=10,
-                show_locals=False,
-            ),
+            exception_formatter=_traceback_formatter(),
         )
     )
     handler = logging.StreamHandler()
