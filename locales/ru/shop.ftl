@@ -10,7 +10,6 @@ shop-catalog-empty =
 shop-category = { $title }
 shop-category-entry = { $title }
 shop-open-products-button = 🛍 Товары ({ $count })
-shop-open-uncategorized-button = 🛍 Без категории ({ $count })
 
 shop-product-list =
     { $title }
@@ -57,5 +56,4 @@ shop-new-product =
     Артикул { $article }
 shop-open-product-button = 🛍 Посмотреть
 shop-breadcrumb-root = Витрина
-shop-uncategorized-title = Без категории
 shop-breadcrumb-separator = { " · " }

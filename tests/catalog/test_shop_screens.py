@@ -294,6 +294,34 @@ def test_the_breadcrumbs_name_the_parent_category() -> None:
     assert breadcrumbs_of(message) == "Витрина · Одежда · Пальто · Верхняя одежда"
 
 
+def bare_catalog_list(*entries: ShopProductEntryView) -> InputRichMessage:
+    view = ShopProductsView(
+        catalog=catalog_view(), category=None, total=len(entries)
+    )
+    return rich_paged_screen(PRODUCT_LIST, paged(list(entries)), view, CUSTOMER)
+
+
+def test_a_catalog_without_categories_titles_the_list_with_itself() -> None:
+    message = bare_catalog_list(entry_view())
+
+    assert "Одежда" in paragraphs_of(message)[0]
+    assert "Без категории" not in paragraphs_of(message)[0]
+
+
+def test_a_bare_catalog_list_stops_the_breadcrumbs_at_the_catalog() -> None:
+    message = bare_catalog_list(entry_view())
+
+    assert breadcrumbs_of(message) == "Витрина · Одежда"
+
+
+def test_a_bare_catalog_list_goes_back_to_the_catalogs() -> None:
+    message = bare_catalog_list()
+
+    assert [entry.action for entry in callbacks_of(message)] == [
+        ShopAction.CATALOGS
+    ]
+
+
 def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:
     view = ShopProductsView(
         catalog=catalog_view(), category=category_view(products=1), total=1

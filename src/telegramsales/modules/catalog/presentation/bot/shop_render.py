@@ -30,7 +30,6 @@ from telegramsales.shared.presentation.bot.pagination import Pagination
 from telegramsales.shared.presentation.bot.rich import rich_paged_screen, rich_screen
 
 PRODUCT_PAGE_SIZE = 6
-COUNT_PROBE_SIZE = 1
 
 
 async def catalog_list(
@@ -58,9 +57,9 @@ async def catalog_card(
     number: int,
 ) -> InputRichMessage:
     page = await queries.list_categories(catalog.id, None, number, DEFAULT_PAGE_SIZE)
-    uncategorized = await queries.list_products(
-        catalog.id, None, 0, COUNT_PROBE_SIZE
-    )
+    if page.total == 0:
+        return await product_list(queries, context, catalog, None, number)
+
     pagination = Pagination(
         page=page,
         callback=lambda value: ShopCallback(
@@ -69,11 +68,7 @@ async def catalog_card(
             page=value,
         ),
     )
-    view = ShopCatalogPageView(
-        catalog=catalog,
-        total=page.total,
-        uncategorized_count=uncategorized.total,
-    )
+    view = ShopCatalogPageView(catalog=catalog, total=page.total)
     return rich_paged_screen(CATALOG, pagination, view, context)
 
 

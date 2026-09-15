@@ -43,12 +43,16 @@ OPEN_PRODUCTS: Button[CategoryView] = Button(
     ),
 )
 
-OPEN_UNCATEGORIZED_PRODUCTS: Button[CatalogView] = Button(
-    text=label(product_texts.OPEN_UNCATEGORIZED_BUTTON),
+OPEN_CATALOG_PRODUCTS: Button[CatalogView] = Button(
+    text=lambda catalog, translate: translate(
+        product_texts.OPEN_CATALOG_PRODUCTS_BUTTON,
+        count=catalog.uncategorized_product_count,
+    ),
     callback=lambda catalog: ProductCallback(
         action=ProductAction.LIST,
         catalog_id=catalog.id,
     ),
+    when=lambda catalog: catalog.uncategorized_product_count > 0,
 )
 
 PRODUCT_ENTRY: Button[ProductEntryView] = Button(

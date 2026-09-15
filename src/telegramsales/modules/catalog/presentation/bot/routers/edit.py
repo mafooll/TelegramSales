@@ -37,7 +37,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="catalog.edit")
@@ -70,7 +70,6 @@ async def set_catalog_visibility(
         ),
         context.actor,
     )
-    await callback.answer()
 
     catalog = await queries.get_catalog(catalog_id)
     if catalog is not None:
@@ -98,7 +97,6 @@ async def set_category_visibility(
         ),
         context.actor,
     )
-    await callback.answer()
 
     category = await queries.get_category(category_id)
     if category is not None:
@@ -128,7 +126,6 @@ async def set_brand_visibility(
         ),
         context.actor,
     )
-    await callback.answer()
 
     brand = await queries.get_brand(brand_id)
     if brand is not None:
@@ -162,7 +159,6 @@ async def ask_delete(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     title = await _title_of(callback_data, queries)
     if title is None:
         return
@@ -195,7 +191,7 @@ async def delete_catalog(
     await handler.handle(
         DeleteCatalog(catalog_id=CatalogId(callback_data.catalog_id)), context.actor
     )
-    await callback.answer(text=context.translate(texts.DELETED))
+    await answer_once(callback, context.translate(texts.DELETED))
     await show(callback, await render.catalog_list(queries, context, 0))
 
 
@@ -219,7 +215,7 @@ async def delete_category(
         DeleteCategory(category_id=CategoryId(callback_data.category_id)),
         context.actor,
     )
-    await callback.answer(text=context.translate(texts.DELETED))
+    await answer_once(callback, context.translate(texts.DELETED))
 
     catalog = await queries.get_catalog(CatalogId(callback_data.catalog_id))
     if catalog is not None:
@@ -245,5 +241,5 @@ async def delete_brand(
     await handler.handle(
         DeleteBrand(brand_id=BrandId(callback_data.brand_id)), context.actor
     )
-    await callback.answer(text=context.translate(texts.DELETED))
+    await answer_once(callback, context.translate(texts.DELETED))
     await show(callback, await render.brand_list(queries, context, 0))

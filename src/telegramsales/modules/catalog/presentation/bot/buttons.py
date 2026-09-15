@@ -95,6 +95,7 @@ CREATE_CATEGORY: Button[CatalogView] = Button(
         catalog_id=catalog.id,
     ),
     permission=CatalogPermission.MANAGE,
+    when=lambda catalog: catalog.uncategorized_product_count == 0,
     style=ButtonStyle.PRIMARY,
 )
 

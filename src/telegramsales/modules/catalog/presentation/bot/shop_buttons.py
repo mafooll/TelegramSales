@@ -12,7 +12,6 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopCallback,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
-    ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
     shop_product_item_key,
@@ -52,17 +51,6 @@ OPEN_PRODUCTS: Button[ShopCategoryView] = Button(
         category_id=category.id,
     ),
     when=lambda category: category.product_count > 0,
-)
-
-OPEN_UNCATEGORIZED: Button[ShopCatalogPageView] = Button(
-    text=lambda view, translate: translate(
-        shop_texts.OPEN_UNCATEGORIZED_BUTTON, count=view.uncategorized_count
-    ),
-    callback=lambda view: ShopCallback(
-        action=ShopAction.PRODUCTS,
-        catalog_id=view.catalog.id,
-    ),
-    when=lambda view: view.uncategorized_count > 0,
 )
 
 PRODUCT_ENTRY: Button[ShopProductEntryView] = Button(
@@ -157,8 +145,16 @@ PRODUCTS_BACK_TO_CATALOG: Button[ShopProductsView] = Button(
         catalog_id=view.catalog.id,
     ),
     when=lambda view: (
-        view.category is None or (_is_leaf(view) and view.category.parent_id is None)
+        view.category is not None
+        and _is_leaf(view)
+        and view.category.parent_id is None
     ),
+)
+
+PRODUCTS_BACK_TO_CATALOGS: Button[ShopProductsView] = Button(
+    text=label(shop_texts.BACK_BUTTON),
+    callback=lambda _: ShopCallback(action=ShopAction.CATALOGS),
+    when=lambda view: view.category is None,
 )
 
 BACK_TO_PRODUCTS: Button[ShopProductView] = Button(

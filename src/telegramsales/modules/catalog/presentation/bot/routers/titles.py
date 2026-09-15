@@ -112,7 +112,6 @@ async def ask_title(
     context: RenderContext,
     state: FSMContext,
 ) -> None:
-    await callback.answer()
     prompt = PROMPTS.get((callback_data.action, callback_data.target))
     if prompt is None or not isinstance(callback.message, Message):
         return

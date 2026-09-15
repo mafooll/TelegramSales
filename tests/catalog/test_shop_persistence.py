@@ -1,3 +1,4 @@
+from aiogram.types import InputRichBlockButtons
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,8 +19,10 @@ from telegramsales.modules.catalog.infrastructure.repositories import (
     ProductVariantRepository,
 )
 from telegramsales.modules.catalog.infrastructure.shop_queries import ShopQueries
+from telegramsales.modules.catalog.presentation.bot import shop_render
 from tests.catalog.factories import NOW, make_media, make_variant, usd
 from tests.catalog.test_persistence import make_catalog, make_category
+from tests.catalog.test_shop_screens import CUSTOMER, breadcrumbs_of
 
 pytestmark = pytest.mark.db
 
@@ -408,3 +411,40 @@ async def test_a_top_level_category_has_no_parent_title(
 
     assert view is not None
     assert view.parent_title is None
+
+
+async def test_a_catalog_without_categories_opens_its_products(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Только товары")
+    await make_product(session, catalog.id, None, "Пальто прямое")
+    await session.flush()
+    queries = ShopQueries(session)
+    view = await queries.get_catalog(catalog.id)
+    assert view is not None
+
+    message = await shop_render.catalog_card(queries, CUSTOMER, view, 0)
+
+    assert breadcrumbs_of(message) == "Витрина · Только товары"
+
+
+async def test_a_catalog_with_categories_opens_them(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог с разделами")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    await make_product(session, catalog.id, category.id)
+    await session.flush()
+    queries = ShopQueries(session)
+    view = await queries.get_catalog(catalog.id)
+    assert view is not None
+
+    message = await shop_render.catalog_card(queries, CUSTOMER, view, 0)
+    labels = [
+        str(button.text)
+        for block in message.blocks or []
+        if isinstance(block, InputRichBlockButtons)
+        for button in block.buttons
+    ]
+
+    assert "Верхняя одежда" in " ".join(labels)

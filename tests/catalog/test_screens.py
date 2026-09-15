@@ -210,20 +210,44 @@ def test_empty_catalog_card_says_there_are_no_categories() -> None:
     assert paragraphs_of(message) == ["Каталог: Одежда\nКатегорий нет"]
 
 
-def test_catalog_card_offers_a_way_to_uncategorized_products() -> None:
+def test_a_catalog_with_its_own_products_offers_them() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(uncategorized=3), MANAGER
+    )
+
+    assert "📦 Товары каталога (3)" in texts_of(message)
+
+
+def test_the_catalog_products_button_needs_no_permission() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(uncategorized=3), OUTSIDER
+    )
+
+    assert "📦 Товары каталога (3)" in texts_of(message)
+
+
+def test_an_empty_catalog_offers_no_product_button() -> None:
     message = rich_paged_screen(
         CATALOG_CARD, empty_pagination(), catalog_view(), MANAGER
     )
 
-    assert "📦 Без категории" in texts_of(message)
+    assert not any(label.startswith("📦") for label in texts_of(message))
 
 
-def test_the_uncategorized_products_button_needs_no_permission() -> None:
+def test_a_catalog_with_its_own_products_takes_no_categories() -> None:
     message = rich_paged_screen(
-        CATALOG_CARD, empty_pagination(), catalog_view(), OUTSIDER
+        CATALOG_CARD, empty_pagination(), catalog_view(uncategorized=3), MANAGER
     )
 
-    assert "📦 Без категории" in texts_of(message)
+    assert "➕ Новая категория" not in texts_of(message)
+
+
+def test_an_empty_catalog_still_takes_categories() -> None:
+    message = rich_paged_screen(
+        CATALOG_CARD, empty_pagination(), catalog_view(), MANAGER
+    )
+
+    assert "➕ Новая категория" in texts_of(message)
 
 
 def test_root_category_may_hold_subcategories() -> None:

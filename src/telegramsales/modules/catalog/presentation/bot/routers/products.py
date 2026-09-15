@@ -50,7 +50,7 @@ from telegramsales.shared.presentation.bot.confirmation import (
     ConfirmationView,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import show
+from telegramsales.shared.presentation.bot.render import answer_once, show
 from telegramsales.shared.presentation.bot.rich import rich_screen
 
 router = Router(name="catalog.products")
@@ -103,7 +103,6 @@ async def show_products(
     context: RenderContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.catalog_id is None:
         return
 
@@ -130,7 +129,6 @@ async def show_product(
     context: RenderContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is not None:
         await _show_card(callback, context, product)
@@ -150,7 +148,6 @@ async def publish(
 
     product_id = ProductId(callback_data.product_id)
     await handler.handle(PublishProduct(product_id=product_id), context.actor)
-    await callback.answer()
 
     product = await queries.get_product(product_id)
     if product is not None:
@@ -177,7 +174,6 @@ async def set_visibility(
         ),
         context.actor,
     )
-    await callback.answer()
 
     product = await queries.get_product(product_id)
     if product is not None:
@@ -204,7 +200,6 @@ async def set_stock(
         ),
         context.actor,
     )
-    await callback.answer()
 
     product = await queries.get_product(product_id)
     if product is not None:
@@ -218,7 +213,6 @@ async def ask_delete(
     context: RenderContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is None:
         return
@@ -252,7 +246,7 @@ async def delete(
     await handler.handle(
         DeleteProduct(product_id=ProductId(callback_data.product_id)), context.actor
     )
-    await callback.answer(text=context.translate(texts.DELETED))
+    await answer_once(callback, context.translate(texts.DELETED))
     await show(
         callback,
         await product_render.product_list(
@@ -275,7 +269,6 @@ async def show_media(
     context: RenderContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is None:
         return
@@ -299,7 +292,6 @@ async def drop_media(
     media_id = MediaId(callback_data.item_id)
     product_id = await queries.product_of_media(media_id)
     await handler.handle(DetachMedia(media_id=media_id), context.actor)
-    await callback.answer()
 
     product = await _view(queries, product_id)
     if product is None:
@@ -316,7 +308,6 @@ async def show_variants(
     context: RenderContext,
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is None:
         return
@@ -346,7 +337,6 @@ async def set_availability(
         ),
         context.actor,
     )
-    await callback.answer()
 
     product = await _view(queries, product_id)
     if product is None:
@@ -364,7 +354,6 @@ async def switch_layout(
     handler: FromDishka[ChangeMediaLayoutHandler],
     queries: FromDishka[IProductQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is None:
         return
@@ -393,7 +382,6 @@ async def pick_brand(
     queries: FromDishka[IProductQueries],
     catalog_queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     product = await _view(queries, callback_data.product_id)
     if product is None:
         return
@@ -421,7 +409,6 @@ async def set_brand(
     await handler.handle(
         RebrandProduct(product_id=product.id, brand_id=brand_id), context.actor
     )
-    await callback.answer()
 
     updated = await queries.get_product(product.id)
     if updated is not None:

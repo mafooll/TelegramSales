@@ -18,10 +18,10 @@ from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
     CATALOG_ENTRY,
     CATEGORY_ENTRY,
     OPEN_PRODUCTS,
-    OPEN_UNCATEGORIZED,
     PICK_VARIANT,
     PRODUCT_ENTRY,
     PRODUCTS_BACK_TO_CATALOG,
+    PRODUCTS_BACK_TO_CATALOGS,
     PRODUCTS_BACK_TO_CATEGORY,
     PRODUCTS_BACK_TO_PARENT,
     VARIANT_PICK,
@@ -63,7 +63,7 @@ CATALOG: ListScreen[ShopCategoryView, ShopCatalogPageView] = ListScreen(
         title=view.catalog.title,
     ),
     item=CATEGORY_ENTRY,
-    footer=[OPEN_UNCATEGORIZED, back_to_catalogs()],
+    footer=[back_to_catalogs()],
 )
 
 CATEGORY: ListScreen[ShopCategoryView, ShopCategoryView] = ListScreen(
@@ -75,10 +75,10 @@ CATEGORY: ListScreen[ShopCategoryView, ShopCategoryView] = ListScreen(
 )
 
 
-def _product_list_title(view: ShopProductsView, translate: ITranslator) -> str:
-    if view.category is not None:
-        return view.category.title
-    return translate(shop_texts.UNCATEGORIZED_TITLE)
+def _product_list_title(view: ShopProductsView) -> str:
+    if view.category is None:
+        return view.catalog.title
+    return view.category.title
 
 
 PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
@@ -86,7 +86,7 @@ PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
         shop_texts.PRODUCT_LIST_EMPTY
         if view.total == 0
         else shop_texts.PRODUCT_LIST,
-        title=_product_list_title(view, translate),
+        title=_product_list_title(view),
         total=view.total,
     ),
     item=PRODUCT_ENTRY,
@@ -98,6 +98,7 @@ PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
         PRODUCTS_BACK_TO_CATEGORY,
         PRODUCTS_BACK_TO_PARENT,
         PRODUCTS_BACK_TO_CATALOG,
+        PRODUCTS_BACK_TO_CATALOGS,
     ],
 )
 

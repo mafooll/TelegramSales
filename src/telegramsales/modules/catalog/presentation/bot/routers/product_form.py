@@ -148,23 +148,24 @@ async def start_product(
     state: FSMContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
-
     catalog_id: CatalogId
     category_id: CategoryId | None
     if callback_data.category_id is not None:
         category = await queries.get_category(CategoryId(callback_data.category_id))
         if category is None:
+            await callback.answer()
             return
         catalog_id = category.catalog_id
         category_id = category.id
     elif callback_data.catalog_id is not None:
         catalog = await queries.get_catalog(CatalogId(callback_data.catalog_id))
         if catalog is None:
+            await callback.answer()
             return
         catalog_id = catalog.id
         category_id = None
     else:
+        await callback.answer()
         return
 
     await state.set_state(ProductForm.title)
@@ -309,9 +310,9 @@ async def ask_media(
     context: RenderContext,
     state: FSMContext,
 ) -> None:
-    await callback.answer()
     prompt = MEDIA_PROMPTS.get(callback_data.action)
     if prompt is None or callback_data.product_id is None:
+        await callback.answer()
         return
 
     kind, message_key = prompt
@@ -336,9 +337,9 @@ async def ask_edit(
     context: RenderContext,
     state: FSMContext,
 ) -> None:
-    await callback.answer()
     prompt = EDIT_PROMPTS.get(callback_data.action)
     if prompt is None or callback_data.product_id is None:
+        await callback.answer()
         return
 
     form, message_key = prompt

@@ -54,7 +54,6 @@ class ProductListView:
 class ShopCatalogPageView:
     catalog: ShopCatalogView
     total: int
-    uncategorized_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)

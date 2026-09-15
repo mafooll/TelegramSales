@@ -22,7 +22,6 @@ router = Router(name="catalog.browse")
 
 @router.callback_query(CatalogCallback.filter(F.action == CatalogAction.HUB))
 async def open_hub(callback: CallbackQuery, context: RenderContext) -> None:
-    await callback.answer()
     await show(callback, render.hub(context))
 
 
@@ -37,7 +36,6 @@ async def show_catalogs(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     await show(
         callback,
         await render.catalog_list(queries, context, callback_data.page),
@@ -55,7 +53,6 @@ async def show_catalog(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.catalog_id is None:
         return
 
@@ -80,7 +77,6 @@ async def show_category(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.category_id is None:
         return
 
@@ -105,7 +101,6 @@ async def show_brands(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     await show(
         callback,
         await render.brand_list(queries, context, callback_data.page),
@@ -123,7 +118,6 @@ async def show_brand(
     context: RenderContext,
     queries: FromDishka[ICatalogQueries],
 ) -> None:
-    await callback.answer()
     if callback_data.brand_id is None:
         return
 

@@ -20,13 +20,13 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopCallback,
 )
 from telegramsales.shared.presentation.bot.context import RenderContext
-from telegramsales.shared.presentation.bot.render import send, show
+from telegramsales.shared.presentation.bot.render import answer_once, send, show
 
 router = Router(name="catalog.shop")
 
 
 async def _gone(callback: CallbackQuery, context: RenderContext) -> None:
-    await callback.answer(context.translate(shop_texts.GONE), show_alert=True)
+    await answer_once(callback, context.translate(shop_texts.GONE), alert=True)
 
 
 SHOP_COMMAND = "shop"
@@ -58,7 +58,6 @@ async def show_catalogs(
     context: RenderContext,
     queries: FromDishka[IShopQueries],
 ) -> None:
-    await callback.answer()
     await show(
         callback,
         await shop_render.catalog_list(queries, context, callback_data.page),
@@ -81,7 +80,6 @@ async def show_catalog(
         await _gone(callback, context)
         return
 
-    await callback.answer()
     await show(
         callback,
         await shop_render.catalog_card(
@@ -102,7 +100,6 @@ async def show_category(
         await _gone(callback, context)
         return
 
-    await callback.answer()
     await show(
         callback,
         await _below_category(queries, context, category, callback_data.page),
@@ -131,7 +128,6 @@ async def show_products(
             await _gone(callback, context)
             return
 
-    await callback.answer()
     await show(
         callback,
         await shop_render.product_list(
@@ -156,7 +152,6 @@ async def show_product(
         await _gone(callback, context)
         return
 
-    await callback.answer()
     await show(callback, shop_render.product_card(context, product))
 
 
@@ -210,5 +205,4 @@ async def show_variants(
         await _gone(callback, context)
         return
 
-    await callback.answer()
     await show(callback, shop_render.variant_picker(context, product))
