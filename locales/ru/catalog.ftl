@@ -77,7 +77,6 @@ catalog-product-item-hidden = 🚫 { $title } · { $price }
 
 catalog-product-card =
     { $title }
-    Артикул: { $article }
     Цена: { $price }
 
     { $description }
@@ -85,7 +84,6 @@ catalog-product-card =
     Фото: { $photos } · Видео: { $videos } · Варианты: { $variants }
 catalog-product-card-sale =
     { $title }
-    Артикул: { $article }
     Цена: { $price } (было { $old_price })
 
     { $description }
@@ -203,3 +201,4 @@ catalog-error-category-not-empty = В категории есть подкате
 catalog-error-category-holds-products = В категории есть товары — сначала удалите или перенесите их.
 catalog-error-brand-in-use = Бренд стоит у товаров — сначала смените его у них.
 catalog-product-ask-brand-title = Пришлите название нового бренда — он сразу встанет товару.
+catalog-product-article = Артикул:

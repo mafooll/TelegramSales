@@ -25,13 +25,9 @@ shop-product-entry-out = { $title } · нет в наличии
 shop-product-card =
     { $title }
     { $price }
-
-    Артикул: { $article }
 shop-product-card-sale =
     { $title }
     { $price }  { $old_price }
-
-    Артикул: { $article }
 shop-product-brand = Бренд: { $brand }
 shop-product-variants =
     { $label }:
@@ -54,3 +50,4 @@ shop-new-product = Новинка: { $title }
 shop-open-product-button = 🛍 Посмотреть
 shop-breadcrumb-root = Витрина
 shop-breadcrumb-separator = { " · " }
+shop-product-article = Артикул:

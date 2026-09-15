@@ -1,20 +1,23 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InputRichMessage, Message
 import pytest
 
+from telegramsales.shared.presentation.bot.content import paragraph
 from telegramsales.shared.presentation.bot.middlewares import (
     CallbackAnswerMiddleware,
 )
 from telegramsales.shared.presentation.bot.render import (
     answer_once,
+    show,
     start_answering,
     stop_answering,
 )
 
 NOW = datetime(2026, 9, 15, 12, 0, tzinfo=UTC)
 TEXT = "готово"
+NOTHING = InputRichMessage(blocks=[paragraph("экран")])
 
 type Answers = list[tuple[str | None, bool]]
 
@@ -115,4 +118,23 @@ async def test_a_failing_handler_still_gets_answered(
     with pytest.raises(RuntimeError):
         await CallbackAnswerMiddleware()(failing, callback, {})
 
+    assert answers == [(None, False)]
+
+
+async def test_a_kept_message_is_not_edited(
+    callback: CallbackQuery,
+    answers: Answers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    edited: list[str] = []
+
+    async def refuse_edit(*_args: Any, **_kwargs: Any) -> bool:
+        edited.append("edit")
+        return True
+
+    monkeypatch.setattr(Message, "edit_text", refuse_edit)
+
+    await show(callback, NOTHING, keep=True)
+
+    assert edited == []
     assert answers == [(None, False)]

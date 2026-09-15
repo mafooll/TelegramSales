@@ -152,7 +152,11 @@ async def show_product(
         await _gone(callback, context)
         return
 
-    await show(callback, shop_render.product_card(context, product))
+    await show(
+        callback,
+        shop_render.product_card(context, product),
+        keep=callback_data.keep,
+    )
 
 
 async def _category(

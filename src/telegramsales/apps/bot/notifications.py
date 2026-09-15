@@ -67,7 +67,7 @@ class Notice:
 def open_orders_action() -> CallToAction:
     return CallToAction(
         key=orders_texts.OPEN_ORDERS_BUTTON,
-        data=OrderCallback(action=OrderAction.LIST).pack(),
+        data=OrderCallback(action=OrderAction.LIST, keep=True).pack(),
     )
 
 
@@ -77,6 +77,7 @@ def open_product_action(product_id: ProductId) -> CallToAction:
         data=ShopCallback(
             action=ShopAction.PRODUCT,
             product_id=product_id,
+            keep=True,
         ).pack(),
     )
 

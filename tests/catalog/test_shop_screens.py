@@ -6,6 +6,7 @@ from aiogram.types import (
     InputRichBlockPhoto,
     InputRichBlockSlideshow,
     InputRichMessage,
+    RichTextCode,
 )
 
 from telegramsales.modules.catalog.application.queries import (
@@ -363,12 +364,18 @@ def test_the_card_shows_the_description() -> None:
     assert "Тёплое пальто из шерсти." in paragraphs_of(message)
 
 
-def test_the_card_shows_the_price_and_the_article() -> None:
+def test_the_card_shows_the_price() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert paragraphs_of(message)[0] == (
-        "Пальто оверсайз\n12 900 $\n\nАртикул: 000042"
-    )
+    assert paragraphs_of(message)[0] == "Пальто оверсайз\n12 900 $"
+
+
+def test_the_article_is_a_copyable_block() -> None:
+    message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    article = (message.blocks or [])[1]
+
+    assert isinstance(article, InputRichBlockParagraph)
+    assert article.text == ["Артикул:", " ", RichTextCode(text="000042")]
 
 
 def test_an_old_price_is_struck_through() -> None:

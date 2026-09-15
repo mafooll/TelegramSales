@@ -78,6 +78,7 @@ async def show_orders(
         await render.order_list(
             queries, context, _customer(context), callback_data.page
         ),
+        keep=callback_data.keep,
     )
 
 

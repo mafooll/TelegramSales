@@ -68,8 +68,18 @@ def stop_answering(token: Token[bool]) -> bool:
     return answered
 
 
-async def _draw(callback: CallbackQuery, message: InputRichMessage) -> None:
+async def _draw(
+    callback: CallbackQuery,
+    message: InputRichMessage,
+    *,
+    keep: bool,
+) -> None:
     if not isinstance(callback.message, Message):
+        return
+
+    if keep:
+        if callback.message.bot is not None:
+            await send(callback.message.bot, callback.message.chat.id, message)
         return
 
     try:
@@ -81,5 +91,10 @@ async def _draw(callback: CallbackQuery, message: InputRichMessage) -> None:
             await send(callback.message.bot, callback.message.chat.id, message)
 
 
-async def show(callback: CallbackQuery, message: InputRichMessage) -> None:
-    await gather(answer_once(callback), _draw(callback, message))
+async def show(
+    callback: CallbackQuery,
+    message: InputRichMessage,
+    *,
+    keep: bool = False,
+) -> None:
+    await gather(answer_once(callback), _draw(callback, message, keep=keep))

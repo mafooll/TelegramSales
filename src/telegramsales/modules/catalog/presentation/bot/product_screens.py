@@ -61,8 +61,10 @@ from telegramsales.modules.catalog.presentation.bot.views import (
 from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.content import (
     Content,
+    code,
     gallery,
     paragraph,
+    parts,
     slideshow,
     video,
 )
@@ -84,6 +86,7 @@ PRODUCT_LIST: ListScreen[ProductEntryView, ProductListView] = ListScreen(
 def _card_content(product: ProductView, translate: ITranslator) -> Content:
     return [
         paragraph(_card_text(product, translate)),
+        parts(translate(product_texts.PRODUCT_ARTICLE), " ", code(product.article)),
         *_photos(product),
         *([] if product.video_id is None else [video(product.video_id)]),
     ]

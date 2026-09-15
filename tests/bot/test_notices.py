@@ -128,7 +128,10 @@ def test_a_status_notice_leads_to_the_order_list() -> None:
 
     assert notice is not None
     assert notice.action.key == texts.OPEN_ORDERS_BUTTON
-    assert notice.action.data == OrderCallback(action=OrderAction.LIST).pack()
+    assert notice.action.data == OrderCallback(
+        action=OrderAction.LIST,
+        keep=True,
+    ).pack()
 
 
 def test_a_cancellation_notice_leads_to_the_order_list() -> None:
@@ -146,7 +149,18 @@ def test_an_announcement_leads_to_the_product_card() -> None:
     assert announcement.action.data == ShopCallback(
         action=ShopAction.PRODUCT,
         product_id=COAT,
+        keep=True,
     ).pack()
+
+
+def test_a_notice_button_keeps_the_notification() -> None:
+    notice = status_notice(status_changed(OrderStatus.PAID))
+    announcement = new_product_announcement(published())
+
+    assert notice is not None
+    assert announcement.action is not None
+    assert OrderCallback.unpack(notice.action.data).keep
+    assert ShopCallback.unpack(announcement.action.data).keep
 
 
 def test_every_action_fits_the_callback_limit() -> None:

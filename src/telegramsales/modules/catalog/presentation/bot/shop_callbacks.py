@@ -23,3 +23,4 @@ class ShopCallback(CallbackData, prefix="shop"):
     product_id: PackedUUID | None = None
     variant_id: int | None = None
     page: int = 0
+    keep: bool = False

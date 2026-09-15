@@ -13,6 +13,8 @@ from aiogram.types import (
     InputRichBlockVideo,
     InputRichMessage,
     RichBlockCaption,
+    RichTextCode,
+    RichTextUnion,
 )
 
 type Content = str | Sequence[InputRichBlockUnion]
@@ -32,6 +34,14 @@ def _caption(text: str | None) -> RichBlockCaption | None:
 
 def paragraph(text: str) -> InputRichBlockUnion:
     return InputRichBlockParagraph(text=text)
+
+
+def code(text: str) -> RichTextCode:
+    return RichTextCode(text=text)
+
+
+def parts(*pieces: str | RichTextUnion) -> InputRichBlockUnion:
+    return InputRichBlockParagraph(text=list(pieces))
 
 
 def divider() -> InputRichBlockUnion:

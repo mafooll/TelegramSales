@@ -40,8 +40,10 @@ from telegramsales.modules.catalog.presentation.bot.views import (
 from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.content import (
     Content,
+    code,
     gallery,
     paragraph,
+    parts,
     slideshow,
     video,
 )
@@ -139,8 +141,18 @@ def _variants(product: ShopProductView, translate: ITranslator) -> str:
     )
 
 
+def _article(
+    product: ShopProductView,
+    translate: ITranslator,
+) -> InputRichBlockUnion:
+    return parts(translate(shop_texts.PRODUCT_ARTICLE), " ", code(product.article))
+
+
 def _card_content(product: ShopProductView, translate: ITranslator) -> Content:
-    blocks: list[InputRichBlockUnion] = [paragraph(_header(product, translate))]
+    blocks: list[InputRichBlockUnion] = [
+        paragraph(_header(product, translate)),
+        _article(product, translate),
+    ]
     if product.brand_title is not None:
         blocks.append(
             paragraph(translate(shop_texts.PRODUCT_BRAND, brand=product.brand_title))

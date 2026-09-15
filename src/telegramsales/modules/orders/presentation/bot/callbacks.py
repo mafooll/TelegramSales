@@ -37,6 +37,7 @@ class OrderCallback(CallbackData, prefix="ord"):
     action: OrderAction
     order_id: PackedUUID | None = None
     page: int = 0
+    keep: bool = False
 
 
 class SelectionAction(StrEnum):
