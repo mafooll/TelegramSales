@@ -103,6 +103,14 @@ class VariantsNotAllowedError(DomainError):
         )
 
 
+class ProductWithoutBrandError(DomainError):
+    def __init__(self, *, product_id: ProductId) -> None:
+        super().__init__(
+            f"product {product_id} needs a brand to be published",
+            details={"product_id": str(product_id)},
+        )
+
+
 class ProductWithoutPhotoError(DomainError):
     def __init__(self, *, product_id: ProductId) -> None:
         super().__init__(

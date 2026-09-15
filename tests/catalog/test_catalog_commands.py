@@ -15,15 +15,25 @@ from telegramsales.modules.catalog.application.exceptions import (
     DuplicateTitleError,
 )
 from telegramsales.modules.catalog.contracts import CatalogId
-from telegramsales.modules.catalog.domain.exceptions import CatalogNotEmptyError
+from telegramsales.modules.catalog.domain.exceptions import (
+    CatalogHoldsProductsError,
+    CatalogNotEmptyError,
+)
 from telegramsales.modules.catalog.domain.permissions import CatalogPermission
 from telegramsales.modules.catalog.domain.values import Title
 from telegramsales.shared.application.access import PermissionDeniedError
-from tests.catalog.factories import CLOTHES, NOW, make_catalog, make_category
+from tests.catalog.factories import (
+    CLOTHES,
+    NOW,
+    make_catalog,
+    make_category,
+    make_product,
+)
 from tests.catalog.fakes import (
     FakeCatalogRepository,
     FakeCatalogUnitOfWork,
     FakeCategoryRepository,
+    FakeProductRepository,
     FixedClock,
     actor_with,
 )
@@ -189,6 +199,22 @@ async def test_empty_catalog_is_deleted() -> None:
     )
 
     assert CLOTHES not in uow.catalogs.items
+
+
+async def test_catalog_with_its_own_products_survives_deletion() -> None:
+    product = make_product()
+    product.move_to(CLOTHES, None)
+    uow = FakeCatalogUnitOfWork(
+        catalogs=FakeCatalogRepository(make_catalog()),
+        products=FakeProductRepository(product),
+    )
+
+    with pytest.raises(CatalogHoldsProductsError):
+        await DeleteCatalogHandler(uow).handle(
+            DeleteCatalog(catalog_id=CLOTHES), MANAGER
+        )
+
+    assert CLOTHES in uow.catalogs.items
 
 
 async def test_catalog_with_categories_survives_deletion() -> None:

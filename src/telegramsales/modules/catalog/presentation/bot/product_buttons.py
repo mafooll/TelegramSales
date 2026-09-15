@@ -24,7 +24,11 @@ from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     BrandPickView,
+    CatalogPickView,
+    CategoryPickView,
+    MoveTargetView,
     ProductListView,
+    VariantCardView,
     catalog_products_key,
     media_item_key,
     product_item_key,
@@ -187,9 +191,7 @@ VARIANT_ENTRY: Button[VariantView] = Button(
         price=money_text(variant.price),
     ),
     callback=lambda variant: ProductCallback(
-        action=ProductAction.VARIANT_OFF
-        if variant.is_available
-        else ProductAction.VARIANT_ON,
+        action=ProductAction.VARIANT,
         item_id=variant.id,
     ),
     permission=CatalogPermission.MANAGE,
@@ -288,11 +290,117 @@ BRAND_PICK: Button[BrandPickView] = Button(
     permission=CatalogPermission.MANAGE,
 )
 
-NO_BRAND: Button[ProductView] = Button(
-    text=label(product_texts.NO_BRAND_BUTTON),
-    callback=lambda product: ProductCallback(
-        action=ProductAction.SET_BRAND,
-        product_id=product.id,
+NEW_BRAND: Button[ProductView] = Button(
+    text=label(product_texts.NEW_BRAND_BUTTON),
+    callback=lambda _: CatalogCallback(
+        action=CatalogAction.ASK_CREATE,
+        target=CatalogTarget.BRAND,
     ),
     permission=CatalogPermission.MANAGE,
+)
+
+
+def _variant_button(
+    key: str,
+    action: ProductAction,
+    *,
+    style: ButtonStyle | None = None,
+    when: Callable[[VariantCardView], bool] | None = None,
+) -> Button[VariantCardView]:
+    return Button(
+        text=label(key),
+        callback=lambda card: ProductCallback(
+            action=action,
+            product_id=card.product.id,
+            item_id=card.variant.id,
+        ),
+        permission=CatalogPermission.MANAGE,
+        when=when,
+        style=style,
+    )
+
+
+RENAME_VARIANT = _variant_button(
+    product_texts.VARIANT_RENAME_BUTTON, ProductAction.RENAME_VARIANT
+)
+
+REPRICE_VARIANT = _variant_button(
+    product_texts.VARIANT_PRICE_BUTTON, ProductAction.REPRICE_VARIANT
+)
+
+SELL_VARIANT = _variant_button(
+    product_texts.VARIANT_ON_BUTTON,
+    ProductAction.VARIANT_ON,
+    when=lambda card: not card.variant.is_available,
+    style=ButtonStyle.SUCCESS,
+)
+
+STOP_VARIANT = _variant_button(
+    product_texts.VARIANT_OFF_BUTTON,
+    ProductAction.VARIANT_OFF,
+    when=lambda card: card.variant.is_available,
+)
+
+DROP_VARIANT = _variant_button(
+    product_texts.VARIANT_DROP_BUTTON,
+    ProductAction.ASK_DROP_VARIANT,
+    style=ButtonStyle.DANGER,
+)
+
+BACK_TO_VARIANTS: Button[VariantCardView] = Button(
+    text=label(product_texts.BACK_TO_VARIANTS_BUTTON),
+    callback=lambda card: ProductCallback(
+        action=ProductAction.VARIANTS,
+        product_id=card.product.id,
+    ),
+)
+
+
+MOVE_PRODUCT = _product_button(
+    product_texts.MOVE_BUTTON, ProductAction.MOVE
+)
+
+MOVE_CATALOG_PICK: Button[CatalogPickView] = Button(
+    text=lambda pick, translate: translate(
+        product_texts.MOVE_CATALOG_ENTRY, title=pick.title
+    ),
+    callback=lambda pick: ProductCallback(
+        action=ProductAction.MOVE_TO_CATALOG,
+        product_id=pick.product_id,
+        catalog_id=pick.catalog_id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+MOVE_CATEGORY_PICK: Button[CategoryPickView] = Button(
+    text=lambda pick, translate: translate(
+        product_texts.MOVE_CATEGORY_ENTRY, title=pick.title
+    ),
+    callback=lambda pick: ProductCallback(
+        action=ProductAction.MOVE_TO,
+        product_id=pick.product_id,
+        catalog_id=pick.catalog_id,
+        category_id=pick.category_id,
+    ),
+    permission=CatalogPermission.MANAGE,
+)
+
+MOVE_INTO_CATALOG: Button[MoveTargetView] = Button(
+    text=label(product_texts.MOVE_INTO_CATALOG_BUTTON),
+    callback=lambda view: ProductCallback(
+        action=ProductAction.MOVE_TO,
+        product_id=view.product.id,
+        catalog_id=view.catalog.id,
+    ),
+    permission=CatalogPermission.MANAGE,
+    when=lambda view: view.takes_products,
+    style=ButtonStyle.PRIMARY,
+)
+
+BACK_TO_MOVE: Button[MoveTargetView] = Button(
+    text=label(texts.BACK_BUTTON),
+    callback=lambda view: ProductCallback(
+        action=ProductAction.MOVE,
+        product_id=view.product.id,
+    ),
 )

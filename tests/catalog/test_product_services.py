@@ -4,6 +4,7 @@ from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.domain.exceptions import (
     ForeignCatalogError,
     NonPositivePriceError,
+    ProductWithoutBrandError,
     ProductWithoutPhotoError,
     TooManyPhotosError,
     TooManyVideosError,
@@ -63,6 +64,14 @@ def test_a_product_without_photos_cannot_be_published() -> None:
 
 def test_a_single_photo_is_enough_to_publish() -> None:
     ensure_can_be_published(make_product(), 1)
+
+
+def test_a_product_without_a_brand_cannot_be_published() -> None:
+    product = make_product()
+    product.rebrand(None)
+
+    with pytest.raises(ProductWithoutBrandError):
+        ensure_can_be_published(product, 1)
 
 
 def test_category_of_the_same_catalog_fits() -> None:

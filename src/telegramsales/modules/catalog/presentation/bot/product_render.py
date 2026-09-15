@@ -4,6 +4,8 @@ from aiogram.types import InputRichMessage
 from telegramsales.modules.catalog.application.ports import IProductQueries
 from telegramsales.modules.catalog.application.queries import (
     BrandView,
+    CatalogView,
+    CategoryView,
     MediaView,
     ProductView,
     VariantView,
@@ -16,15 +18,22 @@ from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
 from telegramsales.modules.catalog.presentation.bot.product_screens import (
     BRAND_PICKER,
     MEDIA_BOARD,
+    MOVE_CATALOG_PICKER,
+    MOVE_CATEGORY_PICKER,
     PRODUCT_CARD,
     PRODUCT_LIST,
     VARIANT_BOARD,
+    VARIANT_CARD,
 )
 from telegramsales.modules.catalog.presentation.bot.screens import PROMPT
 from telegramsales.modules.catalog.presentation.bot.views import (
     BrandPickView,
+    CatalogPickView,
+    CategoryPickView,
+    MoveTargetView,
     ProductListView,
     PromptView,
+    VariantCardView,
 )
 from telegramsales.shared.application.pagination import DEFAULT_PAGE_SIZE, Page
 from telegramsales.shared.presentation.bot.context import RenderContext
@@ -107,3 +116,51 @@ def brand_picker(
         for brand in brands
     ]
     return rich_paged_screen(BRAND_PICKER, _whole(picks), product, context)
+
+
+def variant_card(
+    context: RenderContext,
+    product: ProductView,
+    variant: VariantView,
+) -> InputRichMessage:
+    view = VariantCardView(product=product, variant=variant)
+    return rich_screen(VARIANT_CARD, view, context)
+
+
+def move_catalog_picker(
+    context: RenderContext,
+    product: ProductView,
+    catalogs: list[CatalogView],
+) -> InputRichMessage:
+    picks = [
+        CatalogPickView(
+            product_id=product.id,
+            catalog_id=catalog.id,
+            title=catalog.title,
+        )
+        for catalog in catalogs
+    ]
+    return rich_paged_screen(MOVE_CATALOG_PICKER, _whole(picks), product, context)
+
+
+def move_category_picker(
+    context: RenderContext,
+    product: ProductView,
+    catalog: CatalogView,
+    categories: list[CategoryView],
+) -> InputRichMessage:
+    picks = [
+        CategoryPickView(
+            product_id=product.id,
+            catalog_id=catalog.id,
+            category_id=category.id,
+            title=category.title,
+        )
+        for category in categories
+    ]
+    view = MoveTargetView(
+        product=product,
+        catalog=catalog,
+        takes_products=not categories,
+    )
+    return rich_paged_screen(MOVE_CATEGORY_PICKER, _whole(picks), view, context)

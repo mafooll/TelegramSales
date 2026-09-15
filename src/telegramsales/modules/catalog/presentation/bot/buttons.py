@@ -174,7 +174,9 @@ DELETE_CATALOG: Button[CatalogView] = Button(
         catalog_id=catalog.id,
     ),
     permission=CatalogPermission.MANAGE,
-    when=lambda catalog: catalog.category_count == 0,
+    when=lambda catalog: (
+        catalog.category_count == 0 and catalog.uncategorized_product_count == 0
+    ),
     style=ButtonStyle.DANGER,
 )
 
@@ -230,7 +232,9 @@ DELETE_CATEGORY: Button[CategoryView] = Button(
         category_id=category.id,
     ),
     permission=CatalogPermission.MANAGE,
-    when=lambda category: category.child_count == 0,
+    when=lambda category: (
+        category.child_count == 0 and category.product_count == 0
+    ),
     style=ButtonStyle.DANGER,
 )
 

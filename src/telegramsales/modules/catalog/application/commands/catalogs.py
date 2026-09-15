@@ -109,7 +109,10 @@ class DeleteCatalogHandler:
             if not (catalog := await uow.catalogs.get(command.catalog_id)):
                 raise CatalogNotFoundError(catalog_id=command.catalog_id)
 
-            categories = await uow.categories.count_in_catalog(catalog.id)
-            ensure_catalog_is_empty(catalog.id, categories)
+            ensure_catalog_is_empty(
+                catalog.id,
+                await uow.categories.count_in_catalog(catalog.id),
+                await uow.products.count_uncategorized(catalog.id),
+            )
 
             await uow.catalogs.delete(catalog)

@@ -29,6 +29,7 @@ class CategoryView:
     title: str
     is_active: bool
     child_count: int
+    product_count: int
 
 
 @dataclass(frozen=True, slots=True)

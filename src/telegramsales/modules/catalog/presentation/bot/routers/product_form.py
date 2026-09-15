@@ -27,6 +27,10 @@ from telegramsales.modules.catalog.application.commands.variants import (
     AddVariantHandler,
     ChangeVariantAxis,
     ChangeVariantAxisHandler,
+    RenameVariant,
+    RenameVariantHandler,
+    RepriceVariant,
+    RepriceVariantHandler,
 )
 from telegramsales.modules.catalog.application.ports import (
     ICatalogQueries,
@@ -36,18 +40,23 @@ from telegramsales.modules.catalog.contracts import (
     CatalogId,
     CategoryId,
     ProductId,
+    VariantId,
 )
 from telegramsales.modules.catalog.domain.enums import MediaKind
 from telegramsales.modules.catalog.domain.pricing import SHOP_CURRENCY
 from telegramsales.modules.catalog.domain.values import Description, Title
 from telegramsales.modules.catalog.presentation.bot import (
     product_render,
+    product_texts,
     product_texts as texts,
     texts as catalog_texts,
 )
 from telegramsales.modules.catalog.presentation.bot.product_callbacks import (
     ProductAction,
     ProductCallback,
+)
+from telegramsales.modules.catalog.presentation.bot.product_screens import (
+    BRAND_PAGE_SIZE,
 )
 from telegramsales.modules.catalog.presentation.bot.product_states import ProductForm
 from telegramsales.shared.domain.exceptions import DomainError
@@ -65,6 +74,18 @@ PRODUCT_KEY = "product_id"
 TITLE_KEY = "title"
 DESCRIPTION_KEY = "description"
 KIND_KEY = "kind"
+VARIANT_KEY = "variant_id"
+
+VARIANT_PROMPTS: dict[ProductAction, tuple[State, str]] = {
+    ProductAction.RENAME_VARIANT: (
+        ProductForm.variant_rename,
+        product_texts.ASK_VARIANT_TITLE,
+    ),
+    ProductAction.REPRICE_VARIANT: (
+        ProductForm.variant_price,
+        product_texts.ASK_VARIANT_PRICE,
+    ),
+}
 
 EDIT_PROMPTS: dict[ProductAction, tuple[State, str]] = {
     ProductAction.NAME: (ProductForm.rename, texts.ASK_NEW_TITLE),
@@ -215,12 +236,13 @@ async def take_description(
 
 
 @router.message(ProductForm.price, PlainTextFilter())
-async def take_price(
+async def take_price(  # noqa: PLR0913, PLR0917
     message: Message,
     state: FSMContext,
     context: RenderContext,
     handler: FromDishka[CreateProductHandler],
     queries: FromDishka[IProductQueries],
+    catalog_queries: FromDishka[ICatalogQueries],
 ) -> None:
     stored = await state.get_data()
 
@@ -240,14 +262,15 @@ async def take_price(
             ),
             context.actor,
         )
-        await state.set_state(ProductForm.photos)
+        await state.set_state(ProductForm.brand)
         await state.update_data(
             {PRODUCT_KEY: str(product_id), KIND_KEY: MediaKind.PHOTO.value}
         )
         product = await queries.get_product(product_id)
         if product is None:
             return None
-        return product_render.media_board(context, product, [])
+        brands = await catalog_queries.list_brands(0, BRAND_PAGE_SIZE)
+        return product_render.brand_picker(context, product, list(brands.items))
 
     try:
         await _apply_text(message, context, apply)
@@ -484,3 +507,101 @@ async def take_variant(
         return product_render.variant_board(context, product, variants)
 
     await _apply_text(message, context, apply)
+
+
+async def _stored_variant(state: FSMContext) -> VariantId:
+    stored = await state.get_data()
+    return VariantId(int(stored[VARIANT_KEY]))
+
+
+async def _show_variant_card(
+    context: RenderContext,
+    queries: IProductQueries,
+    variant_id: VariantId,
+) -> InputRichMessage | None:
+    product_id = await queries.product_of_variant(variant_id)
+    if product_id is None:
+        return None
+
+    product = await queries.get_product(product_id)
+    if product is None:
+        return None
+
+    variants = await queries.list_variants(product_id)
+    found = next((item for item in variants if item.id == variant_id), None)
+    if found is None:
+        return None
+    return product_render.variant_card(context, product, found)
+
+
+@router.callback_query(ProductCallback.filter(F.action.in_(set(VARIANT_PROMPTS))))
+async def ask_variant_edit(
+    callback: CallbackQuery,
+    callback_data: ProductCallback,
+    context: RenderContext,
+    state: FSMContext,
+) -> None:
+    prompt = VARIANT_PROMPTS.get(callback_data.action)
+    if prompt is None or callback_data.item_id is None:
+        await callback.answer()
+        return
+
+    form, message_key = prompt
+    await state.set_state(form)
+    await state.update_data({VARIANT_KEY: callback_data.item_id})
+    await _ask(
+        callback,
+        context,
+        message_key,
+        ProductCallback(
+            action=ProductAction.VARIANT,
+            item_id=callback_data.item_id,
+        ),
+    )
+
+
+@router.message(ProductForm.variant_rename, PlainTextFilter())
+async def take_variant_title(
+    message: Message,
+    state: FSMContext,
+    context: RenderContext,
+    handler: FromDishka[RenameVariantHandler],
+    queries: FromDishka[IProductQueries],
+) -> None:
+    variant_id = await _stored_variant(state)
+
+    async def apply(raw: str) -> InputRichMessage | None:
+        await handler.handle(
+            RenameVariant(variant_id=variant_id, title=Title(raw)), context.actor
+        )
+        await state.clear()
+        return await _show_variant_card(context, queries, variant_id)
+
+    await _apply_text(message, context, apply)
+
+
+@router.message(ProductForm.variant_price, PlainTextFilter())
+async def take_variant_price(
+    message: Message,
+    state: FSMContext,
+    context: RenderContext,
+    handler: FromDishka[RepriceVariantHandler],
+    queries: FromDishka[IProductQueries],
+) -> None:
+    variant_id = await _stored_variant(state)
+
+    async def apply(raw: str) -> InputRichMessage | None:
+        await handler.handle(
+            RepriceVariant(
+                variant_id=variant_id,
+                price_override=Money(parse_amount(raw), SHOP_CURRENCY),
+            ),
+            context.actor,
+        )
+        await state.clear()
+        return await _show_variant_card(context, queries, variant_id)
+
+    try:
+        await _apply_text(message, context, apply)
+    except (InvalidOperation, ArithmeticError):
+        await message.answer(text=context.translate(texts.PRICE_REJECTED))

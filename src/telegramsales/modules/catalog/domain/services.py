@@ -9,6 +9,7 @@ from telegramsales.modules.catalog.domain.exceptions import (
     CategoryNotEmptyError,
     ForeignCatalogError,
     NestingTooDeepError,
+    ProductWithoutBrandError,
     ProductWithoutPhotoError,
     TooManyPhotosError,
     TooManyVideosError,
@@ -27,11 +28,20 @@ def ensure_can_hold_children(parent: Category, catalog_id: CatalogId) -> None:
         raise NestingTooDeepError(category_id=parent.id)
 
 
-def ensure_catalog_is_empty(catalog_id: CatalogId, category_count: int) -> None:
+def ensure_catalog_is_empty(
+    catalog_id: CatalogId,
+    category_count: int,
+    product_count: int = EMPTY,
+) -> None:
     if category_count > EMPTY:
         raise CatalogNotEmptyError(
             catalog_id=catalog_id,
             category_count=category_count,
+        )
+    if product_count > EMPTY:
+        raise CatalogHoldsProductsError(
+            catalog_id=catalog_id,
+            product_count=product_count,
         )
 
 
@@ -97,6 +107,8 @@ def ensure_video_fits(video_count: int) -> None:
 def ensure_can_be_published(product: Product, photo_count: int) -> None:
     if photo_count == EMPTY:
         raise ProductWithoutPhotoError(product_id=product.id)
+    if product.brand_id is None:
+        raise ProductWithoutBrandError(product_id=product.id)
 
 
 def ensure_category_fits(product_category: Category, catalog_id: CatalogId) -> None:

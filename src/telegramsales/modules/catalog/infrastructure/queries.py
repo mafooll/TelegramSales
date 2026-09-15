@@ -71,6 +71,14 @@ CHILD_COUNT = (
     .label("child_count")
 )
 
+CATEGORY_PRODUCT_COUNT = (
+    select(func.count())
+    .select_from(ProductORM)
+    .where(ProductORM.category_id == CategoryORM.id)
+    .scalar_subquery()
+    .label("product_count")
+)
+
 
 def _catalog_query() -> Select[tuple[int, str, bool, int, int]]:
     return select(
@@ -82,7 +90,7 @@ def _catalog_query() -> Select[tuple[int, str, bool, int, int]]:
     )
 
 
-def _category_query() -> Select[tuple[int, int, int | None, str, bool, int]]:
+def _category_query() -> Select[tuple[int, int, int | None, str, bool, int, int]]:
     return select(
         CategoryORM.id,
         CategoryORM.catalog_id,
@@ -90,6 +98,7 @@ def _category_query() -> Select[tuple[int, int, int | None, str, bool, int]]:
         CategoryORM.title,
         CategoryORM.is_active,
         CHILD_COUNT,
+        CATEGORY_PRODUCT_COUNT,
     )
 
 
@@ -160,6 +169,7 @@ class CatalogQueries(ICatalogQueries):
             title=row.title,
             is_active=row.is_active,
             child_count=row.child_count,
+            product_count=row.product_count,
         )
 
     @override
@@ -194,6 +204,7 @@ class CatalogQueries(ICatalogQueries):
                     title=row.title,
                     is_active=row.is_active,
                     child_count=row.child_count,
+                    product_count=row.product_count,
                 )
                 for row in rows
             ],

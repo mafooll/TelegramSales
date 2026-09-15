@@ -14,10 +14,13 @@ from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     ADD_VIDEO,
     BACK_TO_CATEGORY,
     BACK_TO_CATEGORY_CARD,
+    BACK_TO_MOVE,
     BACK_TO_PRODUCT,
+    BACK_TO_VARIANTS,
     BRAND_PICK,
     DELETE_PRODUCT,
     DONE_WITH_MEDIA,
+    DROP_VARIANT,
     EDIT_DESCRIPTION,
     EDIT_NAME,
     EDIT_PRICE,
@@ -25,21 +28,33 @@ from telegramsales.modules.catalog.presentation.bot.product_buttons import (
     MARK_IN_STOCK,
     MARK_OUT,
     MEDIA_ENTRY,
+    MOVE_CATALOG_PICK,
+    MOVE_CATEGORY_PICK,
+    MOVE_INTO_CATALOG,
+    MOVE_PRODUCT,
+    NEW_BRAND,
     NEW_PRODUCT,
-    NO_BRAND,
     OPEN_MEDIA,
     OPEN_VARIANTS,
     PICK_BRAND,
     PRODUCT_ENTRY,
     PUBLISH,
+    RENAME_VARIANT,
+    REPRICE_VARIANT,
+    SELL_VARIANT,
     SET_AXIS,
     SHOW_PRODUCT,
+    STOP_VARIANT,
     SWITCH_LAYOUT,
     VARIANT_ENTRY,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     BrandPickView,
+    CatalogPickView,
+    CategoryPickView,
+    MoveTargetView,
     ProductListView,
+    VariantCardView,
     product_card_key,
     variant_screen_key,
 )
@@ -106,6 +121,7 @@ PRODUCT_CARD: Screen[ProductView] = Screen(
         OPEN_MEDIA,
         OPEN_VARIANTS,
         PICK_BRAND,
+        MOVE_PRODUCT,
         PUBLISH,
         HIDE_PRODUCT,
         SHOW_PRODUCT,
@@ -147,6 +163,9 @@ VARIANT_BOARD: ListScreen[VariantView, ProductView] = ListScreen(
 )
 
 
+BRAND_PAGE_SIZE = 50
+MOVE_PAGE_SIZE = 50
+
 BRAND_PICKER: ListScreen[BrandPickView, ProductView] = ListScreen(
     content=lambda product, translate: translate(
         product_texts.BRAND_PICKER,
@@ -154,6 +173,46 @@ BRAND_PICKER: ListScreen[BrandPickView, ProductView] = ListScreen(
         brand=product.brand_title or translate(product_texts.BRAND_UNKNOWN),
     ),
     item=BRAND_PICK,
-    footer=[NO_BRAND, BACK_TO_PRODUCT],
+    footer=[NEW_BRAND, BACK_TO_PRODUCT],
+    footer_layout=(2,),
+)
+
+
+VARIANT_CARD: Screen[VariantCardView] = Screen(
+    content=lambda card, translate: translate(
+        product_texts.VARIANT_CARD,
+        product=card.product.title,
+        label=card.product.variant_label or "",
+        title=card.variant.title,
+        price=money_text(card.variant.price),
+    ),
+    buttons=[
+        RENAME_VARIANT,
+        REPRICE_VARIANT,
+        SELL_VARIANT,
+        STOP_VARIANT,
+        DROP_VARIANT,
+        BACK_TO_VARIANTS,
+    ],
+    layout=(2, 1),
+)
+
+
+MOVE_CATALOG_PICKER: ListScreen[CatalogPickView, ProductView] = ListScreen(
+    content=lambda product, translate: translate(
+        product_texts.MOVE_CATALOG_PICKER, title=product.title
+    ),
+    item=MOVE_CATALOG_PICK,
+    footer=[BACK_TO_PRODUCT],
+)
+
+MOVE_CATEGORY_PICKER: ListScreen[CategoryPickView, MoveTargetView] = ListScreen(
+    content=lambda view, translate: translate(
+        product_texts.MOVE_CATEGORY_PICKER,
+        title=view.product.title,
+        catalog=view.catalog.title,
+    ),
+    item=MOVE_CATEGORY_PICK,
+    footer=[MOVE_INTO_CATALOG, BACK_TO_MOVE],
     footer_layout=(2,),
 )

@@ -70,6 +70,7 @@ def category_view(
     parent_id: int | None = None,
     is_active: bool = True,
     children: int = 0,
+    products: int = 0,
 ) -> CategoryView:
     return CategoryView(
         id=OUTERWEAR if parent_id is None else COATS,
@@ -78,6 +79,7 @@ def category_view(
         title="Верхняя одежда",
         is_active=is_active,
         child_count=children,
+        product_count=products,
     )
 
 
@@ -248,6 +250,22 @@ def test_a_catalog_with_its_own_products_takes_no_categories() -> None:
     )
 
     assert "➕ Новая категория" not in texts_of(message)
+
+
+def test_a_category_with_products_hides_deletion() -> None:
+    message = rich_paged_screen(
+        CATEGORY_CARD, empty_pagination(), category_view(products=2), MANAGER
+    )
+
+    assert "🗑️ Удалить" not in texts_of(message)
+
+
+def test_an_empty_category_offers_deletion() -> None:
+    message = rich_paged_screen(
+        CATEGORY_CARD, empty_pagination(), category_view(), MANAGER
+    )
+
+    assert "🗑️ Удалить" in texts_of(message)
 
 
 def test_an_empty_catalog_still_takes_categories() -> None:

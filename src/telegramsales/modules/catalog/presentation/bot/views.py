@@ -72,6 +72,34 @@ class ShopProductsView:
 
 
 @dataclass(frozen=True, slots=True)
+class CatalogPickView:
+    product_id: ProductId
+    catalog_id: CatalogId
+    title: str
+
+
+@dataclass(frozen=True, slots=True)
+class CategoryPickView:
+    product_id: ProductId
+    catalog_id: CatalogId
+    category_id: CategoryId
+    title: str
+
+
+@dataclass(frozen=True, slots=True)
+class MoveTargetView:
+    product: ProductView
+    catalog: CatalogView
+    takes_products: bool
+
+
+@dataclass(frozen=True, slots=True)
+class VariantCardView:
+    product: ProductView
+    variant: VariantView
+
+
+@dataclass(frozen=True, slots=True)
 class BrandPickView:
     product_id: ProductId
     brand_id: BrandId

@@ -152,5 +152,33 @@ catalog-brand-picker =
     Бренд: { $brand }
 catalog-brand-unknown = не указан
 catalog-brand-entry = { $title }
-catalog-no-brand-button = ✖️ Без бренда
+catalog-product-new-brand-button = ➕ Новый бренд
 catalog-open-catalog-products-empty-button = 📦 Товары каталога
+
+catalog-variant-card =
+    { $product }
+    { $label }: { $title }
+    Цена: { $price }
+catalog-variant-rename-button = ✏️ Название
+catalog-variant-price-button = 💲 Цена
+catalog-variant-drop-button = 🗑️ Удалить
+catalog-variant-on-button = ✅ В наличии
+catalog-variant-off-button = 🚫 Нет в наличии
+catalog-variant-drop-question = Удалить вариант { $title }?
+catalog-variant-ask-title = Пришлите новое название варианта.
+catalog-variant-ask-price = Пришлите новую цену варианта.
+catalog-back-to-variants-button = ⬅️ К вариантам
+
+catalog-product-move-button = 📂 Перенести
+catalog-product-move-catalog-picker =
+    { $title }
+
+    Куда переносим? Выберите каталог.
+catalog-product-move-category-picker =
+    { $title }
+
+    Каталог: { $catalog }. Выберите категорию.
+catalog-product-move-catalog-entry = { $title }
+catalog-product-move-category-entry = { $title }
+catalog-product-move-into-catalog-button = 📦 Прямо в каталог
+catalog-product-moved = Товар перенесён.
