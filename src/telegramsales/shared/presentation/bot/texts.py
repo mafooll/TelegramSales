@@ -1,0 +1,7 @@
+HOME = "shared-home-button"
+PREVIOUS = "shared-previous-button"
+NEXT = "shared-next-button"
+CONFIRM = "shared-confirm-button"
+CANCEL = "shared-cancel-button"
+PAGE_POSITION = "shared-page-position"
+REFUSED = "shared-refused"
