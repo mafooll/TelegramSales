@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := check
 .NOTPARALLEL:
-.PHONY: lint format typecheck test check quick run db-shell db-reset migration migrate downgrade history
+.PHONY: lint format typecheck test check quick run db-shell db-reset migration migrate downgrade history backup backups restore
 
 DC := docker compose
 
@@ -44,3 +44,12 @@ downgrade:
 
 history:
 	uv run alembic history
+
+backup:
+	$(DC) run --rm -e BACKUP_ONCE=true backup
+
+backups:
+	$(DC) run --rm --entrypoint ls backup -lh /backups
+
+restore:
+	$(DC) run --rm --entrypoint /restore.sh backup $(f)
