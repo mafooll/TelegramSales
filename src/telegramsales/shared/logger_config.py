@@ -37,7 +37,7 @@ def _traceback_formatter() -> structlog.typing.ExceptionRenderer:
 
 def _console_handler(*, use_json: bool) -> logging.Handler:
     renderer: Processor = (
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(ensure_ascii=False)
         if use_json
         else structlog.dev.ConsoleRenderer(
             colors=True,
@@ -79,7 +79,7 @@ def _file_handler(
                 structlog.stdlib.ProcessorFormatter.remove_processors_meta,
                 structlog.processors.TimeStamper(fmt="iso"),
                 structlog.processors.format_exc_info,
-                structlog.processors.JSONRenderer(),
+                structlog.processors.JSONRenderer(ensure_ascii=False),
             ],
             foreign_pre_chain=_shared_processors(),
         )

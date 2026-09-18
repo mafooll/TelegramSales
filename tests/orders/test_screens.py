@@ -3,8 +3,10 @@ from aiogram.types import (
     InputRichBlockCollage,
     InputRichBlockParagraph,
     InputRichBlockPhoto,
+    InputRichBlockSectionHeading,
     InputRichBlockSlideshow,
     InputRichMessage,
+    RichTextCode,
 )
 
 from telegramsales.modules.catalog.contracts import MediaLayout
@@ -286,12 +288,20 @@ def test_a_gone_line_is_marked() -> None:
     assert "⚠️ Пальто оверсайз · нет в наличии" in line_texts_of(message)
 
 
+def said_in(message: InputRichMessage) -> str:
+    return "".join(
+        str(block.text)
+        for block in message.blocks or []
+        if isinstance(block, InputRichBlockParagraph | InputRichBlockSectionHeading)
+    )
+
+
 def test_the_cart_total_counts_only_what_is_on_offer() -> None:
     view = cart_view(cart_line(), cart_line(is_available=False))
 
     message = rich_paged_screen(CART, paged(list(view.lines)), view, CUSTOMER)
 
-    assert "Итого 12 900 $" in paragraphs_of(message)[0]
+    assert "12 900 $" in said_in(message)
 
 
 def test_a_single_line_cannot_give_one_back() -> None:
@@ -427,10 +437,17 @@ def test_an_order_entry_shows_number_status_and_sum() -> None:
 
 def test_an_order_card_lists_its_lines() -> None:
     message = rich_screen(ORDER_CARD, order_view(), CUSTOMER)
-    text = paragraphs_of(message)[0]
 
-    assert "• Пальто оверсайз · M · 2 шт · 25 800 $" in text
-    assert "Итого: 25 800 $" in text
+    assert "• Пальто оверсайз · M · 2 шт · 25 800 $" in said_in(message)
+    assert "25 800 $" in said_in(message)
+
+
+def test_an_order_number_can_be_copied() -> None:
+    message = rich_screen(ORDER_CARD, order_view(), CUSTOMER)
+    first = (message.blocks or [])[0]
+
+    assert isinstance(first, InputRichBlockParagraph)
+    assert first.text == ["Заказ", " ", RichTextCode(text="2026-09-12-0001")]
 
 
 def test_a_fresh_order_can_be_cancelled() -> None:

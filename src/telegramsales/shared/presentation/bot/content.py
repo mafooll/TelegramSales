@@ -8,11 +8,13 @@ from aiogram.types import (
     InputRichBlockFooter,
     InputRichBlockParagraph,
     InputRichBlockPhoto,
+    InputRichBlockSectionHeading,
     InputRichBlockSlideshow,
     InputRichBlockUnion,
     InputRichBlockVideo,
     InputRichMessage,
     RichBlockCaption,
+    RichTextBold,
     RichTextCode,
     RichTextUnion,
 )
@@ -20,6 +22,7 @@ from aiogram.types import (
 type Content = str | Sequence[InputRichBlockUnion]
 
 SINGLE_ITEM = 1
+HEADING_SIZE = 2
 MEDIA_BLOCKS = (
     InputRichBlockPhoto,
     InputRichBlockVideo,
@@ -38,6 +41,14 @@ def paragraph(text: str) -> InputRichBlockUnion:
 
 def code(text: str) -> RichTextCode:
     return RichTextCode(text=text)
+
+
+def bold(text: str) -> RichTextBold:
+    return RichTextBold(text=text)
+
+
+def heading(text: str, size: int = HEADING_SIZE) -> InputRichBlockUnion:
+    return InputRichBlockSectionHeading(text=text, size=size)
 
 
 def parts(*pieces: str | RichTextUnion) -> InputRichBlockUnion:
