@@ -97,6 +97,8 @@ services:
       APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-ru}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       APP_LOG_JSON: ${APP_LOG_JSON:-false}
+    volumes:
+      - bot_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,6 +117,7 @@ services:
           path: ./pyproject.toml
 
 volumes:
+  bot_logs:
   postgres_data:
   postgres_backups:
   redis_data:
