@@ -42,6 +42,8 @@ RUN useradd --create-home --uid 1000 app
 
 COPY --from=builder --chown=app:app /app /app
 
+RUN chown app:app /app && mkdir -p /app/logs && chown app:app /app/logs
+
 USER app
 
 CMD ["telegramsales-bot"]
