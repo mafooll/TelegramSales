@@ -11,3 +11,8 @@ class TitleForm(StatesGroup):
     category_rename = State()
     brand = State()
     brand_rename = State()
+
+
+@final
+class SearchForm(StatesGroup):
+    needle = State()

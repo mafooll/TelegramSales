@@ -12,6 +12,7 @@ from telegramsales.modules.catalog.presentation.bot.shop_callbacks import (
     ShopCallback,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
+    SearchView,
     ShopProductsView,
     ShopVariantPickView,
     shop_product_item_key,
@@ -214,4 +215,17 @@ BACK_TO_PRODUCT: Button[ShopProductView] = Button(
         action=ShopAction.PRODUCT,
         product_id=product.id,
     ),
+)
+
+
+def open_search[ViewType]() -> Button[ViewType]:
+    return Button(
+        text=label(shop_texts.SEARCH_BUTTON),
+        callback=lambda _: ShopCallback(action=ShopAction.SEARCH),
+    )
+
+
+SEARCH_AGAIN: Button[SearchView] = Button(
+    text=label(shop_texts.SEARCH_AGAIN_BUTTON),
+    callback=lambda _: ShopCallback(action=ShopAction.SEARCH),
 )

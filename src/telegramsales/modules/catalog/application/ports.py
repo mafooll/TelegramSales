@@ -322,4 +322,12 @@ class IShopQueries(ABC):
     ) -> Page[ShopProductEntryView]: ...
 
     @abstractmethod
+    async def search_products(
+        self,
+        needle: str,
+        number: int,
+        size: int,
+    ) -> Page[ShopProductEntryView]: ...
+
+    @abstractmethod
     async def get_product(self, product_id: ProductId) -> ShopProductView | None: ...

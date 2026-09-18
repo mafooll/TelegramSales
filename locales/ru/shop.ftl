@@ -22,17 +22,11 @@ shop-product-list-empty =
 shop-product-entry = { $title } · { $price }
 shop-product-entry-out = { $title } · нет в наличии
 
-shop-product-card =
-    { $title }
-    { $price }
-shop-product-card-sale =
-    { $title }
-    { $price }  { $old_price }
-shop-product-brand = Бренд: { $brand }
+shop-product-brand = Бренд:
 shop-product-variants =
     { $label }:
     { $items }
-shop-product-variant-item = • { $title } — { $price }
+shop-product-variant-item = • { $title } · { $price }
 shop-product-out = Нет в наличии
 
 shop-back-button = ⬅️ Назад
@@ -51,3 +45,21 @@ shop-open-product-button = 🛍 Посмотреть
 shop-breadcrumb-root = Витрина
 shop-breadcrumb-separator = { " · " }
 shop-product-article = Артикул:
+
+shop-search-button = 🔎 Поиск
+shop-search-again-button = 🔎 Искать снова
+shop-search-ask =
+    Поиск по магазину
+
+    Отправьте название, бренд или артикул.
+shop-search-too-short = Слишком короткий запрос, нужно хотя бы { $least } символа.
+shop-search-lost = Запрос потерялся, начните поиск заново
+shop-found =
+    Найдено: { $total }
+
+    По запросу { $needle }
+shop-found-empty =
+    Ничего не нашлось
+
+    По запросу { $needle }. Попробуйте другое слово или артикул.
+shop-found-footnote = { $needle }

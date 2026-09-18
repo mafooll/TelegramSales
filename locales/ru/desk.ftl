@@ -37,7 +37,7 @@ desk-status-done = выполнен
 desk-status-cancelled = отменён
 
 desk-support-called = Покупатель просит менеджера.
-desk-support-opened = Написал менеджеру. Опишите вопрос здесь же — вам ответят в этом чате.
+desk-support-opened = Позвал менеджера. Опишите вопрос здесь же, вам ответят в этом чате.
 desk-support-refused = Сейчас написать менеджеру нельзя.
 
 desk-order-gone = Этого заказа больше нет

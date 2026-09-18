@@ -14,12 +14,15 @@ from telegramsales.modules.catalog.presentation.bot.shop_screens import (
     CATALOG,
     CATALOGS,
     CATEGORY,
+    FOUND_PRODUCTS,
     PRODUCT_CARD,
     PRODUCT_LIST,
+    SEARCH_PROMPT,
     VARIANT_PICKER,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
+    SearchView,
     ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
@@ -146,3 +149,25 @@ def variant_picker(
         ),
     )
     return rich_paged_screen(VARIANT_PICKER, pagination, product, context)
+
+
+def search_prompt(context: RenderContext) -> InputRichMessage:
+    return rich_screen(SEARCH_PROMPT, None, context)
+
+
+async def found_products(
+    queries: IShopQueries,
+    context: RenderContext,
+    needle: str,
+    number: int,
+) -> InputRichMessage:
+    page = await queries.search_products(needle, number, PRODUCT_PAGE_SIZE)
+    pagination = Pagination(
+        page=page,
+        callback=lambda value: ShopCallback(
+            action=ShopAction.FOUND,
+            page=value,
+        ),
+    )
+    view = SearchView(needle=needle, total=page.total)
+    return rich_paged_screen(FOUND_PRODUCTS, pagination, view, context)

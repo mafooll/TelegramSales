@@ -4,8 +4,10 @@ from aiogram.types import (
     InputRichBlockFooter,
     InputRichBlockParagraph,
     InputRichBlockPhoto,
+    InputRichBlockSectionHeading,
     InputRichBlockSlideshow,
     InputRichMessage,
+    RichTextBold,
     RichTextCode,
 )
 
@@ -26,12 +28,15 @@ from telegramsales.modules.catalog.presentation.bot.shop_screens import (
     CATALOG,
     CATALOGS,
     CATEGORY,
+    FOUND_PRODUCTS,
     PRODUCT_CARD,
     PRODUCT_LIST,
+    SEARCH_PROMPT,
     VARIANT_PICKER,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
+    SearchView,
     ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
@@ -48,6 +53,7 @@ from tests.catalog.factories import CLOTHES, COAT, COATS, OUTERWEAR, SIZE_M, usd
 
 DEFAULT_LOCALE = "ru"
 PAGE_SIZE = 8
+SHOP_PREFIX = f"{ShopCallback.__prefix__}{ShopCallback.__separator__}"
 SIZE_L = VariantId(501)
 
 TRANSLATE = FluentTranslations(LOCALES_PATH, DEFAULT_LOCALE)(DEFAULT_LOCALE)
@@ -174,6 +180,15 @@ def callbacks_of(message: InputRichMessage) -> list[ShopCallback]:
         if isinstance(block, InputRichBlockButtons)
         for button in block.buttons
         if button.callback_data is not None
+        and button.callback_data.startswith(SHOP_PREFIX)
+    ]
+
+
+def back_of(message: InputRichMessage) -> list[ShopCallback]:
+    return [
+        entry
+        for entry in callbacks_of(message)
+        if entry.action is not ShopAction.SEARCH
     ]
 
 
@@ -318,9 +333,7 @@ def test_a_bare_catalog_list_stops_the_breadcrumbs_at_the_catalog() -> None:
 def test_a_bare_catalog_list_goes_back_to_the_catalogs() -> None:
     message = bare_catalog_list()
 
-    assert [entry.action for entry in callbacks_of(message)] == [
-        ShopAction.CATALOGS
-    ]
+    assert [entry.action for entry in back_of(message)] == [ShopAction.CATALOGS]
 
 
 def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:
@@ -330,7 +343,7 @@ def test_a_leaf_category_sends_the_list_back_to_the_catalog() -> None:
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
 
-    assert [entry.action for entry in callbacks_of(message)] == [ShopAction.CATALOG]
+    assert [entry.action for entry in back_of(message)] == [ShopAction.CATALOG]
 
 
 def test_a_branching_category_sends_the_list_back_to_itself() -> None:
@@ -342,7 +355,7 @@ def test_a_branching_category_sends_the_list_back_to_itself() -> None:
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
 
-    assert [entry.action for entry in callbacks_of(message)] == [ShopAction.CATEGORY]
+    assert [entry.action for entry in back_of(message)] == [ShopAction.CATEGORY]
 
 
 def test_a_leaf_subcategory_sends_the_list_back_to_its_parent() -> None:
@@ -353,9 +366,8 @@ def test_a_leaf_subcategory_sends_the_list_back_to_its_parent() -> None:
     )
 
     message = rich_paged_screen(PRODUCT_LIST, paged([]), view, CUSTOMER)
-    back = callbacks_of(message)
 
-    assert [entry.category_id for entry in back] == [COATS]
+    assert [entry.category_id for entry in back_of(message)] == [COATS]
 
 
 def test_the_card_shows_the_description() -> None:
@@ -364,42 +376,57 @@ def test_the_card_shows_the_description() -> None:
     assert "Тёплое пальто из шерсти." in paragraphs_of(message)
 
 
-def test_the_card_shows_the_price() -> None:
+def nodes_of(message: InputRichMessage, position: int) -> list[object]:
+    block = (message.blocks or [])[position]
+    assert isinstance(block, InputRichBlockParagraph)
+    assert isinstance(block.text, list)
+    return list(block.text)
+
+
+def test_the_card_opens_with_a_heading() -> None:
+    message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    title = (message.blocks or [])[0]
+
+    assert isinstance(title, InputRichBlockSectionHeading)
+    assert str(title.text) == "Пальто оверсайз"
+
+
+def test_the_price_is_bold() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert paragraphs_of(message)[0] == "Пальто оверсайз\n12 900 $"
+    assert nodes_of(message, 1) == [RichTextBold(text="12 900 $")]
 
 
 def test_the_article_is_a_copyable_block() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
-    article = (message.blocks or [])[1]
 
-    assert isinstance(article, InputRichBlockParagraph)
-    assert article.text == ["Артикул:", " ", RichTextCode(text="000042")]
+    assert nodes_of(message, 2) == ["Артикул:", " ", RichTextCode(text="000042")]
 
 
 def test_an_old_price_is_struck_through() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(old_price="15900"), CUSTOMER)
+    price = nodes_of(message, 1)
 
-    assert f"1{STRIKE}5{STRIKE}" in paragraphs_of(message)[0]
+    assert f"1{STRIKE}5{STRIKE}" in str(price[-1])
 
 
 def test_a_card_without_a_sale_shows_one_price() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert STRIKE not in paragraphs_of(message)[0]
+    assert STRIKE not in str(nodes_of(message, 1))
 
 
 def test_a_brand_is_named_when_the_product_has_one() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(brand="Acme"), CUSTOMER)
 
-    assert "Бренд: Acme" in paragraphs_of(message)
+    assert nodes_of(message, 2) == ["Бренд:", " ", RichTextBold(text="Acme")]
 
 
 def test_a_product_without_a_brand_says_nothing_about_brands() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    said = [str(nodes_of(message, position)) for position in (1, 2)]
 
-    assert not any(text.startswith("Бренд") for text in paragraphs_of(message))
+    assert not any("Бренд" in line for line in said)
 
 
 def test_variants_are_listed_with_their_prices() -> None:
@@ -410,7 +437,7 @@ def test_variants_are_listed_with_their_prices() -> None:
 
     message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
 
-    assert "Размер:\n• M — 12 900 $\n• L — 13 900 $" in paragraphs_of(message)
+    assert "Размер:\n• M · 12 900 $\n• L · 13 900 $" in paragraphs_of(message)
 
 
 def test_an_out_of_stock_card_says_so() -> None:
@@ -503,3 +530,78 @@ def test_a_picked_variant_carries_both_identifiers() -> None:
 
     assert added.product_id == COAT
     assert added.variant_id == SIZE_M
+
+
+def found(
+    items: list[ShopProductEntryView], total: int
+) -> Pagination[ShopProductEntryView]:
+    return Pagination(
+        page=Page(items=items, number=0, size=PAGE_SIZE, total=total),
+        callback=lambda value: ShopCallback(action=ShopAction.FOUND, page=value),
+    )
+
+
+def test_the_search_asks_what_to_look_for() -> None:
+    message = rich_screen(SEARCH_PROMPT, None, CUSTOMER)
+
+    assert paragraphs_of(message) == [
+        "Поиск по магазину\n\nОтправьте название, бренд или артикул."
+    ]
+
+
+def test_the_storefront_offers_a_search() -> None:
+    message = rich_paged_screen(
+        CATALOGS, paged([catalog_view()]), CountedView(total=1), CUSTOMER
+    )
+
+    assert ShopAction.SEARCH in [entry.action for entry in callbacks_of(message)]
+
+
+def test_found_products_are_counted() -> None:
+    view = SearchView(needle="пальто", total=1)
+
+    message = rich_paged_screen(
+        FOUND_PRODUCTS, found([entry_view()], 1), view, CUSTOMER
+    )
+
+    assert paragraphs_of(message) == ["Найдено: 1\n\nПо запросу пальто"]
+    assert captions_of(message) == ["Пальто оверсайз · 12 900 $"]
+
+
+def test_an_empty_search_suggests_another_word() -> None:
+    view = SearchView(needle="телевизор", total=0)
+
+    message = rich_paged_screen(FOUND_PRODUCTS, found([], 0), view, CUSTOMER)
+
+    assert paragraphs_of(message) == [
+        (
+            "Ничего не нашлось\n\nПо запросу телевизор. "
+            "Попробуйте другое слово или артикул."
+        )
+    ]
+
+
+def test_a_search_can_be_repeated() -> None:
+    view = SearchView(needle="пальто", total=0)
+
+    message = rich_paged_screen(FOUND_PRODUCTS, found([], 0), view, CUSTOMER)
+
+    assert [entry.action for entry in callbacks_of(message)] == [
+        ShopAction.SEARCH,
+        ShopAction.CATALOGS,
+    ]
+
+
+def test_paging_the_results_carries_no_query() -> None:
+    view = SearchView(needle="пальто", total=12)
+    pagination = Pagination(
+        page=Page(items=[entry_view()], number=0, size=1, total=12),
+        callback=lambda value: ShopCallback(action=ShopAction.FOUND, page=value),
+    )
+
+    message = rich_paged_screen(FOUND_PRODUCTS, pagination, view, CUSTOMER)
+
+    paging = [
+        entry for entry in callbacks_of(message) if entry.action is ShopAction.FOUND
+    ]
+    assert [entry.page for entry in paging] == [0, 1]

@@ -15,8 +15,8 @@ staff-list =
     }
 staff-list-empty = В команде пока никого нет.
 
-staff-member-label = { $id } — { $role }
-staff-member-label-revoked = 🚫 { $id } — { $role }
+staff-member-label = { $id } · { $role }
+staff-member-label-revoked = 🚫 { $id } · { $role }
 
 staff-member-card =
     Участник { $id }

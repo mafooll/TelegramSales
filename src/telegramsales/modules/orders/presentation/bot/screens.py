@@ -44,8 +44,13 @@ from telegramsales.modules.orders.presentation.bot.views import (
 from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.content import (
     Content,
+    bold,
+    code,
+    divider,
     gallery,
+    heading,
     paragraph,
+    parts,
     slideshow,
 )
 from telegramsales.shared.presentation.bot.keyboard import ListScreen, Screen
@@ -58,15 +63,18 @@ PROMPT: Screen[PromptView] = Screen(
 )
 
 
-def _cart_text(cart: CartView, translate: ITranslator) -> str:
+def _cart_text(cart: CartView, translate: ITranslator) -> Content:
     if cart.is_empty:
         return translate(texts.CART_EMPTY)
+
+    blocks: list[InputRichBlockUnion] = [
+        heading(translate(texts.CART)),
+        parts(translate(texts.CART_TOTAL), " ", bold(money_text(cart.total))),
+    ]
     if cart.has_unavailable:
-        return translate(
-            texts.CART_WITH_GONE_LINES,
-            total=money_text(cart.total),
-        )
-    return translate(texts.CART, total=money_text(cart.total))
+        blocks.append(paragraph(translate(texts.CART_WITH_GONE_LINES)))
+    blocks.append(divider())
+    return blocks
 
 
 def _cart_line_thumbnail(line: CartLineView) -> str | None:
@@ -144,7 +152,7 @@ ORDER_LIST: ListScreen[OrderEntryView, OrderListView] = ListScreen(
 )
 
 
-def _order_text(order: OrderView, translate: ITranslator) -> str:
+def _order_text(order: OrderView, translate: ITranslator) -> Content:
     lines = "\n".join(
         translate(
             texts.ORDER_LINE,
@@ -160,17 +168,27 @@ def _order_text(order: OrderView, translate: ITranslator) -> str:
         if not order.comment
         else translate(texts.ORDER_COMMENT, comment=order.comment)
     )
-    return translate(
-        texts.ORDER_CARD,
-        number=order.number,
-        status=translate(status_key(order.status)),
-        items=lines,
-        total=money_text(order.total),
-        name=order.name,
-        phone=order.phone,
-        address=order.address,
-        comment=comment,
-    )
+    return [
+        parts(translate(texts.ORDER_NUMBER), " ", code(order.number)),
+        parts(
+            translate(texts.ORDER_STATUS),
+            " ",
+            bold(translate(status_key(order.status))),
+        ),
+        divider(),
+        paragraph(lines),
+        parts(translate(texts.ORDER_TOTAL), " ", bold(money_text(order.total))),
+        divider(),
+        paragraph(
+            translate(
+                texts.ORDER_CONTACTS,
+                name=order.name,
+                phone=order.phone,
+                address=order.address,
+                comment=comment,
+            )
+        ),
+    ]
 
 
 ORDER_CARD: Screen[OrderView] = Screen(
