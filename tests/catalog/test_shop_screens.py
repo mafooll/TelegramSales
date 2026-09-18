@@ -4,8 +4,10 @@ from aiogram.types import (
     InputRichBlockFooter,
     InputRichBlockParagraph,
     InputRichBlockPhoto,
+    InputRichBlockSectionHeading,
     InputRichBlockSlideshow,
     InputRichMessage,
+    RichTextBold,
     RichTextCode,
 )
 
@@ -364,42 +366,57 @@ def test_the_card_shows_the_description() -> None:
     assert "Тёплое пальто из шерсти." in paragraphs_of(message)
 
 
-def test_the_card_shows_the_price() -> None:
+def nodes_of(message: InputRichMessage, position: int) -> list[object]:
+    block = (message.blocks or [])[position]
+    assert isinstance(block, InputRichBlockParagraph)
+    assert isinstance(block.text, list)
+    return list(block.text)
+
+
+def test_the_card_opens_with_a_heading() -> None:
+    message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    title = (message.blocks or [])[0]
+
+    assert isinstance(title, InputRichBlockSectionHeading)
+    assert str(title.text) == "Пальто оверсайз"
+
+
+def test_the_price_is_bold() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert paragraphs_of(message)[0] == "Пальто оверсайз\n12 900 $"
+    assert nodes_of(message, 1) == [RichTextBold(text="12 900 $")]
 
 
 def test_the_article_is_a_copyable_block() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
-    article = (message.blocks or [])[1]
 
-    assert isinstance(article, InputRichBlockParagraph)
-    assert article.text == ["Артикул:", " ", RichTextCode(text="000042")]
+    assert nodes_of(message, 2) == ["Артикул:", " ", RichTextCode(text="000042")]
 
 
 def test_an_old_price_is_struck_through() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(old_price="15900"), CUSTOMER)
+    price = nodes_of(message, 1)
 
-    assert f"1{STRIKE}5{STRIKE}" in paragraphs_of(message)[0]
+    assert f"1{STRIKE}5{STRIKE}" in str(price[-1])
 
 
 def test_a_card_without_a_sale_shows_one_price() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
 
-    assert STRIKE not in paragraphs_of(message)[0]
+    assert STRIKE not in str(nodes_of(message, 1))
 
 
 def test_a_brand_is_named_when_the_product_has_one() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(brand="Acme"), CUSTOMER)
 
-    assert "Бренд: Acme" in paragraphs_of(message)
+    assert nodes_of(message, 2) == ["Бренд:", " ", RichTextBold(text="Acme")]
 
 
 def test_a_product_without_a_brand_says_nothing_about_brands() -> None:
     message = rich_screen(PRODUCT_CARD, product_view(), CUSTOMER)
+    said = [str(nodes_of(message, position)) for position in (1, 2)]
 
-    assert not any(text.startswith("Бренд") for text in paragraphs_of(message))
+    assert not any("Бренд" in line for line in said)
 
 
 def test_variants_are_listed_with_their_prices() -> None:
@@ -410,7 +427,7 @@ def test_variants_are_listed_with_their_prices() -> None:
 
     message = rich_screen(PRODUCT_CARD, product_view(variants=variants), CUSTOMER)
 
-    assert "Размер:\n• M — 12 900 $\n• L — 13 900 $" in paragraphs_of(message)
+    assert "Размер:\n• M · 12 900 $\n• L · 13 900 $" in paragraphs_of(message)
 
 
 def test_an_out_of_stock_card_says_so() -> None:

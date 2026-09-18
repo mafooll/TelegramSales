@@ -27,7 +27,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-CMD ["watchfiles", "--filter", "python", "python -m telegramsales.apps.bot", "src"]
+CMD ["watchfiles", "--filter", "python", "telegramsales-bot", "src"]
 
 
 FROM python:3.13-slim AS runtime
@@ -44,4 +44,4 @@ COPY --from=builder --chown=app:app /app /app
 
 USER app
 
-CMD ["python", "-m", "telegramsales.apps.bot"]
+CMD ["telegramsales-bot"]

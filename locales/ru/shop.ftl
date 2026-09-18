@@ -22,17 +22,11 @@ shop-product-list-empty =
 shop-product-entry = { $title } · { $price }
 shop-product-entry-out = { $title } · нет в наличии
 
-shop-product-card =
-    { $title }
-    { $price }
-shop-product-card-sale =
-    { $title }
-    { $price }  { $old_price }
-shop-product-brand = Бренд: { $brand }
+shop-product-brand = Бренд:
 shop-product-variants =
     { $label }:
     { $items }
-shop-product-variant-item = • { $title } — { $price }
+shop-product-variant-item = • { $title } · { $price }
 shop-product-out = Нет в наличии
 
 shop-back-button = ⬅️ Назад

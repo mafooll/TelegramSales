@@ -104,7 +104,7 @@ catalog-product-variants-button = 📐 Варианты
 
 catalog-product-ask-title = Пришлите название товара.
 catalog-product-ask-description = Пришлите описание товара.
-catalog-product-ask-price = Пришлите цену — только число, например 12900.
+catalog-product-ask-price = Пришлите цену. Только число, например 12900.
 catalog-product-ask-new-title = Пришлите новое название товара.
 catalog-product-ask-new-description = Пришлите новое описание товара.
 catalog-product-ask-new-price = Пришлите новую цену.
@@ -114,10 +114,10 @@ catalog-media-screen =
     { $title }
     Фото: { $photos } из 10 · Видео: { $videos } из 1
 
-    Пришлите снимки — можно альбомом. Нажмите на файл в списке, чтобы удалить.
+    Пришлите снимки, можно альбомом. Нажмите на файл в списке, чтобы удалить.
 catalog-media-item = 🖼 Удалить фото
 catalog-media-video-item = 🎬 Удалить видео
-catalog-ask-photo = Пришлите фотографии — можно альбомом.
+catalog-ask-photo = Пришлите фотографии, можно альбомом.
 catalog-ask-video = Пришлите видеообзор.
 catalog-add-photo-button = ➕ Фото
 catalog-add-video-button = ➕ Видео
@@ -130,17 +130,17 @@ catalog-variant-screen =
     Нажмите на вариант, чтобы переключить наличие.
 catalog-variant-screen-closed =
     { $title }
-    Варианты не заданы. Назовите ось — например «Размер» или «Объём».
+    Варианты не заданы. Назовите ось: «Размер», «Объём», «Цвет».
 catalog-variant-item = { $title } · { $price }
 catalog-variant-item-out = 🚫 { $title } · { $price }
 catalog-ask-axis = Как называется ось вариантов? Например «Размер».
-catalog-ask-variant = Пришлите название варианта — например «M».
+catalog-ask-variant = Пришлите название варианта, например «M».
 catalog-axis-button = 📐 Ось вариантов
 catalog-add-variant-button = ➕ Вариант
 catalog-media-rejected =
-    Это не фото и не видео. Пришлите снимок или видеофайл — кружок и голосовое не подойдут.
+    Это не фото и не видео. Пришлите снимок или видеофайл. Кружок и голосовое не подойдут.
 catalog-media-as-file =
-    Видео пришло файлом — Telegram такой файл в карточку не пустит.
+    Видео пришло файлом. Telegram такой файл в карточку не пустит.
     Отправьте его как видео: в меню вложения выберите «Видео», а не «Файл».
 catalog-layout-collage-button = 🔲 Коллажем
 catalog-layout-slideshow-button = 🎞 Каруселью
@@ -194,11 +194,11 @@ catalog-error-title-empty = Название не может быть пусты
 catalog-error-title-too-long = Название слишком длинное.
 catalog-error-nesting-too-deep = Глубже двух уровней категории не вкладываются.
 catalog-error-foreign-catalog = Категория из другого каталога.
-catalog-error-catalog-not-empty = В каталоге есть категории — сначала удалите их.
-catalog-error-catalog-holds-products = В каталоге есть товары — сначала удалите их.
-catalog-error-catalog-holds-categories = Каталог разделён на категории — товар без категории в него не положить.
-catalog-error-category-not-empty = В категории есть подкатегории — сначала удалите их.
-catalog-error-category-holds-products = В категории есть товары — сначала удалите или перенесите их.
-catalog-error-brand-in-use = Бренд стоит у товаров — сначала смените его у них.
-catalog-product-ask-brand-title = Пришлите название нового бренда — он сразу встанет товару.
+catalog-error-catalog-not-empty = В каталоге есть категории. Сначала удалите их.
+catalog-error-catalog-holds-products = В каталоге есть товары. Сначала удалите их.
+catalog-error-catalog-holds-categories = Каталог разделён на категории. Товар без категории в него не положить.
+catalog-error-category-not-empty = В категории есть подкатегории. Сначала удалите их.
+catalog-error-category-holds-products = В категории есть товары. Сначала удалите или перенесите их.
+catalog-error-brand-in-use = Бренд стоит у товаров. Сначала смените его у них.
+catalog-product-ask-brand-title = Пришлите название нового бренда. Он сразу встанет товару.
 catalog-product-article = Артикул:

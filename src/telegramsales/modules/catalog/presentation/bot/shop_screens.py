@@ -35,13 +35,15 @@ from telegramsales.modules.catalog.presentation.bot.views import (
     ShopProductsView,
     ShopVariantPickView,
     breadcrumbs,
-    shop_product_card_key,
 )
 from telegramsales.shared.application.i18n import ITranslator
 from telegramsales.shared.presentation.bot.content import (
     Content,
+    bold,
     code,
+    divider,
     gallery,
+    heading,
     paragraph,
     parts,
     slideshow,
@@ -111,17 +113,13 @@ def _photos(product: ShopProductView) -> list[InputRichBlockUnion]:
     return gallery(product.photo_ids)
 
 
-def _header(product: ShopProductView, translate: ITranslator) -> str:
-    return translate(
-        shop_product_card_key(product),
-        title=product.title,
-        article=product.article,
-        price=money_text(product.price),
-        old_price=(
-            ""
-            if product.old_price is None
-            else struck_text(money_text(product.old_price))
-        ),
+def _price(product: ShopProductView) -> InputRichBlockUnion:
+    if product.old_price is None:
+        return parts(bold(money_text(product.price)))
+    return parts(
+        bold(money_text(product.price)),
+        "  ",
+        struck_text(money_text(product.old_price)),
     )
 
 
@@ -150,13 +148,19 @@ def _article(
 
 def _card_content(product: ShopProductView, translate: ITranslator) -> Content:
     blocks: list[InputRichBlockUnion] = [
-        paragraph(_header(product, translate)),
-        _article(product, translate),
+        heading(product.title),
+        _price(product),
     ]
     if product.brand_title is not None:
         blocks.append(
-            paragraph(translate(shop_texts.PRODUCT_BRAND, brand=product.brand_title))
+            parts(
+                translate(shop_texts.PRODUCT_BRAND),
+                " ",
+                bold(product.brand_title),
+            )
         )
+    blocks.append(_article(product, translate))
+    blocks.append(divider())
     blocks.append(paragraph(product.description))
     if product.variants:
         blocks.append(paragraph(_variants(product, translate)))

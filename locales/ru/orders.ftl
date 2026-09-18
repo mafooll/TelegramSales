@@ -1,9 +1,6 @@
-orders-cart = Корзина. Итого { $total }
+orders-cart = Корзина
 orders-cart-empty = Корзина пуста. Загляните в магазин и выберите что-нибудь.
-orders-cart-with-gone-lines =
-    Корзина. Итого { $total }
-
-    Отмеченные позиции закончились — уберите их, чтобы оформить заказ.
+orders-cart-with-gone-lines = Отмеченные позиции закончились. Уберите их, чтобы оформить заказ.
 orders-variant-suffix = { " · " }{ $variant }
 orders-cart-line = { $title }{ $variant } · { $quantity } шт · { $total }
 orders-cart-line-gone = ⚠️ { $title }{ $variant } · нет в наличии
@@ -31,7 +28,7 @@ orders-clear-question = Очистить корзину полностью?
 
 orders-added-to-cart = Добавлено в корзину
 orders-share-message =
-    Вот ссылка на вашу корзину — её можно переслать кому угодно:
+    Ссылка на вашу корзину, её можно переслать кому угодно:
 
     { $link }
 
@@ -75,14 +72,7 @@ orders-placed =
 orders-order-list = Ваши заказы: { $total }
 orders-order-list-empty = Заказов пока нет.
 orders-order-entry = { $number } · { $status } · { $total }
-orders-order-card =
-    Заказ { $number }
-    Статус: { $status }
-
-    { $items }
-
-    Итого: { $total }
-
+orders-order-contacts =
     { $name }
     { $phone }
     { $address }
@@ -119,3 +109,7 @@ orders-notice-shipped = Заказ { $number } передан в доставк�
 orders-notice-done = Заказ { $number } выполнен. Спасибо за покупку!
 orders-notice-cancelled = Заказ { $number } отменён.
 orders-open-line-button = 🛍 Открыть
+orders-cart-total = Итого:
+orders-order-number = Заказ
+orders-order-status = Статус:
+orders-order-total = Итого:

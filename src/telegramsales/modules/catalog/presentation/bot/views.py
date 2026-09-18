@@ -12,7 +12,6 @@ from telegramsales.modules.catalog.application.queries import (
     ShopCatalogView,
     ShopCategoryView,
     ShopProductEntryView,
-    ShopProductView,
     VariantView,
 )
 from telegramsales.modules.catalog.contracts import (
@@ -170,9 +169,3 @@ def breadcrumbs(view: ShopProductsView, translate: ITranslator) -> str:
             trail.append(category.parent_title)
         trail.append(category.title)
     return translate(shop_texts.BREADCRUMB_SEPARATOR).join(trail)
-
-
-def shop_product_card_key(product: ShopProductView) -> str:
-    if product.old_price is not None:
-        return shop_texts.PRODUCT_CARD_SALE
-    return shop_texts.PRODUCT_CARD

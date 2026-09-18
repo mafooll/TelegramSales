@@ -89,7 +89,7 @@ def test_manager_sees_the_add_button_in_the_list() -> None:
         STAFF_LIST, page_of(1), StaffListView(total=1), MANAGER
     )
 
-    assert texts_of(message) == ["200 — менеджер", "➕ Добавить", "⬅️ В меню"]
+    assert texts_of(message) == ["200 · менеджер", "➕ Добавить", "⬅️ В меню"]
 
 
 def test_viewer_sees_colleagues_but_cannot_add() -> None:
@@ -97,7 +97,7 @@ def test_viewer_sees_colleagues_but_cannot_add() -> None:
         STAFF_LIST, page_of(1), StaffListView(total=1), VIEWER
     )
 
-    assert texts_of(message) == ["200 — менеджер", "⬅️ В меню"]
+    assert texts_of(message) == ["200 · менеджер", "⬅️ В меню"]
 
 
 def test_the_way_back_to_the_menu_needs_no_permission() -> None:
@@ -163,7 +163,7 @@ def test_revoked_member_is_marked_in_the_list() -> None:
     )
     message = rich_paged_screen(STAFF_LIST, revoked, StaffListView(total=1), VIEWER)
 
-    assert texts_of(message)[0] == "🚫 200 — менеджер"
+    assert texts_of(message)[0] == "🚫 200 · менеджер"
 
 
 def test_card_shows_the_role_in_words() -> None:

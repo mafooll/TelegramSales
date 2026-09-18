@@ -13,8 +13,6 @@ PRODUCT_LIST_EMPTY = "shop-product-list-empty"
 PRODUCT_ENTRY = "shop-product-entry"
 PRODUCT_ENTRY_OUT = "shop-product-entry-out"
 
-PRODUCT_CARD = "shop-product-card"
-PRODUCT_CARD_SALE = "shop-product-card-sale"
 PRODUCT_BRAND = "shop-product-brand"
 PRODUCT_VARIANTS = "shop-product-variants"
 PRODUCT_VARIANT_ITEM = "shop-product-variant-item"
