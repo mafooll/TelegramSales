@@ -45,3 +45,21 @@ shop-open-product-button = 🛍 Посмотреть
 shop-breadcrumb-root = Витрина
 shop-breadcrumb-separator = { " · " }
 shop-product-article = Артикул:
+
+shop-search-button = 🔎 Поиск
+shop-search-again-button = 🔎 Искать снова
+shop-search-ask =
+    Поиск по магазину
+
+    Отправьте название, бренд или артикул.
+shop-search-too-short = Слишком короткий запрос, нужно хотя бы { $least } символа.
+shop-search-lost = Запрос потерялся, начните поиск заново
+shop-found =
+    Найдено: { $total }
+
+    По запросу { $needle }
+shop-found-empty =
+    Ничего не нашлось
+
+    По запросу { $needle }. Попробуйте другое слово или артикул.
+shop-found-footnote = { $needle }

@@ -38,6 +38,7 @@ async def _create_schema(url: str) -> None:
     engine = create_async_engine(url)
     try:
         async with engine.begin() as connection:
+            await connection.execute(text("create extension if not exists pg_trgm"))
             await connection.run_sync(BaseORM.metadata.create_all)
     finally:
         await engine.dispose()

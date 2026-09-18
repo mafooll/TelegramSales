@@ -37,6 +37,12 @@ class CountedView:
 
 
 @dataclass(frozen=True, slots=True)
+class SearchView:
+    needle: str
+    total: int
+
+
+@dataclass(frozen=True, slots=True)
 class PromptView:
     message_key: str
     back: CallbackData

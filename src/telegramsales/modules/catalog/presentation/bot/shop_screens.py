@@ -24,13 +24,16 @@ from telegramsales.modules.catalog.presentation.bot.shop_buttons import (
     PRODUCTS_BACK_TO_CATALOGS,
     PRODUCTS_BACK_TO_CATEGORY,
     PRODUCTS_BACK_TO_PARENT,
+    SEARCH_AGAIN,
     VARIANT_PICK,
     back_to_catalogs,
     open_cart,
+    open_search,
     product_caption,
 )
 from telegramsales.modules.catalog.presentation.bot.views import (
     CountedView,
+    SearchView,
     ShopCatalogPageView,
     ShopProductsView,
     ShopVariantPickView,
@@ -58,7 +61,7 @@ CATALOGS: ListScreen[ShopCatalogView, CountedView] = ListScreen(
         shop_texts.CATALOGS_EMPTY if view.total == 0 else shop_texts.CATALOGS
     ),
     item=CATALOG_ENTRY,
-    footer=[home_button()],
+    footer=[open_search(), home_button()],
 )
 
 CATALOG: ListScreen[ShopCategoryView, ShopCatalogPageView] = ListScreen(
@@ -99,11 +102,31 @@ PRODUCT_LIST: ListScreen[ShopProductEntryView, ShopProductsView] = ListScreen(
     item_caption=product_caption,
     footnote=breadcrumbs,
     footer=[
+        open_search(),
         PRODUCTS_BACK_TO_CATEGORY,
         PRODUCTS_BACK_TO_PARENT,
         PRODUCTS_BACK_TO_CATALOG,
         PRODUCTS_BACK_TO_CATALOGS,
     ],
+)
+
+
+SEARCH_PROMPT: Screen[None] = Screen(
+    content=lambda _, translate: translate(shop_texts.SEARCH_ASK),
+    buttons=[back_to_catalogs()],
+)
+
+FOUND_PRODUCTS: ListScreen[ShopProductEntryView, SearchView] = ListScreen(
+    content=lambda view, translate: translate(
+        shop_texts.FOUND_EMPTY if view.total == 0 else shop_texts.FOUND,
+        needle=view.needle,
+        total=view.total,
+    ),
+    item=PRODUCT_ENTRY,
+    item_extra=ADD_ENTRY_TO_CART,
+    item_photo=lambda product: product.thumbnail,
+    item_caption=product_caption,
+    footer=[SEARCH_AGAIN, back_to_catalogs()],
 )
 
 

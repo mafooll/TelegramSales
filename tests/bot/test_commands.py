@@ -14,6 +14,7 @@ def test_the_menu_lists_the_commands_the_bot_answers() -> None:
     assert [command.command for command in bot_commands(TRANSLATE)] == [
         "start",
         "shop",
+        "find",
         "cart",
         "orders",
         "support",

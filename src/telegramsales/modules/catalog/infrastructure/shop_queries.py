@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Any, override
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -143,6 +143,48 @@ def _product_entries() -> Select[tuple[Any, str, Decimal, str, bool, str, bool]]
     )
 
 
+SIMILARITY = 0.4
+ARTICLE_RANK = 0
+BRAND_RANK = 1
+TITLE_RANK = 2
+
+
+def _found_entries(needle: str) -> Select[tuple[Any, ...]]:
+    lowered = needle.lower()
+    brand_title = func.coalesce(BrandORM.title, "")
+
+    by_article = func.lower(ProductORM.article).like(f"{lowered}%")
+    by_brand = or_(
+        func.lower(brand_title).like(f"%{lowered}%"),
+        func.word_similarity(needle, brand_title) >= SIMILARITY,
+    )
+    by_title = or_(
+        func.lower(ProductORM.title).like(f"%{lowered}%"),
+        func.word_similarity(needle, ProductORM.title) >= SIMILARITY,
+    )
+
+    rank = case(
+        (by_article, ARTICLE_RANK),
+        (by_brand, BRAND_RANK),
+        else_=TITLE_RANK,
+    ).label("rank")
+    score = func.greatest(
+        func.word_similarity(needle, ProductORM.title),
+        func.word_similarity(needle, brand_title),
+    ).label("score")
+
+    return (
+        _product_entries()
+        .add_columns(rank, score)
+        .outerjoin(
+            BrandORM,
+            (ProductORM.brand_id == BrandORM.id) & BrandORM.is_active.is_(True),
+        )
+        .where(or_(by_article, by_brand, by_title))
+        .order_by(rank, score.desc(), ProductORM.title)
+    )
+
+
 async def _total[RowsType: tuple[Any, ...]](
     session: AsyncSession,
     query: Select[RowsType],
@@ -153,6 +195,17 @@ async def _total[RowsType: tuple[Any, ...]](
 
 def _money(amount: Decimal, currency: str) -> Money:
     return Money(amount, Currency(currency))
+
+
+def _entry_view(row: Any) -> ShopProductEntryView:  # noqa: ANN401
+    return ShopProductEntryView(
+        id=ProductId(row.id),
+        title=row.title,
+        price=_money(row.price, row.currency),
+        is_in_stock=row.is_in_stock,
+        thumbnail=row.thumbnail,
+        has_variants=row.has_variants,
+    )
 
 
 def _category_view(row: Any) -> ShopCategoryView:  # noqa: ANN401
@@ -263,17 +316,27 @@ class ShopQueries(IShopQueries):
         ).all()
 
         return Page(
-            items=[
-                ShopProductEntryView(
-                    id=ProductId(row.id),
-                    title=row.title,
-                    price=_money(row.price, row.currency),
-                    is_in_stock=row.is_in_stock,
-                    thumbnail=row.thumbnail,
-                    has_variants=row.has_variants,
-                )
-                for row in rows
-            ],
+            items=[_entry_view(row) for row in rows],
+            number=number,
+            size=size,
+            total=total,
+        )
+
+    @override
+    async def search_products(
+        self,
+        needle: str,
+        number: int,
+        size: int,
+    ) -> Page[ShopProductEntryView]:
+        query = _found_entries(needle)
+        total = await _total(self._session, query)
+        rows = (
+            await self._session.execute(query.limit(size).offset(number * size))
+        ).all()
+
+        return Page(
+            items=[_entry_view(row) for row in rows],
             number=number,
             size=size,
             total=total,

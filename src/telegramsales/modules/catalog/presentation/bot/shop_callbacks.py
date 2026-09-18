@@ -14,6 +14,8 @@ class ShopAction(StrEnum):
     VARIANTS = "vars"
     ADD = "add"
     CART = "cart"
+    SEARCH = "find"
+    FOUND = "found"
 
 
 class ShopCallback(CallbackData, prefix="shop"):

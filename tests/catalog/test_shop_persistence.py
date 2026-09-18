@@ -448,3 +448,91 @@ async def test_a_catalog_with_categories_opens_them(
     ]
 
     assert "Верхняя одежда" in " ".join(labels)
+
+
+async def make_stock(session: AsyncSession) -> CatalogId:
+    catalog = await make_catalog(session, "Каталог для поиска")
+    category = await make_category(session, catalog.id, "Верхняя одежда")
+    brand = await make_brand(session, "Loro Piana")
+    await make_product(session, catalog.id, category.id, "Пальто оверсайз")
+    await make_product(
+        session, catalog.id, category.id, "Шарф кашемировый", brand_id=brand.id
+    )
+    await session.flush()
+    return catalog.id
+
+
+async def test_a_product_is_found_by_its_title(session: AsyncSession) -> None:
+    await make_stock(session)
+
+    page = await ShopQueries(session).search_products("пальто", 0, PAGE_SIZE)
+
+    assert [item.title for item in page.items] == ["Пальто оверсайз"]
+
+
+async def test_a_product_is_found_by_its_brand(session: AsyncSession) -> None:
+    await make_stock(session)
+
+    page = await ShopQueries(session).search_products("loro", 0, PAGE_SIZE)
+
+    assert [item.title for item in page.items] == ["Шарф кашемировый"]
+
+
+async def test_a_product_is_found_by_its_article(session: AsyncSession) -> None:
+    catalog = await make_catalog(session, "Каталог с артикулом")
+    product = await make_product(session, catalog.id, None, "Пальто оверсайз")
+    await session.flush()
+
+    page = await ShopQueries(session).search_products(
+        str(product.article), 0, PAGE_SIZE
+    )
+
+    assert [item.id for item in page.items] == [product.id]
+
+
+async def test_a_typo_still_finds_the_product(session: AsyncSession) -> None:
+    await make_stock(session)
+
+    page = await ShopQueries(session).search_products("палто", 0, PAGE_SIZE)
+
+    assert [item.title for item in page.items] == ["Пальто оверсайз"]
+
+
+async def test_an_article_outranks_a_title(session: AsyncSession) -> None:
+    catalog = await make_catalog(session, "Каталог с совпадением")
+    wanted = await make_product(session, catalog.id, None, "Шарф кашемировый")
+    named = await make_product(
+        session, catalog.id, None, f"Пальто {wanted.article}"
+    )
+    await session.flush()
+
+    page = await ShopQueries(session).search_products(
+        str(wanted.article), 0, PAGE_SIZE
+    )
+
+    assert [item.id for item in page.items] == [wanted.id, named.id]
+
+
+async def test_an_unpublished_product_stays_out_of_the_search(
+    session: AsyncSession,
+) -> None:
+    catalog = await make_catalog(session, "Каталог с черновиком")
+    await make_product(
+        session, catalog.id, None, "Пальто черновик", published=False
+    )
+    await session.flush()
+
+    page = await ShopQueries(session).search_products("пальто", 0, PAGE_SIZE)
+
+    assert page.items == []
+
+
+async def test_the_search_is_paged(session: AsyncSession) -> None:
+    catalog = await make_catalog(session, "Каталог с однотипными товарами")
+    for number in range(3):
+        await make_product(session, catalog.id, None, f"Пальто {number}")
+    await session.flush()
+
+    page = await ShopQueries(session).search_products("пальто", 1, 2)
+
+    assert (page.total, len(page.items)) == (3, 1)
