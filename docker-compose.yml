@@ -5,17 +5,17 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER not set, see .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set, see .env.example}
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
         - CMD-SHELL
-        - pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-telegramsales}
+        - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-telegramsales}
       interval: 5s
       timeout: 5s
       retries: 10
@@ -24,7 +24,7 @@ services:
     image: redis:8-alpine
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -44,8 +44,8 @@ services:
     command: ["alembic", "upgrade", "head"]
     restart: "no"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER not set, see .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set, see .env.example}
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -62,8 +62,8 @@ services:
     environment:
       PGHOST: postgres
       PGPORT: 5432
-      PGUSER: ${POSTGRES_USER:-postgres}
-      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGUSER: ${POSTGRES_USER:?POSTGRES_USER not set, see .env.example}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set, see .env.example}
       PGDATABASE: ${POSTGRES_DB:-telegramsales}
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
@@ -85,8 +85,8 @@ services:
     environment:
       BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN not set, see .env.example}
       BOT_DROP_PENDING_UPDATES: ${BOT_DROP_PENDING_UPDATES:-true}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER not set, see .env.example}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set, see .env.example}
       POSTGRES_DB: ${POSTGRES_DB:-telegramsales}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
